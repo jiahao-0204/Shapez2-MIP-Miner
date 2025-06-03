@@ -115,7 +115,7 @@ if __name__ == "__main__":
     
     # set time limit
     env0 = model.getMultiobjEnv(0)
-    env0.setParam('MIPGap', 0.05)
+    # env0.setParam('MIPGap', 0.05)
     env0.setParam('TimeLimit', 60)
     
     env1 = model.getMultiobjEnv(1)
