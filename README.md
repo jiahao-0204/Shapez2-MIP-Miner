@@ -4,6 +4,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 
 
 ### Current Progress Update
+> **Status: work in progress – expect rapid changes.**
 
 ![Prototype layout screenshot](<images/CleanShot 2025-06-03 at 23.38.07@2x.png>)
 
@@ -16,15 +17,11 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 | Blue line       | Space belt           |
 | Red cross       | Belt endpoint        |
 
-> **Status: work in progress – expect rapid changes.**
-
----
 
 ## Roadmap
 
 - [ ] image recognition for importing astroid layouts
 - [ ] better readme
 
----
 
 *Questions or suggestions?* Feel free to open an issue or a pull request.
