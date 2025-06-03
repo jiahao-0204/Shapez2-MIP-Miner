@@ -27,13 +27,13 @@ if __name__ == "__main__":
     # set a list of node that need extracting
     xmin_to_extract = 3
     xmax_to_extract = 17
-    ymin_to_extract = 3
+    ymin_to_extract = 7
     ymax_to_extract = 13
     nodes_to_extract = [(x, y) for x in range(xmin_to_extract, xmax_to_extract + 1) for y in range(ymin_to_extract, ymax_to_extract + 1)]
     
     # set a list of nodes that can be sinks
     x_min_sink = 0
-    x_max_sink = width - 1
+    x_max_sink = width
     y_min_sink = height - 1
     y_max_sink = height - 1
     nodes_sink = [(x, y) for x in range(x_min_sink, x_max_sink + 1) for y in range(y_min_sink, y_max_sink + 1)]
@@ -337,18 +337,21 @@ if __name__ == "__main__":
     plt.title("Asteroid Miner Solution")
     plt.xlabel("X-axis")
     plt.ylabel("Y-axis")
-    plt.axhline(0, color='black', lw=0.5)
-    plt.axvline(0, color='black', lw=0.5)
+    # plt.axhline(0, color='black', lw=0.5)
+    # plt.axvline(0, color='black', lw=0.5)
     
-    # # draw nodes to extract
-    # plt.scatter(*zip(*nodes_to_extract), color='red', label='Nodes to Extract', s=100, marker='x')
+    # draw nodes to extract
+    plt.scatter(*zip(*nodes_to_extract), color='lightgrey', s=150, marker='s', zorder = 0)
+    
+    # draw sink nodes
+    plt.scatter(*zip(*nodes_sink), color='red', s=50, marker='x', zorder = 2)
     
     # draw belts
     for belt in all_belts:
         if belt.X > 0.5:  # if the belt is placed
             start_node = tuple(map(int, belt.varName.split('_')[1:3]))
             end_node = tuple(map(int, belt.varName.split('_')[3:5]))
-            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color=belt_color, linewidth=2)
+            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color=belt_color, linewidth=2, zorder = 1)
     
     # draw miners
     for miner in all_miner_platforms:
@@ -410,7 +413,7 @@ if __name__ == "__main__":
             continue
         
         # put text
-        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=10, ha='center', va='bottom', color='black')
+        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=10, ha='center', va='bottom', color='black', zorder=3)
     
     # add legend
     plt.legend()
