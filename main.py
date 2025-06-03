@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # set a list of node that need extracting
     xmin_to_extract = 3
     xmax_to_extract = 17
-    ymin_to_extract = 7
+    ymin_to_extract = 3
     ymax_to_extract = 13
     nodes_to_extract = [(x, y) for x in range(xmin_to_extract, xmax_to_extract + 1) for y in range(ymin_to_extract, ymax_to_extract + 1)]
     
@@ -112,8 +112,15 @@ if __name__ == "__main__":
     # set second objective to minimize the number of belts used
     model.setObjectiveN(quicksum(all_miner_platforms + all_extender_platforms), index=0, priority=1, name="maximize_extractors", weight=-1.0)
     model.setObjectiveN(quicksum(all_belts), index=1, priority=0, name="minimize_belts", weight=1.0)
-    model.update()
-
+    
+    # set time limit
+    env0 = model.getMultiobjEnv(0)
+    env0.setParam('MIPGap', 0.05)
+    env0.setParam('TimeLimit', 60)
+    
+    env1 = model.getMultiobjEnv(1)
+    env1.setParam('MIPGap', 0.05)
+    env1.setParam('TimeLimit', 60)
     
     # ----------------------------------------------------------
     # add constraints for the problem
