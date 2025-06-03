@@ -311,11 +311,19 @@ if __name__ == "__main__":
     # draw the solution
     # ----------------------------------------------------
     
+    # colors
+    edge_color = 'black'
+    belt_color = 'blue'
+    miner_color = 'green'
+    miner_belt_color = belt_color
+    extender_color = 'orange'
+    extender_belt_color = 'black'
+    
     # initialize plt
     plt.figure(figsize=(6, 6))
     plt.xlim(-1, width+1)
     plt.ylim(-1, height+1)
-    plt.grid(True)
+    # plt.grid(True)
     plt.xticks(range(width+1))
     plt.yticks(range(height+1))
     plt.gca().set_aspect('equal', adjustable='box')
@@ -333,7 +341,7 @@ if __name__ == "__main__":
         if belt.X > 0.5:  # if the belt is placed
             start_node = tuple(map(int, belt.varName.split('_')[1:3]))
             end_node = tuple(map(int, belt.varName.split('_')[3:5]))
-            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color='blue', linewidth=2)
+            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color=belt_color, linewidth=2)
     
     # draw miners
     for miner in all_miner_platforms:
@@ -355,7 +363,11 @@ if __name__ == "__main__":
             else:
                 marker = '.'
             
-            plt.scatter(start_node[0], start_node[1], color='green', s=100, marker=marker)
+            # draw miner
+            plt.scatter(start_node[0], start_node[1], color=miner_color, marker=marker, s=80, edgecolors=edge_color, zorder=2)
+            
+            # draw line to belt
+            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color=belt_color, linewidth=2, zorder = 1)
             
     # draw extenders
     for extender in all_extender_platforms:
@@ -363,33 +375,35 @@ if __name__ == "__main__":
             start_node = tuple(map(int, extender.varName.split('_')[1:3]))
             end_node = tuple(map(int, extender.varName.split('_')[3:5]))
             
-            # compute direction
-            direction = (end_node[0] - start_node[0], end_node[1] - start_node[1])
-
-            if direction == (1, 0):  # right
-                marker = '>'
-            elif direction == (0, 1):  # up
-                marker = '^'
-            elif direction == (-1, 0):  # left
-                marker = '<'
-            elif direction == (0, -1):  # down
-                marker = 'v'
-            else:
-                marker = 's'
+            # draw extender
+            plt.scatter(start_node[0], start_node[1], color=extender_color, marker='o', s=80, edgecolors=edge_color, zorder=2)
             
-            plt.scatter(start_node[0], start_node[1], color='orange', s=100, marker=marker)
+            # draw line to miner or extender
+            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color=extender_belt_color, linewidth=1, zorder = 1)
     
-    # draw node_flow_in as text
-    for node, flows in node_flow_in.items():
-        # put text
-        flow_value = sum(flow.X for flow in flows)
-        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='right', va='center', color='black')
+    # # draw node_flow_in as text
+    # for node, flows in node_flow_in.items():
+    #     # put text
+    #     flow_value = sum(flow.X for flow in flows)
+    #     plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='right', va='center', color='black')
         
-    # draw node_flow_out as text
-    for node, flows in node_flow_out.items():
+    # # draw node_flow_out as text
+    # for node, flows in node_flow_out.items():
+    #     # put text
+    #     flow_value = sum(flow.X for flow in flows)
+    #     plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='left', va='center', color='black')
+    
+    # draw sink nodes with flow value
+    for node in nodes_sink:
+        # get flow value
+        flow_value = sum(flow.X for flow in node_flow_in[node])
+        
+        # skip if value is zero
+        if flow_value == 0:
+            continue
+        
         # put text
-        flow_value = sum(flow.X for flow in flows)
-        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='left', va='center', color='black')
+        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=10, ha='center', va='bottom', color='black')
     
     # add legend
     plt.legend()
