@@ -325,14 +325,57 @@ if __name__ == "__main__":
                 1.0,
                 name=f"flow_direction_{outflow.varName}"
             )
+            
+    # if extender is true, the end node must have extender or miner
+    for extender in all_extender_platforms:
+        # get the start and end nodes of the extender
+        var_parts = extender.varName.split('_')
+        start_node = (int(var_parts[1]), int(var_parts[2]))
+        end_node = (int(var_parts[3]), int(var_parts[4]))
+        
+        # add the constraint
+        model.addGenConstrIndicator(
+            extender,
+            True,
+            node_used_by_extractor[end_node],
+            GRB.EQUAL,
+            1.0,
+            name=f"extender_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
+        )
     
-    # constraint - no belt into miner nor extender
+    # if miner is true, the end node must have belt
+    for miner in all_miner_platforms:
+        # get the start and end nodes of the miner
+        var_parts = miner.varName.split('_')
+        start_node = (int(var_parts[1]), int(var_parts[2]))
+        end_node = (int(var_parts[3]), int(var_parts[4]))
+        
+        # add the constraint
+        model.addGenConstrIndicator(
+            miner,
+            True,
+            node_used_by_belt[end_node],
+            GRB.EQUAL,
+            1.0,
+            name=f"miner_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
+        )
     
-    
-    
-    # constraint - only miner into belt, extender can not into belt
-    
-    
+    # if belt is true, the end node must not have extractor
+    for belt in all_belts:
+        # get the start and end nodes of the belt
+        var_parts = belt.varName.split('_')
+        start_node = (int(var_parts[1]), int(var_parts[2]))
+        end_node = (int(var_parts[3]), int(var_parts[4]))
+        
+        # add the constraint
+        model.addGenConstrIndicator(
+            belt,
+            True,
+            node_used_by_extractor[end_node],
+            GRB.EQUAL,
+            0.0,
+            name=f"belt_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
+        )
     
     
     
