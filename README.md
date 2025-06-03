@@ -7,6 +7,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 > **Status: work in progress – expect rapid changes.**
 
 ![Prototype layout screenshot](<images/thumbnail.png>)
+![Prototype layout screenshot](<images/thumbnail2.png>)
 
 
 | Symbol          | Meaning              |
