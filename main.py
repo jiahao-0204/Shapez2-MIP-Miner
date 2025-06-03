@@ -309,7 +309,7 @@ if __name__ == "__main__":
         model.addGenConstrIndicator(flow_greater_than_zero_var, False, flow, GRB.EQUAL, 0.0, name=constr_name + "_zero")
         
         
-    # constraint - bool(flow value) = OR(things in the same direction)
+    # if have flow value, something must be in the same direction
     for outflow in all_flows:        
         # get the list of things in the same direction
         flow_greater_than_zero_var = flow_greater_than_zero.get(outflow, None)
