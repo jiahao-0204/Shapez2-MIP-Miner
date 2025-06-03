@@ -11,100 +11,11 @@ from matplotlib import pyplot as plt
 
 DIRECTIONS = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 
-def draw_solution(width, height, nodes_to_extract, all_belts, all_miner_platforms, all_extender_platforms, node_flow_in, node_flow_out):    
-    # initialize plt
-    plt.figure(figsize=(6, 6))
-    plt.xlim(-1, width+1)
-    plt.ylim(-1, height+1)
-    plt.grid(True)
-    plt.xticks(range(width+1))
-    plt.yticks(range(height+1))
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.title("Asteroid Miner Solution")
-    plt.xlabel("X-axis")
-    plt.ylabel("Y-axis")
-    plt.axhline(0, color='black', lw=0.5)
-    plt.axvline(0, color='black', lw=0.5)
-    
-    # # draw nodes to extract
-    # plt.scatter(*zip(*nodes_to_extract), color='red', label='Nodes to Extract', s=100, marker='x')
-    
-    # draw belts
-    for belt in all_belts:
-        if belt.X > 0.5:  # if the belt is placed
-            start_node = tuple(map(int, belt.varName.split('_')[1:3]))
-            end_node = tuple(map(int, belt.varName.split('_')[3:5]))
-            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color='blue', linewidth=2)
-    
-    # draw miners
-    for miner in all_miner_platforms:
-        if miner.X > 0.5:  # if the miner is placed
-            start_node = tuple(map(int, miner.varName.split('_')[1:3]))
-            end_node = tuple(map(int, miner.varName.split('_')[3:5]))
-            
-            # compute direction
-            direction = (end_node[0] - start_node[0], end_node[1] - start_node[1])
-
-            if direction == (1, 0):  # right
-                marker = '>'
-            elif direction == (0, 1):  # up
-                marker = '^'
-            elif direction == (-1, 0):  # left
-                marker = '<'
-            elif direction == (0, -1):  # down
-                marker = 'v'
-            else:
-                marker = '.'
-            
-            plt.scatter(start_node[0], start_node[1], color='green', s=100, marker=marker)
-            
-    # draw extenders
-    for extender in all_extender_platforms:
-        if extender.X > 0.5:  # if the extender is placed
-            start_node = tuple(map(int, extender.varName.split('_')[1:3]))
-            end_node = tuple(map(int, extender.varName.split('_')[3:5]))
-            
-            # compute direction
-            direction = (end_node[0] - start_node[0], end_node[1] - start_node[1])
-
-            if direction == (1, 0):  # right
-                marker = '>'
-            elif direction == (0, 1):  # up
-                marker = '^'
-            elif direction == (-1, 0):  # left
-                marker = '<'
-            elif direction == (0, -1):  # down
-                marker = 'v'
-            else:
-                marker = 's'
-            
-            plt.scatter(start_node[0], start_node[1], color='orange', s=100, marker=marker)
-    
-    # draw node_flow_in as text
-    for node, flows in node_flow_in.items():
-        # put text
-        flow_value = sum(flow.X for flow in flows)
-        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='right', va='center', color='black')
-        
-    # draw node_flow_out as text
-    for node, flows in node_flow_out.items():
-        # put text
-        flow_value = sum(flow.X for flow in flows)
-        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='left', va='center', color='black')
-    
-    # add legend
-    plt.legend()
-    
-    # show the plot
-    plt.show()
-    
-    
-
-
 if __name__ == "__main__":
-    
-    # create an example problem
-    model = Model("astroid_miner")
+        
+    # ----------------------------------------------------------
+    # define the board
+    # ----------------------------------------------------------
     
     # create a board with 20 x 20 cells
     width = 20
@@ -127,7 +38,15 @@ if __name__ == "__main__":
     y_max_sink = height - 1
     nodes_sink = [(x, y) for x in range(x_min_sink, x_max_sink + 1) for y in range(y_min_sink, y_max_sink + 1)]
     
-    # initialize variables
+    # ----------------------------------------------------------
+    # initialize the model
+    # ----------------------------------------------------------
+    model = Model("astroid_miner")
+    
+    # ----------------------------------------------------------
+    # create some variables to use later
+    # ----------------------------------------------------------
+    
     all_extender_platforms = []
     all_miner_platforms = []
     all_belts = []
@@ -185,7 +104,9 @@ if __name__ == "__main__":
                 flow_to_list_of_things_in_the_same_direction[flow_var].append(extender_var)
                 
         
-            
+    # ----------------------------------------------------------
+    # set objective of the problem
+    # ----------------------------------------------------------
                 
     # set first objective to maximize the number of extractors used
     # set second objective to minimize the number of belts used
@@ -379,9 +300,100 @@ if __name__ == "__main__":
     
     
     
-    
-    # optimize the model
+    # ----------------------------------------------------
+    # solve the model
+    # ----------------------------------------------------
     model.optimize()
     
+    
+    
+    # ----------------------------------------------------
     # draw the solution
-    draw_solution(width, height, nodes_to_extract, all_belts, all_miner_platforms, all_extender_platforms, node_flow_in, node_flow_out)
+    # ----------------------------------------------------
+    
+    # initialize plt
+    plt.figure(figsize=(6, 6))
+    plt.xlim(-1, width+1)
+    plt.ylim(-1, height+1)
+    plt.grid(True)
+    plt.xticks(range(width+1))
+    plt.yticks(range(height+1))
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.title("Asteroid Miner Solution")
+    plt.xlabel("X-axis")
+    plt.ylabel("Y-axis")
+    plt.axhline(0, color='black', lw=0.5)
+    plt.axvline(0, color='black', lw=0.5)
+    
+    # # draw nodes to extract
+    # plt.scatter(*zip(*nodes_to_extract), color='red', label='Nodes to Extract', s=100, marker='x')
+    
+    # draw belts
+    for belt in all_belts:
+        if belt.X > 0.5:  # if the belt is placed
+            start_node = tuple(map(int, belt.varName.split('_')[1:3]))
+            end_node = tuple(map(int, belt.varName.split('_')[3:5]))
+            plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color='blue', linewidth=2)
+    
+    # draw miners
+    for miner in all_miner_platforms:
+        if miner.X > 0.5:  # if the miner is placed
+            start_node = tuple(map(int, miner.varName.split('_')[1:3]))
+            end_node = tuple(map(int, miner.varName.split('_')[3:5]))
+            
+            # compute direction
+            direction = (end_node[0] - start_node[0], end_node[1] - start_node[1])
+
+            if direction == (1, 0):  # right
+                marker = '>'
+            elif direction == (0, 1):  # up
+                marker = '^'
+            elif direction == (-1, 0):  # left
+                marker = '<'
+            elif direction == (0, -1):  # down
+                marker = 'v'
+            else:
+                marker = '.'
+            
+            plt.scatter(start_node[0], start_node[1], color='green', s=100, marker=marker)
+            
+    # draw extenders
+    for extender in all_extender_platforms:
+        if extender.X > 0.5:  # if the extender is placed
+            start_node = tuple(map(int, extender.varName.split('_')[1:3]))
+            end_node = tuple(map(int, extender.varName.split('_')[3:5]))
+            
+            # compute direction
+            direction = (end_node[0] - start_node[0], end_node[1] - start_node[1])
+
+            if direction == (1, 0):  # right
+                marker = '>'
+            elif direction == (0, 1):  # up
+                marker = '^'
+            elif direction == (-1, 0):  # left
+                marker = '<'
+            elif direction == (0, -1):  # down
+                marker = 'v'
+            else:
+                marker = 's'
+            
+            plt.scatter(start_node[0], start_node[1], color='orange', s=100, marker=marker)
+    
+    # draw node_flow_in as text
+    for node, flows in node_flow_in.items():
+        # put text
+        flow_value = sum(flow.X for flow in flows)
+        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='right', va='center', color='black')
+        
+    # draw node_flow_out as text
+    for node, flows in node_flow_out.items():
+        # put text
+        flow_value = sum(flow.X for flow in flows)
+        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=8, ha='left', va='center', color='black')
+    
+    # add legend
+    plt.legend()
+    
+    # show the plot
+    plt.show()
+    
