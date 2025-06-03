@@ -189,9 +189,8 @@ if __name__ == "__main__":
                 
     # set first objective to maximize the number of extractors used
     # set second objective to minimize the number of belts used
-    model.setAttr("ModelSense", GRB.MAXIMIZE)
-    model.setObjectiveN(quicksum(all_miner_platforms + all_extender_platforms), index=0, priority=1, name="maximize_extractors", weight=1.0)
-    model.setObjectiveN(quicksum(all_belts), index=1, priority=0, name="minimize_belts", weight=-1.0)
+    model.setObjectiveN(quicksum(all_miner_platforms + all_extender_platforms), index=0, priority=1, name="maximize_extractors", weight=-1.0)
+    model.setObjectiveN(quicksum(all_belts), index=1, priority=0, name="minimize_belts", weight=1.0)
     model.update()
 
     
