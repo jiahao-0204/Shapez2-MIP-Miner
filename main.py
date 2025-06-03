@@ -25,11 +25,57 @@ if __name__ == "__main__":
     nodes = [(x, y) for x in range(width) for y in range(height)]
     
     # set a list of node that need extracting
-    xmin_to_extract = 3
-    xmax_to_extract = 17
-    ymin_to_extract = 7
-    ymax_to_extract = 13
-    nodes_to_extract = [(x, y) for x in range(xmin_to_extract, xmax_to_extract + 1) for y in range(ymin_to_extract, ymax_to_extract + 1)]
+    # xmin_to_extract = 3
+    # xmax_to_extract = 17
+    # ymin_to_extract = 7
+    # ymax_to_extract = 13
+    # nodes_to_extract = [(x, y) for x in range(xmin_to_extract, xmax_to_extract + 1) for y in range(ymin_to_extract, ymax_to_extract + 1)]
+    
+    # hand-coded astroid location
+    astroid_location = [
+        (1, 1),
+        (2, 1),
+        (3, 1),
+        (4, 1),
+        (1, 2),
+        (2, 2),
+        (3, 2),
+        (4, 2),
+        (5, 2),
+        (6, 2),
+        (7, 2),
+        (8, 2),
+        (1, 3),
+        (2, 3),
+        (3, 3),
+        (5, 3),
+        (6, 3),
+        (7, 3),
+        (8, 3),
+        (9, 3),
+        (2, 4),
+        (5, 4),
+        (6, 4),
+        (7, 4),
+        (8, 4),
+        (9, 4),
+        (5, 5),
+        (6, 5),
+        (7, 5),
+        (8, 5),
+        (9, 5),
+        (5, 6),
+        (6, 6),
+        (7, 6),
+        (8, 6),
+        (9, 6),
+        (6, 7),
+        (7, 7),
+        (8, 7),
+    ]
+    
+    offset = (2, 1)  # offset to adjust the coordinates to the board
+    nodes_to_extract = [(x + offset[0], y + offset[1]) for x, y in astroid_location]
     
     # set a list of nodes that can be sinks
     x_min_sink = 0
