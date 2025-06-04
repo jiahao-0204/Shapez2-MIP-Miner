@@ -5,6 +5,7 @@ from pathlib import Path
 from skimage.feature import peak_local_max
 import numpy as np
 import cv2 
+import matplotlib.pyplot as plt
 
 def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_threshold_rel: float):
     # get template
@@ -112,6 +113,7 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     x1 = y1 = 0 # right click position
     x = y = w = h = 0 # template rectangle position and size
     peaks = [] # peaks detected in the image
+    simple_coordinates = np.empty((0, 2), dtype=float)
     draw_new_peaks = False
     draw_new_clicked_position = False
     def mouse_callback(event: int, x_clicked: int, y_clicked: int, flags: int, param):
@@ -119,7 +121,7 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
         left click: set template position 1
         right click: set template position 2 and perform template matching
         """
-        nonlocal x0, y0, x1, y1, x, y, w, h, peaks, draw_new_peaks, draw_new_clicked_position
+        nonlocal x0, y0, x1, y1, x, y, w, h, peaks, simple_coordinates, draw_new_peaks, draw_new_clicked_position
         if event == cv2.EVENT_LBUTTONDOWN:
             # Update clicked position for left click
             x0, y0 = x_clicked, y_clicked
@@ -138,6 +140,7 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
 
             # perform template matching
             peaks = template_matching(img_bgr, x, y, w, h, peak_threshold_rel)
+            simple_coordinates = peaks_to_simple_coordinate(np.array(peaks), min(w, h) // 2)
             draw_new_peaks = True
     
     # link interaction
@@ -174,22 +177,32 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
                 cx = col + w // 2
                 cy = row + h // 2
                 cv2.circle(result, (cx, cy), 10, (0, 0, 255), 2)
-
+            
+            # draw simple coordinates
+            plt.clf()
+            if simple_coordinates.size > 0:
+                plt.scatter(simple_coordinates[:, 0], simple_coordinates[:, 1], marker='s', c='lightgrey', label='Simple Coordinates')
+            xmin = np.min(simple_coordinates[:, 0])
+            xmax = np.max(simple_coordinates[:, 0])
+            ymin = np.min(simple_coordinates[:, 1])
+            ymax = np.max(simple_coordinates[:, 1])
+            plt.xticks(np.arange(xmin, xmax + 1, 1))
+            plt.yticks(np.arange(ymin, ymax + 1, 1))
+            plt.grid(True)
+            plt.axis('equal')
+            plt.title("Simple Coordinates")
+            plt.pause(0.001)  # allow plt to update
+                        
         # display result
         cv2.imshow(window_name, result)
-
+                
         # quit on 'q' key press
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             break
         
     cv2.destroyAllWindows()
-    
-    # -------------------------------------------------------------
-    # convert to simple coordinates
-    # -------------------------------------------------------------
-    peak_tol = max(w, h) // 2
-    simple_coordinates = peaks_to_simple_coordinate(np.array(peaks), peak_tol)
+    plt.close()
     
     # -------------------------------------------------------------
     # return
@@ -198,10 +211,4 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
 
 if __name__ == "__main__":
     simple_coordinates = astroid_parser(Path("images/input.jpg"), 0.5)
-
-    # draw the simple coordinates
-    import matplotlib.pyplot as plt
-    plt.scatter(simple_coordinates[:, 0], simple_coordinates[:, 1], marker = 's', c='blue', label='Simple Coordinates')
-    plt.grid(True)
-    plt.axis('equal')
-    plt.show()
+    print(simple_coordinates)
