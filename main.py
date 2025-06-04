@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 
 # project
 from astroid_parser import astroid_parser
-
+from var_to_txt import var_to_txt
 
 DIRECTIONS = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 
@@ -431,3 +431,5 @@ if __name__ == "__main__":
     # show the plot
     plt.show()
     
+    # save the variables to a file
+    var_to_txt("variables.txt", all_extender_platforms, all_miner_platforms, all_belts)
