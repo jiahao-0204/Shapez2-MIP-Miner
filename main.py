@@ -21,16 +21,16 @@ if __name__ == "__main__":
     
     # general settings
     BELT_MAX_FLOW = 12 * 4
-    OPTIMIZE_MINER_TIMEOUT = 30  # seconds
+    OPTIMIZE_MINER_TIMEOUT = 120  # seconds
     OPTIMIZE_BELT_TIMEOUT = 60  # seconds
     OPTIMIZE_BELT_GAP = 0.05
         
     # define the nodes to extract    
-    MARGIN_X = 10
-    MARGIN_Y = 10
+    MARGIN_X = 5
+    MARGIN_Y = 5
     
     # read input png
-    astroid_location = astroid_parser(Path("images/input.jpg"), 0.5)
+    astroid_location = astroid_parser(Path("images/example2.png"), 0.5)
     nodes_to_extract = [(x + MARGIN_X, y + MARGIN_Y) for x, y in astroid_location]
     
     width = max(x for x, y in astroid_location) + 2 * MARGIN_X
