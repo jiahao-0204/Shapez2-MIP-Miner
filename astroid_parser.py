@@ -77,7 +77,11 @@ def peaks_to_simple_coordinate(peaks: np.ndarray, tol: float | None = None) -> n
     # cluster
     row_idx = cluster_axis(ys, tol_y)
     col_idx = cluster_axis(xs, tol_x)
-    return np.column_stack((col_idx, -row_idx))
+    
+    # invert y and shift up
+    row_idx = np.max(row_idx) - row_idx
+    
+    return np.column_stack((col_idx, row_idx))
 
 
 def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
