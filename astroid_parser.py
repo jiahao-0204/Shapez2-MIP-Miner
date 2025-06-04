@@ -23,7 +23,7 @@ def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_
     
     return peaks
 
-def astroid_parser(image_path: Path, window_name: str = "Image", peak_threshold_rel: float = 0.5):
+def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     """
     A simple parser to detect peaks in an image using template matching.
     The user can select a template by clicking and dragging the mouse.
@@ -48,6 +48,7 @@ def astroid_parser(image_path: Path, window_name: str = "Image", peak_threshold_
     # -------------------------------------------------------------
         
     # create a window
+    window_name = "Astroid Parser"
     cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
     
     # define interaction
@@ -134,9 +135,4 @@ def astroid_parser(image_path: Path, window_name: str = "Image", peak_threshold_
     return peaks
     
 if __name__ == "__main__":
-    # Example usage
-    IMAGE_PATH = Path("images/input.jpg")  # Path to the image file
-    WINDOW_NAME = "Image"                 # OpenCV window title
-    PEAK_THRESHOLD_REL = 0.5              # Relative threshold for peak detection
-
-    peaks = astroid_parser(IMAGE_PATH, WINDOW_NAME, PEAK_THRESHOLD_REL)
+    peaks = astroid_parser(Path("images/input.jpg"), 0.5)
