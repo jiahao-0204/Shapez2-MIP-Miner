@@ -324,74 +324,16 @@ def plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts)
     
     plt.show()
 
-if __name__ == "__main__":
-    # Blueprint string provided by the user
-    blueprint_str = "SHAPEZ2-3-H4sIAFzXQGgA/6yQQWvDMAyF/8ujR1/SQQ8+hrSQWwkltIwwRONuBlcutsxWgv/7HHLJtVAEEkI8fXqa0ENX1XarUB+hJ2zk+TDQaKMjHqHQXj3Pg4aEoD9hS6+PjuTmwz1CcXJuSYg/9DC6S0tgyAp7lmBNLMIJXSEpnMryg088kljPX9VfVSD1Gl0n60bL32+Fnwt8p3CB/lCrS2rjpDE3Sk4OPvxSGFsWE5hcT8ESC7Jai+fyknoo5ixTePYmRDu7mb+d85DzvwADAOgwhKF8AQAA$"
-
-    # print(decode_blueprint(blueprint_str))
-
-    # paste the blueprint for the miner, the output must face right / east
-    miner_blueprint = "SHAPEZ2-3-H4sIAAPgQGgA/6yXUWujQBSF/8tlH33IaKKOj6FdCCQQ2hK6LGEZ6qQ7YMdyHemG4H9fbZrgbppEj0VQxPvNnZlzj5fZ0YoSIXzfo+mSkh19c9tXTQnNikzZlDyaPeW2+XCjnKLkJ5n6PVlmym1yfinIs2WW7W9U/FavOrkr9xetK49urWOjixrc0UM97Fxt89L9um8iF8ZqrjNM23mnpclSY5+/NPMjJaFHPyiZeHRXr9d7n8vtH8fqyeV8ozeqzNzMOs1WZSvFRllHlfdORjAZw6SESSFw1MfRAEfHQ9HmUbMBMmOM9QewAmcljsY4GuFoOHifwnZZTHXmPqi53lxRJ9wzC83Pmv2HXMwvV0L3+HHP+Ek7vrWG7zm/KU7PYeEZ7JOlLwxzzjr9j43ObF6nxDGw89GBPDDLnN29tqnmK3YI2iXSc7H+cYjLgpyAAQqOUXDyD9hXEhH0UuMD8s9sbbeUYoAw0XGIzvUQDi6HCNQmBjn5yYyv/xTkEG3kZWk6waMBuo6OQ/QrKQFyPsgFIDcGuQnIhSAXnXAd/QV01ahf04v7hcvTafV1INbs5MVe14WVQJ8cHUjEPxKzj8TcIzHzSMw7ErOOxJwjOxlnXZ9QjVW8XWkuTHMkbc7LVbWuqr8CDABeAPEsPg8AAA==$" 
+def compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, miner_blueprint = None):
+    # extract platform B code from the miner blueprint if provided
+    if miner_blueprint is not None:    
+        decoded_miner = decode_blueprint(miner_blueprint)
+        B = json.loads(decoded_miner)["BP"]["Entries"][0]["B"]
+    else:
+        B = None
     
-    # extract platform B code from the miner blueprint
-    decoded_miner = decode_blueprint(miner_blueprint)
-    B = json.loads(decoded_miner)["BP"]["Entries"][0]["B"]
-    
-    # print(json.dumps(B, indent=2))
-    # print(json.dumps(rotate_miner(B, 1), indent=2))
-    
-    # empty_json = {
-    #     "v": 1122,
-    #     "BP": {
-    #         "$type": "Island",
-    #         "Icon": {
-    #             "Data": [
-    #                 "icon:Platforms",
-    #                 None,
-    #                 None,
-    #                 "shape:RuRuRuRu"
-    #             ]
-    #         },
-    #         "Entries": []
-    #     }
-    # }
-    
-    # # rotated_miner = encode_miner(0, 0, (1, 0), B)
-    # rotated_miner = encode_miner(0, 0, (-1, 0), B)
-    # # rotated_miner = encode_miner(0, 0, (1, 0), B)
-    # # rotated_miner = encode_miner(0, 0, (1, 0), B)
-    # empty_json['BP']['Entries'].append(rotated_miner)
-    
-    # print(json.dumps(empty_json, indent=2))
-    # print(encode_blueprint(empty_json))
-    
-    
-    # # print(json.dumps(B, indent=2))
-    # print(decode_blueprint(miner_blueprint))
-            
-
-    # ------------------
-    
-    (all_miner_platforms, all_extender_platforms, all_belts) = txt_to_var("variables.txt")
-    
-    
-    # print("All Extender Platforms:")
-    # for extender in all_extender_platforms:
-    #     print(f"{extender['VarName']}: {extender['X']}")
-    
-    # print("\nAll Miner Platforms:")
-    # for miner in all_miner_platforms:
-    #     print(f"{miner['VarName']}: {miner['X']}")
-    
-    # print("\nAll Belts:")
-    # for belt in all_belts:
-    #     print(f"{belt['VarName']}: {belt['X']}")
-    
-    
-    # plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts)
-    
-    
-    empty_json = {
+    # initialize empty blueprint
+    empty_blueprint_json = {
         "v": 1122,
         "BP": {
             "$type": "Island",
@@ -407,6 +349,7 @@ if __name__ == "__main__":
         }
     }
 
+    # add miner
     for miner in all_miner_platforms:
         if miner.X > 0.5:
             # extract coordinates and direction from VarName
@@ -421,8 +364,9 @@ if __name__ == "__main__":
             miner = encode_miner(x, y, direction, B)
             
             # add miner to the blueprint
-            empty_json['BP']['Entries'].append(miner)
+            empty_blueprint_json['BP']['Entries'].append(miner)
     
+    # add extenders
     for extender in all_extender_platforms:
         if extender.X > 0.5:
             # extract coordinates and direction from VarName
@@ -437,14 +381,10 @@ if __name__ == "__main__":
             extender = encode_extender(x, y, direction)
             
             # add extender to the blueprint
-            empty_json['BP']['Entries'].append(extender)
-    
-    # empty_json['BP']['Entries'].append(miner)
-    
-    
-    # create a map of node to io
+            empty_blueprint_json['BP']['Entries'].append(extender)
+        
+    # add belts
     map_of_space_belts : Dict[Tuple[int, int], SpaceBelt] = {}
-
     for belt in all_belts:
         if belt.X > 0.5:
             # extract coordinates from VarName
@@ -466,7 +406,6 @@ if __name__ == "__main__":
             # add input and output locations
             map_of_space_belts[(x, y)].output_location.append(direction)
             map_of_space_belts[(x2, y2)].input_location.append(inv_direction)
-
     for miner in all_miner_platforms:
         if miner.X > 0.5:
             # extract coordinates and direction from VarName
@@ -480,7 +419,6 @@ if __name__ == "__main__":
             
             if (x2, y2) in map_of_space_belts:
                 map_of_space_belts[(x2, y2)].input_location.append(inv_direction)
-
     for belt in map_of_space_belts.values():
         result = belt.get_type()
         if result is not None:
@@ -493,7 +431,19 @@ if __name__ == "__main__":
                     "R": r,
                     "T": belt_type,
                 }
-                empty_json['BP']['Entries'].append(encoded_belt)
+                empty_blueprint_json['BP']['Entries'].append(encoded_belt)
     
-    # print(json.dumps(empty_json, indent=2))
-    print(encode_blueprint(empty_json))
+    # encode the blueprint
+    result = encode_blueprint(empty_blueprint_json)
+    
+    # return
+    return result
+
+if __name__ == "__main__":    
+    # miner and belts layouts
+    (all_miner_platforms, all_extender_platforms, all_belts) = txt_to_var("variables.txt")
+    
+    # miner blueprint (facing right)
+    miner_blueprint = "SHAPEZ2-3-H4sIAAPgQGgA/6yXUWujQBSF/8tlH33IaKKOj6FdCCQQ2hK6LGEZ6qQ7YMdyHemG4H9fbZrgbppEj0VQxPvNnZlzj5fZ0YoSIXzfo+mSkh19c9tXTQnNikzZlDyaPeW2+XCjnKLkJ5n6PVlmym1yfinIs2WW7W9U/FavOrkr9xetK49urWOjixrc0UM97Fxt89L9um8iF8ZqrjNM23mnpclSY5+/NPMjJaFHPyiZeHRXr9d7n8vtH8fqyeV8ozeqzNzMOs1WZSvFRllHlfdORjAZw6SESSFw1MfRAEfHQ9HmUbMBMmOM9QewAmcljsY4GuFoOHifwnZZTHXmPqi53lxRJ9wzC83Pmv2HXMwvV0L3+HHP+Ek7vrWG7zm/KU7PYeEZ7JOlLwxzzjr9j43ObF6nxDGw89GBPDDLnN29tqnmK3YI2iXSc7H+cYjLgpyAAQqOUXDyD9hXEhH0UuMD8s9sbbeUYoAw0XGIzvUQDi6HCNQmBjn5yYyv/xTkEG3kZWk6waMBuo6OQ/QrKQFyPsgFIDcGuQnIhSAXnXAd/QV01ahf04v7hcvTafV1INbs5MVe14WVQJ8cHUjEPxKzj8TcIzHzSMw7ErOOxJwjOxlnXZ9QjVW8XWkuTHMkbc7LVbWuqr8CDABeAPEsPg8AAA==$" 
+    
+    print(compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, miner_blueprint))
