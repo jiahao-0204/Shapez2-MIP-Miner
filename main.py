@@ -19,16 +19,22 @@ if __name__ == "__main__":
     # define the board
     # ----------------------------------------------------------
     
+    # general settings
+    BELT_MAX_FLOW = 12 * 4
+    OPTIMIZE_MINER_TIMEOUT = 30  # seconds
+    OPTIMIZE_BELT_TIMEOUT = 60  # seconds
+    OPTIMIZE_BELT_GAP = 0.05
+        
     # define the nodes to extract    
-    margin_x = 10
-    margin_y = 10
+    MARGIN_X = 10
+    MARGIN_Y = 10
     
     # read input png
     astroid_location = astroid_parser(Path("images/input.jpg"), 0.5)
-    nodes_to_extract = [(x + margin_x, y + margin_y) for x, y in astroid_location]
+    nodes_to_extract = [(x + MARGIN_X, y + MARGIN_Y) for x, y in astroid_location]
     
-    width = max(x for x, y in astroid_location) + 2 * margin_x
-    height = max(y for x, y in astroid_location) + 2 * margin_y
+    width = max(x for x, y in astroid_location) + 2 * MARGIN_X
+    height = max(y for x, y in astroid_location) + 2 * MARGIN_Y
     
     # a list of all nodes
     nodes = [(x, y) for x in range(width) for y in range(height)]
@@ -78,7 +84,7 @@ if __name__ == "__main__":
             
             # create a variable to represent the flow of resources from the node to the end node
             flow_var_name = f"flow_{node[0]}_{node[1]}_{end_node[0]}_{end_node[1]}"
-            flow_var = model.addVar(vtype=GRB.INTEGER, name=flow_var_name, lb=0, ub=12)
+            flow_var = model.addVar(vtype=GRB.INTEGER, name=flow_var_name, lb=0, ub=BELT_MAX_FLOW)
             all_flows.append(flow_var)
             node_flow_out[node].append(flow_var)
             node_flow_in[end_node].append(flow_var)
@@ -118,11 +124,11 @@ if __name__ == "__main__":
     # set time limit
     env0 = model.getMultiobjEnv(0)
     # env0.setParam('MIPGap', 0.05)
-    env0.setParam('TimeLimit', 60)
+    env0.setParam('TimeLimit', OPTIMIZE_MINER_TIMEOUT)
     
     env1 = model.getMultiobjEnv(1)
-    env1.setParam('MIPGap', 0.05)
-    env1.setParam('TimeLimit', 60)
+    env1.setParam('MIPGap', OPTIMIZE_BELT_GAP)
+    env1.setParam('TimeLimit', OPTIMIZE_BELT_TIMEOUT)
     
     # ----------------------------------------------------------
     # add constraints for the problem
@@ -224,7 +230,7 @@ if __name__ == "__main__":
             True,
             quicksum(node_flow_out[node]),
             GRB.LESS_EQUAL,
-            12.0,
+            BELT_MAX_FLOW,
             name=f"belt_flow_cap_{node[0]}_{node[1]}"
         )
         
