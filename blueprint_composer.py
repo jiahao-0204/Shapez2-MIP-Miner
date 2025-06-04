@@ -1,5 +1,6 @@
 # system
 from typing import List, Tuple, Dict
+import copy
 
 # third party
 import base64, gzip, json
@@ -71,7 +72,7 @@ def encode_blueprint(decoded_text):
     # Add the prefix back
     return f"{PREFIX}{compressed_b64}{"$"}"
 
-def encode_miner(x, y, direction):
+def encode_miner(x, y, direction, B = None):
     if direction == (1, 0):
         R = 0
     elif direction == (0, -1):
@@ -81,12 +82,46 @@ def encode_miner(x, y, direction):
     elif direction == (0, 1):
         R = 3
     
-    return {
+    entry = {
         "x": x,
         "y": -y,
         "R": R,
         "T": "Layout_ShapeMiner",
     }
+    
+    # add platform code / B if it exists
+    if B is not None:
+        entry["B"] = B
+        entry["B"] = rotate_platform(B, R)
+    
+    return entry
+
+def rotate_coordinates(x, y):
+    N = 20  # assuming a 20x20 grid
+    return N - 1 - y, x
+
+def rotate_platform(platform_B_code, R):
+    # deep copy the miner_B to avoid modifying the original
+    platform_B_code_copy = copy.deepcopy(platform_B_code)    
+    
+    # goes through each entry, add R to the R value if it exists, R assumed to be 0 if it does not exist
+    for entry in platform_B_code_copy["Entries"]:
+        # change R for individual element
+        if "R" in entry:
+            entry["R"] = (entry["R"] + R) % 4
+        else:
+            entry["R"] = R
+        
+        # change X and Y coordinates for individual element
+        x = entry["X"]
+        y = entry["Y"]
+        for i in range(R):
+            x, y = rotate_coordinates(x, y)
+        entry["X"] = x
+        entry["Y"] = y
+
+    # return the modified platform_B_code
+    return platform_B_code_copy
 
 def encode_extender(x, y, direction):
     if direction == (1, 0):
@@ -291,10 +326,52 @@ def plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts)
 
 if __name__ == "__main__":
     # Blueprint string provided by the user
-    blueprint_str = "SHAPEZ2-3-H4sIAALPQGgA/2SMMQvCMBSE/8vhGId0fGPRoYNQrAhFioT61EKahuR1kJL/bmpHOTg47rtbcAVpXRQKZQ1asJOPZxCqaI17QKHqJ7cWByMGdMOQM9XWyHMKY4Rys7WbIb6NZzrPm9AlhaOTMHDMwwUtaK8VLvm98abnkq3c2xOHFwck9QP++8bbQWQlupS+AgwAqtO5H68AAAA=$"
+    blueprint_str = "SHAPEZ2-3-H4sIAFzXQGgA/6yQQWvDMAyF/8ujR1/SQQ8+hrSQWwkltIwwRONuBlcutsxWgv/7HHLJtVAEEkI8fXqa0ENX1XarUB+hJ2zk+TDQaKMjHqHQXj3Pg4aEoD9hS6+PjuTmwz1CcXJuSYg/9DC6S0tgyAp7lmBNLMIJXSEpnMryg088kljPX9VfVSD1Gl0n60bL32+Fnwt8p3CB/lCrS2rjpDE3Sk4OPvxSGFsWE5hcT8ESC7Jai+fyknoo5ixTePYmRDu7mb+d85DzvwADAOgwhKF8AQAA$"
 
-    print(decode_blueprint(blueprint_str))
+    # print(decode_blueprint(blueprint_str))
 
+    # paste the blueprint for the miner, the output must face right / east
+    miner_blueprint = "SHAPEZ2-3-H4sIAAPgQGgA/6yXUWujQBSF/8tlH33IaKKOj6FdCCQQ2hK6LGEZ6qQ7YMdyHemG4H9fbZrgbppEj0VQxPvNnZlzj5fZ0YoSIXzfo+mSkh19c9tXTQnNikzZlDyaPeW2+XCjnKLkJ5n6PVlmym1yfinIs2WW7W9U/FavOrkr9xetK49urWOjixrc0UM97Fxt89L9um8iF8ZqrjNM23mnpclSY5+/NPMjJaFHPyiZeHRXr9d7n8vtH8fqyeV8ozeqzNzMOs1WZSvFRllHlfdORjAZw6SESSFw1MfRAEfHQ9HmUbMBMmOM9QewAmcljsY4GuFoOHifwnZZTHXmPqi53lxRJ9wzC83Pmv2HXMwvV0L3+HHP+Ek7vrWG7zm/KU7PYeEZ7JOlLwxzzjr9j43ObF6nxDGw89GBPDDLnN29tqnmK3YI2iXSc7H+cYjLgpyAAQqOUXDyD9hXEhH0UuMD8s9sbbeUYoAw0XGIzvUQDi6HCNQmBjn5yYyv/xTkEG3kZWk6waMBuo6OQ/QrKQFyPsgFIDcGuQnIhSAXnXAd/QV01ahf04v7hcvTafV1INbs5MVe14WVQJ8cHUjEPxKzj8TcIzHzSMw7ErOOxJwjOxlnXZ9QjVW8XWkuTHMkbc7LVbWuqr8CDABeAPEsPg8AAA==$" 
+    
+    # extract platform B code from the miner blueprint
+    decoded_miner = decode_blueprint(miner_blueprint)
+    B = json.loads(decoded_miner)["BP"]["Entries"][0]["B"]
+    
+    # print(json.dumps(B, indent=2))
+    # print(json.dumps(rotate_miner(B, 1), indent=2))
+    
+    # empty_json = {
+    #     "v": 1122,
+    #     "BP": {
+    #         "$type": "Island",
+    #         "Icon": {
+    #             "Data": [
+    #                 "icon:Platforms",
+    #                 None,
+    #                 None,
+    #                 "shape:RuRuRuRu"
+    #             ]
+    #         },
+    #         "Entries": []
+    #     }
+    # }
+    
+    # # rotated_miner = encode_miner(0, 0, (1, 0), B)
+    # rotated_miner = encode_miner(0, 0, (-1, 0), B)
+    # # rotated_miner = encode_miner(0, 0, (1, 0), B)
+    # # rotated_miner = encode_miner(0, 0, (1, 0), B)
+    # empty_json['BP']['Entries'].append(rotated_miner)
+    
+    # print(json.dumps(empty_json, indent=2))
+    # print(encode_blueprint(empty_json))
+    
+    
+    # # print(json.dumps(B, indent=2))
+    # print(decode_blueprint(miner_blueprint))
+            
+
+    # ------------------
+    
     (all_miner_platforms, all_extender_platforms, all_belts) = txt_to_var("variables.txt")
     
     
@@ -341,7 +418,7 @@ if __name__ == "__main__":
             direction = (x2 - x, y2 - y)
             
             # encode miner
-            miner = encode_miner(x, y, direction)
+            miner = encode_miner(x, y, direction, B)
             
             # add miner to the blueprint
             empty_json['BP']['Entries'].append(miner)
