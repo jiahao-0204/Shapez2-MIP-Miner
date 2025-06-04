@@ -210,8 +210,8 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
         if key == ord("q"):
             break
         
-    cv2.destroyAllWindows()
-    plt.close()
+    # cv2.destroyAllWindows()
+    # plt.close()
     
     # -------------------------------------------------------------
     # return
