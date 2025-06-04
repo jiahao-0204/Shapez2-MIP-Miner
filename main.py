@@ -30,7 +30,7 @@ if __name__ == "__main__":
     MARGIN_Y = 5
     
     # read input png
-    path = Path("images/example2.png")
+    path = Path("images/example3.png")
     astroid_location = astroid_parser(path, 0.5)
     nodes_to_extract = [(x + MARGIN_X, y + MARGIN_Y) for x, y in astroid_location]
     
