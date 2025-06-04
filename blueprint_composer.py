@@ -12,7 +12,7 @@ from var_to_txt import txt_to_var
 PREFIX = "SHAPEZ2-3-"
 
 
-def decode_blueprint(blueprint_str):
+def blueprint_to_json(blueprint_str):
     """
     Decodes a Shapez.io blueprint string into a human-readable format.
     
@@ -39,7 +39,7 @@ def decode_blueprint(blueprint_str):
     except json.JSONDecodeError:
         return decoded_text
 
-def encode_blueprint(decoded_text):
+def json_to_blueprint(json_str):
     """
     Encodes a decoded blueprint back into the Shapez.io format.
     
@@ -51,20 +51,20 @@ def encode_blueprint(decoded_text):
     """
     
     # if input is dict, convert to string
-    if isinstance(decoded_text, dict):
-        decoded_text = json.dumps(decoded_text)
+    if isinstance(json_str, dict):
+        json_str = json.dumps(json_str)
     
     # try to parse as JSON to ensure it's in the correct format
     # if it fails, keep it as plain text
-    if isinstance(decoded_text, str):
+    if isinstance(json_str, str):
         try:
-            decoded_json = json.loads(decoded_text)
-            decoded_text = json.dumps(decoded_json)
+            decoded_json = json.loads(json_str)
+            json_str = json.dumps(decoded_json)
         except json.JSONDecodeError:
             pass  # Keep as plain text if it fails
 
     # GZip compress
-    compressed_bytes = gzip.compress(decoded_text.encode("utf-8"))
+    compressed_bytes = gzip.compress(json_str.encode("utf-8"))
 
     # Base‑64 encode
     compressed_b64 = base64.b64encode(compressed_bytes).decode("utf-8")
@@ -72,7 +72,7 @@ def encode_blueprint(decoded_text):
     # Add the prefix back
     return f"{PREFIX}{compressed_b64}{"$"}"
 
-def encode_miner(x, y, direction, B = None):
+def create_miner_json(x, y, direction, platform_json = None):
     if direction == (1, 0):
         R = 0
     elif direction == (0, -1):
@@ -90,9 +90,9 @@ def encode_miner(x, y, direction, B = None):
     }
     
     # add platform code / B if it exists
-    if B is not None:
-        entry["B"] = B
-        entry["B"] = rotate_platform(B, R)
+    if platform_json is not None:
+        entry["B"] = platform_json
+        entry["B"] = rotate_platform_json(platform_json, R)
     
     return entry
 
@@ -100,12 +100,12 @@ def rotate_coordinates(x, y):
     N = 20  # assuming a 20x20 grid
     return N - 1 - y, x
 
-def rotate_platform(platform_B_code, R):
+def rotate_platform_json(platform_json, R):
     # deep copy the miner_B to avoid modifying the original
-    platform_B_code_copy = copy.deepcopy(platform_B_code)    
+    platform_json_copy = copy.deepcopy(platform_json)    
     
     # goes through each entry, add R to the R value if it exists, R assumed to be 0 if it does not exist
-    for entry in platform_B_code_copy["Entries"]:
+    for entry in platform_json_copy["Entries"]:
         # change R for individual element
         if "R" in entry:
             entry["R"] = (entry["R"] + R) % 4
@@ -121,9 +121,9 @@ def rotate_platform(platform_B_code, R):
         entry["Y"] = y
 
     # return the modified platform_B_code
-    return platform_B_code_copy
+    return platform_json_copy
 
-def encode_extender(x, y, direction):
+def create_extender_json(x, y, direction):
     if direction == (1, 0):
         R = 0
     elif direction == (0, -1):
@@ -327,13 +327,13 @@ def plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts)
 def compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, miner_blueprint = None):
     # extract platform B code from the miner blueprint if provided
     if miner_blueprint is not None:    
-        decoded_miner = decode_blueprint(miner_blueprint)
-        B = json.loads(decoded_miner)["BP"]["Entries"][0]["B"]
+        miner_json = blueprint_to_json(miner_blueprint)
+        B = json.loads(miner_json)["BP"]["Entries"][0]["B"]
     else:
         B = None
     
     # initialize empty blueprint
-    empty_blueprint_json = {
+    all_json = {
         "v": 1122,
         "BP": {
             "$type": "Island",
@@ -361,10 +361,10 @@ def compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, mi
             direction = (x2 - x, y2 - y)
             
             # encode miner
-            miner = encode_miner(x, y, direction, B)
+            miner_json = create_miner_json(x, y, direction, B)
             
             # add miner to the blueprint
-            empty_blueprint_json['BP']['Entries'].append(miner)
+            all_json['BP']['Entries'].append(miner_json)
     
     # add extenders
     for extender in all_extender_platforms:
@@ -378,10 +378,10 @@ def compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, mi
             direction = (x2 - x, y2 - y)
             
             # encode extender
-            extender = encode_extender(x, y, direction)
+            extender_json = create_extender_json(x, y, direction)
             
             # add extender to the blueprint
-            empty_blueprint_json['BP']['Entries'].append(extender)
+            all_json['BP']['Entries'].append(extender_json)
         
     # add belts
     map_of_space_belts : Dict[Tuple[int, int], SpaceBelt] = {}
@@ -425,19 +425,19 @@ def compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, mi
             belt_type, r = result
             if belt_type is not None:
                 # encode belt
-                encoded_belt = {
+                belt_json = {
                     "x": belt.x,
                     "y": -belt.y,
                     "R": r,
                     "T": belt_type,
                 }
-                empty_blueprint_json['BP']['Entries'].append(encoded_belt)
+                all_json['BP']['Entries'].append(belt_json)
     
     # encode the blueprint
-    result = encode_blueprint(empty_blueprint_json)
+    blueprint = json_to_blueprint(all_json)
     
     # return
-    return result
+    return blueprint
 
 if __name__ == "__main__":    
     # miner and belts layouts
