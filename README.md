@@ -29,7 +29,8 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 ## Roadmap
 
 - [x] image recognition for importing astroid layouts
-- [ ] better readme
+- [ ] add yaml file to expose settings
+- [ ] better readme (include instruction of git clone, how to star XD, python command etc)
 - [ ] better window layout
 - [ ] store output to folder
 
