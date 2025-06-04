@@ -1,3 +1,5 @@
+# system
+from typing import List, Tuple, Dict
 
 # third party
 import base64, gzip, json
@@ -103,6 +105,118 @@ def encode_extender(x, y, direction):
         "T": "Layout_ShapeMinerExtension",
     }
 
+def invert_tuple(t):
+    return (-t[0], -t[1])
+class SpaceBelt:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.input_location : List[tuple[int, int]] = []
+        self.output_location : List[tuple[int, int]] = []
+    
+    def direction_to_r(self, direction):
+        if direction == (1, 0):
+            return 0
+        elif direction == (0, -1):
+            return 1
+        elif direction == (-1, 0):
+            return 2
+        elif direction == (0, 1):
+            return 3
+        else:
+            raise ValueError("Invalid direction")
+    
+    def get_type(self):
+        in_count = len(self.input_location)
+        out_count = len(self.output_location)
+        
+        if in_count == 0 and out_count == 0:
+            return None, None
+        elif in_count == 3 and out_count == 1:
+            return "SpaceBelt_TripleMerger", self.direction_to_r(self.output_location[0])
+        elif in_count == 1 and out_count == 3:
+            return "SpaceBelt_TripleSplitter", self.direction_to_r(invert_tuple(self.input_location[0]))
+        elif in_count == 2 and out_count == 1:
+            # could be
+            # - SpaceBelt_YMerger
+            # - SpaceBelt_LeftFwdMerger
+            # - SpaceBelt_RightFwdMerger
+            
+            # sum vector
+            sum_vector = (0, 0)
+            for loc in self.input_location:
+                sum_vector = (sum_vector[0] + loc[0], sum_vector[1] + loc[1])
+            for loc in self.output_location:
+                sum_vector = (sum_vector[0] + loc[0], sum_vector[1] + loc[1])
+
+            # output vector
+            output_vector = self.output_location[0]
+            
+            # check if y merger
+            if sum_vector == output_vector:
+                return "SpaceBelt_YMerger", self.direction_to_r(self.output_location[0])
+            
+            # check if left or right
+            cross_product = sum_vector[0] * output_vector[1] - sum_vector[1] * output_vector[0]
+            if cross_product > 0:
+                return "SpaceBelt_LeftFwdMerger", self.direction_to_r(self.output_location[0])
+            elif cross_product < 0:
+                return "SpaceBelt_RightFwdMerger", self.direction_to_r(self.output_location[0])
+        elif in_count == 1 and out_count == 2:
+            # could be
+            # - SpaceBelt_LeftFwdSplitter
+            # - SpaceBelt_RightFwdSplitter
+            # - SpaceBelt_YSplitter
+                        
+            # sum vector
+            sum_vector = (0, 0)
+            for loc in self.input_location:
+                sum_vector = (sum_vector[0] + loc[0], sum_vector[1] + loc[1])
+            for loc in self.output_location:
+                sum_vector = (sum_vector[0] + loc[0], sum_vector[1] + loc[1])
+                
+            # input vector
+            input_vector = self.input_location[0]
+            
+            # check if y splitter
+            if sum_vector == input_vector:
+                return "SpaceBelt_YSplitter", self.direction_to_r(invert_tuple(self.input_location[0]))
+            
+            # check if left or right
+            cross_product = sum_vector[0] * input_vector[1] - sum_vector[1] * input_vector[0]
+            if cross_product > 0:
+                return "SpaceBelt_LeftFwdSplitter", self.direction_to_r(self.output_location[0])
+            elif cross_product < 0:
+                return "SpaceBelt_RightFwdSplitter", self.direction_to_r(self.output_location[0])
+        elif in_count == 1 and out_count == 1:
+            # could be
+            # - SpaceBelt_Forward
+            # - SpaceBelt_LeftTurn
+            # - SpaceBelt_RightTurn
+                        
+            # sum vector
+            sum_vector = (0, 0)
+            for loc in self.input_location:
+                sum_vector = (sum_vector[0] + loc[0], sum_vector[1] + loc[1])
+            for loc in self.output_location:
+                sum_vector = (sum_vector[0] + loc[0], sum_vector[1] + loc[1])
+            
+            # check if it is a forward belt
+            if sum_vector == (0, 0):
+                return "SpaceBelt_Forward", self.direction_to_r(self.output_location[0])
+            
+            # check if it is a left or right turn
+            input_vector = self.input_location[0]
+            output_vector = self.output_location[0]
+            cross_product = sum_vector[0] * output_vector[1] - sum_vector[1] * output_vector[0]
+            if cross_product < 0:
+                return "SpaceBelt_LeftTurn", self.direction_to_r(invert_tuple(self.input_location[0]))
+            elif cross_product > 0:
+                return "SpaceBelt_RightTurn", self.direction_to_r(invert_tuple(self.input_location[0]))
+        else:
+            # throw error
+            return None
+
 def plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts):
     # initialize plt
     # colors
@@ -177,9 +291,9 @@ def plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts)
 
 if __name__ == "__main__":
     # Blueprint string provided by the user
-    blueprint_str = "SHAPEZ2-3-H4sIAGm7QGgA/yRNywrCMBD8l8FjLu1xj2IPBYWi4kWKLBoxEDel2YAl5N9NKQMDw7wybqCmaVuD/QDK2OkyWRD66FleMOifQVbjwMqgO1zVNHjWd5i/EUaS9xshfniydE4bMBaDTnR2NtZixrXOHnkJSR+XNXlyYufup1aiqx9lLOUvgAADAEnSHn2PAAAA$"
+    blueprint_str = "SHAPEZ2-3-H4sIAALPQGgA/2SMMQvCMBSE/8vhGId0fGPRoYNQrAhFioT61EKahuR1kJL/bmpHOTg47rtbcAVpXRQKZQ1asJOPZxCqaI17QKHqJ7cWByMGdMOQM9XWyHMKY4Rys7WbIb6NZzrPm9AlhaOTMHDMwwUtaK8VLvm98abnkq3c2xOHFwck9QP++8bbQWQlupS+AgwAqtO5H68AAAA=$"
 
-    # print(decode_blueprint(blueprint_str))
+    print(decode_blueprint(blueprint_str))
 
     (all_miner_platforms, all_extender_platforms, all_belts) = txt_to_var("variables.txt")
     
@@ -197,7 +311,7 @@ if __name__ == "__main__":
     #     print(f"{belt['VarName']}: {belt['X']}")
     
     
-    plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts)
+    # plot_imported_result(all_miner_platforms, all_extender_platforms, all_belts)
     
     
     empty_json = {
@@ -249,5 +363,60 @@ if __name__ == "__main__":
             empty_json['BP']['Entries'].append(extender)
     
     # empty_json['BP']['Entries'].append(miner)
+    
+    
+    # create a map of node to io
+    map_of_space_belts : Dict[Tuple[int, int], SpaceBelt] = {}
 
+    for belt in all_belts:
+        if belt.X > 0.5:
+            # extract coordinates from VarName
+            parts = belt.VarName.split('_')
+            x = int(parts[1])
+            y = int(parts[2])
+            x2 = int(parts[3])
+            y2 = int(parts[4])
+            
+            # create a space belt
+            if (x, y) not in map_of_space_belts:
+                map_of_space_belts[(x, y)] = SpaceBelt(x, y)
+            if (x2, y2) not in map_of_space_belts:
+                map_of_space_belts[(x2, y2)] = SpaceBelt(x2, y2)
+            
+            direction = (x2 - x, y2 - y)
+            inv_direction = invert_tuple(direction)
+            
+            # add input and output locations
+            map_of_space_belts[(x, y)].output_location.append(direction)
+            map_of_space_belts[(x2, y2)].input_location.append(inv_direction)
+
+    for miner in all_miner_platforms:
+        if miner.X > 0.5:
+            # extract coordinates and direction from VarName
+            parts = miner.VarName.split('_')
+            x = int(parts[1])
+            y = int(parts[2])
+            x2 = int(parts[3])
+            y2 = int(parts[4])
+            direction = (x2 - x, y2 - y)
+            inv_direction = invert_tuple(direction)
+            
+            if (x2, y2) in map_of_space_belts:
+                map_of_space_belts[(x2, y2)].input_location.append(inv_direction)
+
+    for belt in map_of_space_belts.values():
+        result = belt.get_type()
+        if result is not None:
+            belt_type, r = result
+            if belt_type is not None:
+                # encode belt
+                encoded_belt = {
+                    "x": belt.x,
+                    "y": -belt.y,
+                    "R": r,
+                    "T": belt_type,
+                }
+                empty_json['BP']['Entries'].append(encoded_belt)
+    
+    # print(json.dumps(empty_json, indent=2))
     print(encode_blueprint(empty_json))
