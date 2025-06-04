@@ -342,7 +342,8 @@ if __name__ == "__main__":
     plt.xticks(range(width+1))
     plt.yticks(range(height+1))
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.title("Asteroid Miner Solution")
+    # include first optimization objective in the title
+    plt.title("Asteroid Miner Solution = " + str(model.getObjective(0).getValue()))
     plt.xlabel("X-axis")
     plt.ylabel("Y-axis")
     # plt.axhline(0, color='black', lw=0.5)
