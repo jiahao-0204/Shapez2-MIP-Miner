@@ -107,10 +107,15 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     # -------------------------------------------------------------
     # mouse click to interact and template match
     # -------------------------------------------------------------
+    
+    # create plt window
+    plt.figure(figsize=(5, 5))
+    plt.show(block=False)
         
     # create a window
     window_name = "Astroid Parser"
     cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
+    cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
     
     # define interaction
     x0 = y0 = 0 # left click position
