@@ -9,7 +9,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 4. `q` to confirm selection
 5. wait for optimizer to run
 6. result is shown
-7. blueprint code will be print to console
+7. blueprint code will be printed to console
 
 
 ### Current Progress Update
