@@ -8,7 +8,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 3. `left click` + `right click` to box a repeating element
 4. `q` to confirm selection
 5. wait for optimizer to run
-6. result it shown
+6. result is shown
 7. blueprint code will be print to console
 
 
