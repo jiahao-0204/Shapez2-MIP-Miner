@@ -9,12 +9,15 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 4. `q` to confirm selection
 5. wait for optimizer to run
 6. result it shown
+7. blueprint code will be print to console
 
 
 ### Current Progress Update
 > **Status: work in progress – expect rapid changes.**
 
 ![Prototype layout screenshot](<images/thumbnail3.png>)
+![Prototype layout screenshot](<images/result3.png>)
+![Prototype layout screenshot](<images/result3_implemented.png>)
 
 
 | Symbol          | Meaning              |
@@ -29,11 +32,11 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 ## Roadmap
 
 - [x] image recognition for importing astroid layouts
+- [x] spit out shapez blueprint
 - [ ] add yaml file to expose settings
 - [ ] better readme (include instruction of git clone, how to star XD, python command etc)
 - [ ] better window layout
 - [ ] store output to folder
-- [ ] spit out shapez blueprint
 
 
 *Questions or suggestions?* Feel free to open an issue or a pull request.
