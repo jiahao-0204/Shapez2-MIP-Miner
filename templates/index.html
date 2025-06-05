@@ -12,52 +12,93 @@
     <!-- a canvas for us to click-->
     <canvas id="canvas" width="800" height="600" style="border:1px solid black;"></canvas>
     
+    <!-- a place to show the result as preformatted text -->
     <pre id="blueprint"></pre>
 
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let leftClicks = [], rightClicks = [];
         
         // listen for clicks
-        canvas.addEventListener('mousedown', e => {
+        const canvas = document.getElementById('canvas');
+        const canvas_context = canvas.getContext('2d');
+        let leftClicks = [], rightClicks = [];
+        canvas.addEventListener('mousedown', event => 
+        {
             const rect = canvas.getBoundingClientRect();
-            const pt = [e.clientX - rect.left, e.clientY - rect.top];
-            if (e.button === 0) {        // left
+            const pt = [event.clientX - rect.left, event.clientY - rect.top];
+            // left
+            if (event.button === 0) 
+            {        
                 leftClicks.push(pt);
                 drawMarker(pt, 'red');
-            } else if (e.button === 2) { // right
+            } 
+            // right
+            else if (event.button === 2) 
+            { 
                 rightClicks.push(pt);
                 drawMarker(pt, 'blue');
-                e.preventDefault();      // suppress context menu
+                event.preventDefault();      // suppress context menu
             }
         });
 
+        function drawMarker([x, y], color)
+        {
+            canvas_context.fillStyle = color; 
+            canvas_context.beginPath(); 
+            canvas_context.arc(x, y, 4, 0, 2*Math.PI);
+            canvas_context.fill();
+        }
+
         // listen for "enter"
-        window.addEventListener('keydown', e => {
-            if (e.key === 'Enter') submitSolve();
+        window.addEventListener('keydown', event => 
+        {
+            if (event.key === 'Enter')
+            {
+                submitData();
+            }
         });
 
-        async function submitSolve() {
+        async function submitData() 
+        {
+            // get file uploaded
             const f = document.getElementById('fileInput').files[0];
+
+            // get clicks
+            const clicks = JSON.stringify({left: leftClicks, right: rightClicks});
+
+            // convert both to form
             const form = new FormData();
             form.append('file', f);
-            form.append('clicks', JSON.stringify({left: leftClicks, right: rightClicks}));
+            form.append('clicks', clicks);
+
+            // submit to server and get task_id
             const {task_id} = await fetch('/uploads/', {method:'POST', body:form}).then(r=>r.json());
+
+            // poll for result
             pollResult(task_id);
         }
-        async function pollResult(id) {
-            let res;
-            do { res = await fetch(`/result/${id}`).then(r=>r.json()); await new Promise(r=>setTimeout(r,1000)); }
-            while (!res.ready);
-            document.getElementById('blueprint').textContent = res.blueprint;
-            const img = new Image(); img.src = `/static/results/${res.image}`;
-            img.onload = () => ctx.drawImage(img,0,0);
+
+        async function pollResult(id) 
+        {
+            // get result from server
+            let result;
+            do 
+            { 
+                result = await fetch(`/result/${id}`).then(r=>r.json()); 
+                await new Promise(r=>setTimeout(r,1000)); 
+            }
+            while (!result.ready);
+            
+            // show result in the pre named blueprint
+            document.getElementById('blueprint').textContent = result.blueprint;
+
+            // draw the image on the canvas
+            const img = new Image(); 
+            img.src = `/static/results/${result.image}`;
+            img.onload = () => canvas_context.drawImage(img,0,0);
         }
-        function drawMarker([x,y], color){
-            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x,y,4,0,2*Math.PI); ctx.fill();
-        }
+
         canvas.oncontextmenu = () => false; // another safeguard
+
     </script>
 </body>
 </html>
