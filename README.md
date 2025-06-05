@@ -38,6 +38,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 - [ ] better readme (include instruction of git clone, how to star XD, python command etc)
 - [ ] better window layout
 - [ ] store output to folder
+- [ ] make into a web application
 
 
 *Questions or suggestions?* Feel free to open an issue or a pull request.
