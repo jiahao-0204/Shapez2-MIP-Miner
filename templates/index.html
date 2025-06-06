@@ -19,34 +19,60 @@
     <pre id="blueprint"></pre>
 
     <script>
-        
-        // listen for clicks
+        // -----------------------------------------------
+        // data
+        // -----------------------------------------------
+        let leftClicks = [];
+        let rightClicks = [];
+
+        // -----------------------------------------------
+        // get web page elements
+        // -----------------------------------------------
+        const fileInput = document.getElementById('fileInput');
         const canvas = document.getElementById('canvas');
         const canvas_context = canvas.getContext('2d');
-        let leftClicks = [], rightClicks = [];
-        canvas.addEventListener('mousedown', event => 
+        const button_submit_image = document.getElementById('submit_image');
+        
+        // -----------------------------------------------
+        // link element to callbacks
+        // -----------------------------------------------
+        canvas.addEventListener('mousedown', callback_canvas_clicks);
+        button_submit_image.addEventListener('click', callback_submit_image);
+        window.addEventListener('keydown', callback_keyboard);
+
+        // -----------------------------------------------
+        // callback functions
+        // -----------------------------------------------
+        function callback_canvas_clicks(event) 
         {
+            // prevent right-click context menu
+            canvas.oncontextmenu = () => false;
+
+            function draw_clicks([x, y], color)
+            {
+                canvas_context.fillStyle = color; 
+                canvas_context.beginPath(); 
+                canvas_context.arc(x, y, 4, 0, 2*Math.PI);
+                canvas_context.fill();
+            }
+
             const rect = canvas.getBoundingClientRect();
             const pt = [event.clientX - rect.left, event.clientY - rect.top];
             // left
             if (event.button === 0) 
             {        
                 leftClicks.push(pt);
-                drawMarker(pt, 'red');
+                draw_clicks(pt, 'red');
             } 
             // right
             else if (event.button === 2) 
-            { 
+            {
                 rightClicks.push(pt);
-                drawMarker(pt, 'blue');
-                event.preventDefault();      // suppress context menu
+                draw_clicks(pt, 'blue');
             }
-        });
+        }
 
-        // listen for button click
-        document.getElementById('submit_image').addEventListener('click', submitImage);
-
-        function submitImage() 
+        async function callback_submit_image() 
         {
             // if no file uploaded, alert
             if (document.getElementById('fileInput').files.length === 0) 
@@ -82,65 +108,42 @@
             rightClicks = [];
         }
 
-        function drawMarker([x, y], color)
-        {
-            canvas_context.fillStyle = color; 
-            canvas_context.beginPath(); 
-            canvas_context.arc(x, y, 4, 0, 2*Math.PI);
-            canvas_context.fill();
-        }
-
-        // listen for "enter"
-        window.addEventListener('keydown', event => 
+        async function callback_keyboard(event)
         {
             if (event.key === 'Enter')
             {
-                submitData();
+                // get file uploaded
+                const f = document.getElementById('fileInput').files[0];
+
+                // get clicks
+                const clicks = JSON.stringify({left: leftClicks, right: rightClicks});
+
+                // convert both to form
+                const form = new FormData();
+                form.append('file', f);
+                form.append('clicks', clicks);
+
+                // submit to server and get task_id
+                const {task_id} = await fetch('/uploads/', {method:'POST', body:form}).then(r=>r.json());
+
+                // poll for result
+                let result;
+                do 
+                { 
+                    result = await fetch(`/result/${id}`).then(r=>r.json()); 
+                    await new Promise(r=>setTimeout(r,1000)); 
+                }
+                while (!result.ready);
+                
+                // show result in the pre named blueprint
+                document.getElementById('blueprint').textContent = result.blueprint;
+
+                // draw the image on the canvas
+                const img = new Image(); 
+                img.src = `/static/results/${result.image}`;
+                img.onload = () => canvas_context.drawImage(img,0,0);
             }
-        });
-
-        async function submitData() 
-        {
-            // get file uploaded
-            const f = document.getElementById('fileInput').files[0];
-
-            // get clicks
-            const clicks = JSON.stringify({left: leftClicks, right: rightClicks});
-
-            // convert both to form
-            const form = new FormData();
-            form.append('file', f);
-            form.append('clicks', clicks);
-
-            // submit to server and get task_id
-            const {task_id} = await fetch('/uploads/', {method:'POST', body:form}).then(r=>r.json());
-
-            // poll for result
-            pollResult(task_id);
         }
-
-        async function pollResult(id) 
-        {
-            // get result from server
-            let result;
-            do 
-            { 
-                result = await fetch(`/result/${id}`).then(r=>r.json()); 
-                await new Promise(r=>setTimeout(r,1000)); 
-            }
-            while (!result.ready);
-            
-            // show result in the pre named blueprint
-            document.getElementById('blueprint').textContent = result.blueprint;
-
-            // draw the image on the canvas
-            const img = new Image(); 
-            img.src = `/static/results/${result.image}`;
-            img.onload = () => canvas_context.drawImage(img,0,0);
-        }
-
-        canvas.oncontextmenu = () => false; // another safeguard
-
     </script>
 </body>
 </html>
