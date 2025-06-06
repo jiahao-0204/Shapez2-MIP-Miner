@@ -4,7 +4,7 @@ from uuid import uuid4
 
 # third party
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Request
-from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse
+from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, FileResponse
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -30,12 +30,19 @@ async def get_index(request: Request):
 def process_data(task_id : str, tmp_path : Path, clicks : str):
     print(f"Processing task {task_id} with file {tmp_path} and clicks {clicks}")
 
-@app.post("/send_clicks/", response_class=JSONResponse)
+@app.post("/send_clicks/", response_class=FileResponse)
 async def send_clicks(task_id: str = Form(...), x: float = Form(...), y: float = Form(...), left: bool = Form(...)):
+    # log
     print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
 
-    # For now, just echo back the data
-    return JSONResponse(status_code=400, content={"error": "Invalid click data"})
+    # check if image path exists
+    image_path = Path(f"/tmp/{task_id}.png")
+    if not image_path.exists():
+        return JSONResponse(status_code=404, content={"error": "Image not found"})
+    print(f"Image path: {image_path}")
+    
+    # return the image file
+    return FileResponse(image_path, media_type="image/png")    
 
 @app.post("/get_task_id/", response_class=JSONResponse)
 async def get_task_id(file: UploadFile = File(...)):

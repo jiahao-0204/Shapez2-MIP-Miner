@@ -158,12 +158,12 @@
                 return;
             }
             
-            // // convert the response to a blob (binary large object)
-            // const blob = await response.blob();
-            // const image_url = URL.createObjectURL(blob);
+            // convert the response to a blob (binary large object)
+            const blob = await response.blob();
+            const image_url = URL.createObjectURL(blob);
 
-            // // update the canvas with the new image
-            // update_canvas_image(image_url);
+            // update the canvas with the new image
+            update_canvas_image(image_url);
         }
 
         async function callback_keyboard(event)
