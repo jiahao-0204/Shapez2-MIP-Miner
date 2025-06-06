@@ -11,6 +11,9 @@
 
     <!-- a canvas for us to click-->
     <canvas id="canvas" width="800" height="600" style="border:1px solid black;"></canvas>
+
+    <!-- a button to call a script function -->
+    <button id="submit_image">Submit image</button>
     
     <!-- a place to show the result as preformatted text -->
     <pre id="blueprint"></pre>
@@ -39,6 +42,45 @@
                 event.preventDefault();      // suppress context menu
             }
         });
+
+        // listen for button click
+        document.getElementById('submit_image').addEventListener('click', submitImage);
+
+        function submitImage() 
+        {
+            // if no file uploaded, alert
+            if (document.getElementById('fileInput').files.length === 0) 
+            {
+                alert('Please upload a file first.');
+                return;
+            }
+
+            // put the image on the canvas
+            const file = document.getElementById('fileInput').files[0];
+            const reader = new FileReader();
+            reader.onload = function(event)
+            {
+                const img = new Image();
+                img.onload = function() 
+                {
+                    canvas_context.clearRect(0, 0, canvas.width, canvas.height); // clear canvas
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Scale down visually
+                    canvas.style.width = '800px';
+                    canvas.style.height = 'auto';
+
+                    canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); // draw image
+                };
+                img.src = event.target.result; // set image source to file content
+            };
+            reader.readAsDataURL(file); // read file as data URL
+
+            // reset clicks
+            leftClicks = [];
+            rightClicks = [];
+        }
 
         function drawMarker([x, y], color)
         {
