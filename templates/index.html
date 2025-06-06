@@ -24,6 +24,7 @@
         // -----------------------------------------------
         let leftClicks = [];
         let rightClicks = [];
+        let task_id = null;
 
         // -----------------------------------------------
         // get web page elements
@@ -31,6 +32,7 @@
         const file_input = document.getElementById('fileInput'); 
         const canvas = document.getElementById('canvas');
         const canvas_context = canvas.getContext('2d');
+        const canvas_rectangle = canvas.getBoundingClientRect();
         const button_submit_image = document.getElementById('submit_image');
         const preformatted_text = document.getElementById('blueprint');
         
@@ -52,78 +54,116 @@
         // -----------------------------------------------
         // callback functions and helpers
         // -----------------------------------------------
+        function update_canvas_image(image_url) 
+        {
+            const img = new Image();
+            img.onload = function() 
+            {
+                canvas_context.clearRect(0, 0, canvas.width, canvas.height); // clear the canvas
+                canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); // draw the updated image
+
+                // clear canvas
+                canvas_context.clearRect(0, 0, canvas.width, canvas.height); 
+
+                // set canvas size to image size
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                // draw image on the canvas
+                canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); 
+                
+                // free the object URL
+                URL.revokeObjectURL(image_url);
+            };
+            img.src = image_url; // set image source to the URL
+        }
+        
+        
         async function callback_submit_image() 
         {
-            // if no file uploaded, alert
+            // ensure a file is selected
             if (file_input.files.length === 0) 
             {
                 alert('Please upload a file first.');
                 return;
             }
 
-            // put the image on the canvas
+            // reset clicks
+            leftClicks = [];
+            rightClicks = [];
+
+            // show the file in the convas
             const file = file_input.files[0];
             const reader = new FileReader();
             reader.onload = function(event)
             {
-                const img = new Image();
-                img.onload = function() 
-                {
-                    // clear canvas
-                    canvas_context.clearRect(0, 0, canvas.width, canvas.height); 
-
-                    // set canvas size to image size
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    // draw image on the canvas
-                    canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); 
-                };
-                img.src = event.target.result; // set image source to file content
+                update_canvas_image(event.target.result); // update canvas with the image
             };
             reader.readAsDataURL(file); // read file as data URL
+            
+            // ----------------------------------------------------
+            // get task_id from server
+            // ----------------------------------------------------
+            
+            // send file to server and get task_id
+            const form = new FormData();
+            form.append('file', file);
+            const response = await fetch('/get_task_id/', {method: 'POST', body: form});
 
-            // reset clicks
-            leftClicks = [];
-            rightClicks = [];
+            // ensure the response is ok
+            if (!response.ok)
+            {
+                console.error('Failed to upload file:', response.statusText);
+                return;
+            }
+
+            // get the task_id from the response
+            const data = await response.json();
+            task_id = data.task_id;
         }
 
-        function draw_clicks([x, y], color)
-        {
-            canvas_context.fillStyle = color; 
-            canvas_context.beginPath(); 
-            canvas_context.arc(x, y, 4, 0, 2*Math.PI);
-            canvas_context.fill();
-        }
-
-        function callback_canvas_clicks(event) 
+        async function callback_canvas_clicks(event) 
         {                        
-            // get the canvas bounding rectangle
-            const rect = canvas.getBoundingClientRect();
+            // skip if no task_id
+            if (!task_id)
+            {
+                console.error('No task_id available. Please upload a file first.');
+                return;
+            }
 
             // compute position
             const screen_x = event.clientX;
             const screen_y = event.clientY;
-            const rect_x = screen_x - rect.left; // relative to canvas rectange
-            const rect_y = screen_y - rect.top; // relative to canvas rectange
-            const canvas_x = rect_x * (canvas.width / rect.width);
-            const canvas_y = rect_y * (canvas.height / rect.height);
-            
-            // point
+            const rect_x = screen_x - canvas_rectangle.left; // relative to canvas rectange
+            const rect_y = screen_y - canvas_rectangle.top; // relative to canvas rectange
+            const canvas_x = rect_x * (canvas.width / canvas_rectangle.width);
+            const canvas_y = rect_y * (canvas.height / canvas_rectangle.height);
             const pt = [canvas_x, canvas_y];
 
-            // left
-            if (event.button === 0) 
-            {        
-                leftClicks.push(pt);
-                draw_clicks(pt, 'red');
-            } 
-            // right
-            else if (event.button === 2) 
+            // get left or right click
+            const left = event.button === 0;
+
+            // create a form with the click data
+            const form = new FormData();
+            form.append('task_id', task_id); // add task_id to the form
+            form.append('x', canvas_x.toString());
+            form.append('y', canvas_y.toString());
+            form.append('left', left.toString());
+            const response = await fetch('/send_clicks/', {method: 'POST', body: form});
+            
+            // ensure the response is ok
+            if (!response.ok) 
             {
-                rightClicks.push(pt);
-                draw_clicks(pt, 'blue');
+                console.error('Failed to send click data:', response.statusText);
+                return;
             }
+            
+            // convert the response to a blob (binary large object)
+            const blob = await response.blob();
+            const image_url = URL.createObjectURL(blob);
+
+            // update the canvas with the new image
+            update_canvas_image(image_url);
         }
 
         async function callback_keyboard(event)
