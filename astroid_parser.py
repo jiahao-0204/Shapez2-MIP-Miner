@@ -9,6 +9,103 @@ import numpy as np
 import cv2 
 import matplotlib.pyplot as plt
 
+class AstroidParser:
+    def __init__(self, img_bgr: np.ndarray, task_id: str):
+        self.img_bgr = img_bgr
+        self.task_id = task_id
+
+        self.point1: Optional[tuple[int, int]] = None
+        self.point2: Optional[tuple[int, int]] = None
+        
+        self.preview_image_buffer = None
+        self.preview_image_updated = False
+        
+        self.simple_coordinate_image_buffer = None
+        self.simple_coordinate_image_updated = False
+
+    def add_click(self, x: int, y: int, left: bool):
+        if left:
+            self.point1 = (x, y)
+        else:
+            self.point2 = (x, y)
+        
+        # update images after click
+        self.update_images()
+
+    def update_images(self):
+        # reset preview image
+        preview_image = self.img_bgr.copy()
+        
+        # draw clicked points
+        if self.point1 is not None:
+            cv2.circle(preview_image, self.point1, 5, (255, 0, 0), -1)
+        if self.point2 is not None:
+            cv2.circle(preview_image, self.point2, 5, (0, 255, 255), -1)
+
+        # proceed if both points are available
+        if self.point1 is not None and self.point2 is not None:
+            x = min(self.point1[0], self.point2[0])
+            y = min(self.point1[1], self.point2[1])
+            w = abs(self.point2[0] - self.point1[0])
+            h = abs(self.point2[1] - self.point1[1])
+            
+            # draw rectangle around the selected area
+            cv2.rectangle(preview_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+            # perform template matching to find peaks
+            peaks = template_matching(preview_image, x, y, w, h, peak_threshold_rel=0.5)
+            
+            for (row, col) in peaks:
+                cx = col + w // 2
+                cy = row + h // 2
+                cv2.circle(preview_image, (cx, cy), 10, (0, 0, 255), 2)
+
+            # Convert peaks to simplified coordinates
+            simple_coordinates = peaks_to_simple_coordinate(np.array(peaks), min(w, h) // 2)
+
+            # plot and store as image buffer
+            plt.clf()
+            if simple_coordinates.size > 0:
+                plt.scatter(simple_coordinates[:, 0], simple_coordinates[:, 1], marker='s', c='lightgrey')
+                plt.axis('equal')
+
+            buffer = BytesIO()
+            plt.savefig(buffer, format='png', bbox_inches='tight')
+            plt.close()
+            buffer.seek(0)
+            self.simple_coordinate_image_buffer = buffer
+            self.simple_coordinate_image_updated = True
+
+        # store preview image as image buffer
+        success, encoded_image = cv2.imencode('.png', preview_image)
+        if not success:
+            raise RuntimeError("Failed to encode preview image")
+        preview_image_buffer = BytesIO(encoded_image.tobytes())
+        self.preview_image_buffer = preview_image_buffer
+        self.preview_image_updated = True
+
+    def request_preview_image(self) -> Optional[BytesIO]:
+        # on first request, create the default image
+        if not self.preview_image_buffer:
+            success, encoded_image = cv2.imencode('.png', self.img_bgr)
+            if not success:
+                raise RuntimeError("Failed to encode default image")
+            self.preview_image_buffer = BytesIO(encoded_image.tobytes())
+            self.preview_image_updated = True
+        
+        if not self.preview_image_updated:
+            return None
+        else:
+            self.preview_image_updated = False
+            return self.preview_image_buffer
+
+    def request_simple_coordinates_image(self) -> Optional[BytesIO]:
+        if not self.simple_coordinate_image_updated:
+            return None
+        else:
+            self.simple_coordinate_image_updated = False
+            return self.simple_coordinate_image_buffer    
+
 def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_threshold_rel: float):
     # get template
     template_bgr = img_bgr[y : y + h, x : x + w]
@@ -84,70 +181,6 @@ def peaks_to_simple_coordinate(peaks: np.ndarray, tol: float | None = None) -> n
     row_idx = np.max(row_idx) - row_idx
     
     return np.column_stack((col_idx, row_idx))
-
-def render_template_matching_and_simple_coordinates(img_bgr: np.ndarray, point1: Optional[tuple[int, int]] = None, point2: Optional[tuple[int, int]] = None):
-    """
-    render the image with marks drawn
-    """
-    # create a copy of the image
-    preview_image = img_bgr.copy()
-    
-    # draw points
-    if point1 is not None:
-        cv2.circle(preview_image, point1, 5, (255, 0, 0), -1)
-    if point2 is not None:
-        cv2.circle(preview_image, point2, 5, (0, 255, 255), -1)
-    
-    # buffers for rendering
-    simple_plot_buffer = None
-    
-    # draw rectangle and perform template matching if both points are provided
-    if point1 is not None and point2 is not None:
-        # compute rectangle coordinates
-        x = min(point1[0], point2[0])
-        y = min(point1[1], point2[1])
-        w = abs(point2[0] - point1[0])
-        h = abs(point2[1] - point1[1])
-        cv2.rectangle(preview_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        
-        # ---------------------------------
-        # template matching
-        # ---------------------------------
-
-        # given both points, perform template matching
-        peaks = template_matching(preview_image, x, y, w, h, peak_threshold_rel=0.5)
-                
-        # draw peaks
-        for (row, col) in peaks:
-            cx = col + w // 2
-            cy = row + h // 2
-            cv2.circle(preview_image, (cx, cy), 10, (0, 0, 255), 2)
-        
-        # ---------------------------------
-        # conversion to simple coordinates
-        # ---------------------------------
-        
-        simple_coordinates = peaks_to_simple_coordinate(np.array(peaks), min(w, h) // 2)
-        
-        # render simple coordinates
-        plt.clf()
-        if simple_coordinates.size > 0:
-            plt.scatter(simple_coordinates[:, 0], simple_coordinates[:, 1], marker='s', c='lightgrey')
-            plt.axis('equal')
-        simple_plot_buffer = BytesIO()
-        plt.savefig(simple_plot_buffer, format='png', bbox_inches='tight')
-        plt.close()
-        simple_plot_buffer.seek(0)
-    
-    # Encode preview image
-    success, encoded_image = cv2.imencode('.png', preview_image)
-    if not success:
-        raise RuntimeError("Failed to encode preview image")
-
-    preview_image_buffer = BytesIO(encoded_image.tobytes())
-
-    # return
-    return preview_image_buffer, simple_plot_buffer
 
 def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     """
