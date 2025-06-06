@@ -29,7 +29,13 @@ async def get_index(request: Request):
 
 def process_data(task_id : str, tmp_path : Path, clicks : str):
     print(f"Processing task {task_id} with file {tmp_path} and clicks {clicks}")
-    
+
+@app.post("/send_clicks/", response_class=JSONResponse)
+async def send_clicks(task_id: str = Form(...), x: float = Form(...), y: float = Form(...), left: bool = Form(...)):
+    print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
+
+    # For now, just echo back the data
+    return JSONResponse(status_code=400, content={"error": "Invalid click data"})
 
 @app.post("/get_task_id/", response_class=JSONResponse)
 async def get_task_id(file: UploadFile = File(...)):

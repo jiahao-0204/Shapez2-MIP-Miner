@@ -84,7 +84,7 @@
             // ensure a file is selected
             if (file_input.files.length === 0) 
             {
-                alert('Please upload a file first.');
+                console.error('Please upload a file first.');
                 return;
             }
 
@@ -113,7 +113,7 @@
             // ensure the response is ok
             if (!response.ok)
             {
-                alert('Failed to upload file:', response.statusText);
+                console.error('Failed to upload file:', response.statusText);
                 return;
             }
 
@@ -127,7 +127,7 @@
             // skip if no task_id
             if (!task_id)
             {
-                alert('No task_id available. Please upload a file first.');
+                console.error('No task_id available. Please upload a file first.');
                 return;
             }
 
@@ -158,12 +158,12 @@
                 return;
             }
             
-            // convert the response to a blob (binary large object)
-            const blob = await response.blob();
-            const image_url = URL.createObjectURL(blob);
+            // // convert the response to a blob (binary large object)
+            // const blob = await response.blob();
+            // const image_url = URL.createObjectURL(blob);
 
-            // update the canvas with the new image
-            update_canvas_image(image_url);
+            // // update the canvas with the new image
+            // update_canvas_image(image_url);
         }
 
         async function callback_keyboard(event)
