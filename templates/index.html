@@ -69,8 +69,15 @@
                 const img = new Image();
                 img.onload = function() 
                 {
-                    canvas_context.clearRect(0, 0, canvas.width, canvas.height); // clear canvas
-                    canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); // draw image
+                    // clear canvas
+                    canvas_context.clearRect(0, 0, canvas.width, canvas.height); 
+
+                    // set canvas size to image size
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // draw image on the canvas
+                    canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); 
                 };
                 img.src = event.target.result; // set image source to file content
             };
@@ -90,9 +97,21 @@
         }
 
         function callback_canvas_clicks(event) 
-        {
+        {                        
+            // get the canvas bounding rectangle
             const rect = canvas.getBoundingClientRect();
-            const pt = [event.clientX - rect.left, event.clientY - rect.top];
+
+            // compute position
+            const screen_x = event.clientX;
+            const screen_y = event.clientY;
+            const rect_x = screen_x - rect.left; // relative to canvas rectange
+            const rect_y = screen_y - rect.top; // relative to canvas rectange
+            const canvas_x = rect_x * (canvas.width / rect.width);
+            const canvas_y = rect_y * (canvas.height / rect.height);
+            
+            // point
+            const pt = [canvas_x, canvas_y];
+
             // left
             if (event.button === 0) 
             {        
