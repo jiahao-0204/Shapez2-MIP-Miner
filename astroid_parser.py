@@ -1,5 +1,7 @@
 # system
 from pathlib import Path
+from typing import Optional
+from io import BytesIO
 
 # third-party
 from skimage.feature import peak_local_max
@@ -83,6 +85,69 @@ def peaks_to_simple_coordinate(peaks: np.ndarray, tol: float | None = None) -> n
     
     return np.column_stack((col_idx, row_idx))
 
+def render_template_matching_and_simple_coordinates(img_bgr: np.ndarray, point1: Optional[tuple[int, int]] = None, point2: Optional[tuple[int, int]] = None):
+    """
+    render the image with marks drawn
+    """
+    # create a copy of the image
+    preview_image = img_bgr.copy()
+    
+    # draw points
+    if point1 is not None:
+        cv2.circle(preview_image, point1, 5, (255, 0, 0), -1)
+    if point2 is not None:
+        cv2.circle(preview_image, point2, 5, (0, 255, 255), -1)
+    
+    # buffers for rendering
+    simple_plot_buffer = None
+    
+    # draw rectangle and perform template matching if both points are provided
+    if point1 is not None and point2 is not None:
+        # compute rectangle coordinates
+        x = min(point1[0], point2[0])
+        y = min(point1[1], point2[1])
+        w = abs(point2[0] - point1[0])
+        h = abs(point2[1] - point1[1])
+        cv2.rectangle(preview_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        
+        # ---------------------------------
+        # template matching
+        # ---------------------------------
+
+        # given both points, perform template matching
+        peaks = template_matching(preview_image, x, y, w, h, peak_threshold_rel=0.5)
+                
+        # draw peaks
+        for (row, col) in peaks:
+            cx = col + w // 2
+            cy = row + h // 2
+            cv2.circle(preview_image, (cx, cy), 10, (0, 0, 255), 2)
+        
+        # ---------------------------------
+        # conversion to simple coordinates
+        # ---------------------------------
+        
+        simple_coordinates = peaks_to_simple_coordinate(np.array(peaks), min(w, h) // 2)
+        
+        # render simple coordinates
+        plt.clf()
+        if simple_coordinates.size > 0:
+            plt.scatter(simple_coordinates[:, 0], simple_coordinates[:, 1], marker='s', c='lightgrey')
+            plt.axis('equal')
+        simple_plot_buffer = BytesIO()
+        plt.savefig(simple_plot_buffer, format='png', bbox_inches='tight')
+        plt.close()
+        simple_plot_buffer.seek(0)
+    
+    # Encode preview image
+    success, encoded_image = cv2.imencode('.png', preview_image)
+    if not success:
+        raise RuntimeError("Failed to encode preview image")
+
+    preview_image_buffer = BytesIO(encoded_image.tobytes())
+
+    # return
+    return preview_image_buffer, simple_plot_buffer
 
 def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     """
@@ -90,6 +155,14 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     The user can select a template by clicking and dragging the mouse.
     Peaks are detected based on the template and displayed on the image.
     """
+    
+    # -------------------------------------------------------------
+    # parser data
+    # -------------------------------------------------------------
+    point1: Optional[tuple[int, int]] = None
+    point2: Optional[tuple[int, int]] = None
+    previous_point1: Optional[tuple[int, int]] = None
+    previous_point2: Optional[tuple[int, int]] = None
     
     # -------------------------------------------------------------
     # validate input
@@ -105,106 +178,51 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
         raise FileNotFoundError(f"cv2.imread failed: {image_path}")
     
     # -------------------------------------------------------------
-    # mouse click to interact and template match
+    # create windows
+    # -------------------------------------------------------------        
+    
+    window_simple_coordinates = "Simple Coordinates Window"
+    cv2.namedWindow(window_simple_coordinates, cv2.WINDOW_AUTOSIZE)
+    
+    window_image = "Image Window"
+    cv2.namedWindow(window_image, cv2.WINDOW_AUTOSIZE)    
+    
     # -------------------------------------------------------------
-    
-    # create plt window
-    plt.figure(figsize=(5, 5))
-    plt.show(block=False)
-        
-    # create a window
-    window_name = "Astroid Parser"
-    cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
-    cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
-    
-    # define interaction
-    x0 = y0 = 0 # left click position
-    x1 = y1 = 0 # right click position
-    x = y = w = h = 0 # template rectangle position and size
-    peaks = [] # peaks detected in the image
-    simple_coordinates = np.empty((0, 2), dtype=float)
-    draw_new_peaks = False
-    draw_new_clicked_position = False
+    # link callback
+    # -------------------------------------------------------------        
     def mouse_callback(event: int, x_clicked: int, y_clicked: int, flags: int, param):
-        """
-        left click: set template position 1
-        right click: set template position 2 and perform template matching
-        """
-        nonlocal x0, y0, x1, y1, x, y, w, h, peaks, simple_coordinates, draw_new_peaks, draw_new_clicked_position
+        nonlocal point1, point2
         if event == cv2.EVENT_LBUTTONDOWN:
-            # Update clicked position for left click
-            x0, y0 = x_clicked, y_clicked
-            x1, y1 = 0, 0
-            draw_new_clicked_position = True
-
-        # perform template matching on right click
+            point1 = (x_clicked, y_clicked)
+            point2 = None  # reset second point
         elif event == cv2.EVENT_RBUTTONDOWN:
-            # Update clicked position for right click
-            x1, y1 = x_clicked, y_clicked
-            draw_new_clicked_position = True
-
-            # compute template rectangle position and size
-            x, y = min(x0, x1), min(y0, y1)
-            w, h = abs(x1 - x0), abs(y1 - y0)
-
-            # perform template matching
-            peaks = template_matching(img_bgr, x, y, w, h, peak_threshold_rel)
-            simple_coordinates = peaks_to_simple_coordinate(np.array(peaks), min(w, h) // 2)
-            draw_new_peaks = True
-    
-    # link interaction
-    cv2.setMouseCallback(window_name, mouse_callback)
+            point2 = (x_clicked, y_clicked)
+    cv2.setMouseCallback(window_image, mouse_callback)
 
     # -------------------------------------------------------------
     # render image for inspection
     # -------------------------------------------------------------
     
-    result = img_bgr.copy()
     while True:
-        # clicked positions
-        if draw_new_clicked_position:
-            draw_new_clicked_position = False
+        # update to points
+        first_run = (previous_point1 is None and previous_point2 is None)
+        update_to_points = (point1 != previous_point1 or point2 != previous_point2)
+        
+        if update_to_points or first_run:
+            previous_point1, previous_point2 = point1, point2
             
-            # reset result image
-            result = img_bgr.copy()
+            # render image
+            preview_image_buffer, simple_plot_buffer = render_template_matching_and_simple_coordinates(img_bgr, point1, point2)
             
-            # draw new clicked positions
-            if x0 is not None and y0 is not None:
-                cv2.circle(result, (x0, y0), 5, (255, 0, 0), -1)
-            if x1 is not None and y1 is not None:
-                cv2.circle(result, (x1, y1), 5, (0, 255, 255), -1)
-
-        # peaks
-        if draw_new_peaks:
-            draw_new_peaks = False
+            # show image 1
+            preview_image = cv2.imdecode(np.frombuffer(preview_image_buffer.getvalue(), np.uint8), cv2.IMREAD_COLOR)   
+            cv2.imshow(window_image, preview_image)
             
-            # draw template rectangle
-            cv2.rectangle(result, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            
-            # draw peaks
-            for (row, col) in peaks:
-                cx = col + w // 2
-                cy = row + h // 2
-                cv2.circle(result, (cx, cy), 10, (0, 0, 255), 2)
-            
-            # draw simple coordinates
-            plt.clf()
-            if simple_coordinates.size > 0:
-                plt.scatter(simple_coordinates[:, 0], simple_coordinates[:, 1], marker='s', c='lightgrey', label='Simple Coordinates')
-            xmin = np.min(simple_coordinates[:, 0])
-            xmax = np.max(simple_coordinates[:, 0])
-            ymin = np.min(simple_coordinates[:, 1])
-            ymax = np.max(simple_coordinates[:, 1])
-            plt.xticks(np.arange(xmin, xmax + 1, 1))
-            plt.yticks(np.arange(ymin, ymax + 1, 1))
-            plt.grid(True)
-            plt.axis('equal')
-            plt.title("Simple Coordinates")
-            plt.pause(0.001)  # allow plt to update
-                        
-        # display result
-        cv2.imshow(window_name, result)
-                
+            # show image 2
+            if simple_plot_buffer is not None:
+                simple_coordinates_image = cv2.imdecode(np.frombuffer(simple_plot_buffer.getvalue(), np.uint8), cv2.IMREAD_COLOR)
+                cv2.imshow(window_simple_coordinates, simple_coordinates_image)
+                    
         # quit on 'q' key press
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
@@ -219,5 +237,5 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     return simple_coordinates
 
 if __name__ == "__main__":
-    simple_coordinates = astroid_parser(Path("images/input.jpg"), 0.5)
+    simple_coordinates = astroid_parser(Path("images/example3.png"), 0.5)
     print(simple_coordinates)
