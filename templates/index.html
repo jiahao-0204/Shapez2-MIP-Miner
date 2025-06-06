@@ -113,7 +113,7 @@
             // ensure the response is ok
             if (!response.ok)
             {
-                console.error('Failed to upload file:', response.statusText);
+                alert('Failed to upload file:', response.statusText);
                 return;
             }
 
@@ -127,7 +127,7 @@
             // skip if no task_id
             if (!task_id)
             {
-                console.error('No task_id available. Please upload a file first.');
+                alert('No task_id available. Please upload a file first.');
                 return;
             }
 
