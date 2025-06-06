@@ -9,27 +9,34 @@ from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, Fil
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+# ------------------------------------------
+# Setup
+# ------------------------------------------
+
+# initialize the FastAPI app
 app = FastAPI()
 
-
-# Serve static files (e.g. output images)
+# static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Templates setup
+# templates
 templates = Jinja2Templates(directory="templates")
 
 
-# @app.get("/", response_class=PlainTextResponse)
-# async def get_root():
-#     return "Hello World!"
+# ------------------------------------------
+# Web API
+# ------------------------------------------
 
+# home page
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+# background task
 def process_data(task_id : str, tmp_path : Path, clicks : str):
     print(f"Processing task {task_id} with file {tmp_path} and clicks {clicks}")
 
+# send clicks
 @app.post("/send_clicks/", response_class=FileResponse)
 async def send_clicks(task_id: str = Form(...), x: float = Form(...), y: float = Form(...), left: bool = Form(...)):
     # log
@@ -44,6 +51,7 @@ async def send_clicks(task_id: str = Form(...), x: float = Form(...), y: float =
     # return the image file
     return FileResponse(image_path, media_type="image/png")    
 
+# get task id
 @app.post("/get_task_id/", response_class=JSONResponse)
 async def get_task_id(file: UploadFile = File(...)):
     # log
