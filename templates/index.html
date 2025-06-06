@@ -28,11 +28,20 @@
         // -----------------------------------------------
         // get web page elements
         // -----------------------------------------------
-        const fileInput = document.getElementById('fileInput');
+        const file_input = document.getElementById('fileInput'); 
         const canvas = document.getElementById('canvas');
         const canvas_context = canvas.getContext('2d');
         const button_submit_image = document.getElementById('submit_image');
+        const preformatted_text = document.getElementById('blueprint');
         
+        // -----------------------------------------------
+        // setup canvas
+        // -----------------------------------------------
+        const canvas_display_width = 800;
+        canvas.style.width = `${canvas_display_width}px`;
+        canvas.style.height = 'auto'; // set height to auto
+        canvas.oncontextmenu = () => false;
+
         // -----------------------------------------------
         // link element to callbacks
         // -----------------------------------------------
@@ -41,21 +50,18 @@
         window.addEventListener('keydown', callback_keyboard);
 
         // -----------------------------------------------
-        // callback functions
+        // callback functions and helpers
         // -----------------------------------------------
+        function draw_clicks([x, y], color)
+        {
+            canvas_context.fillStyle = color; 
+            canvas_context.beginPath(); 
+            canvas_context.arc(x, y, 4, 0, 2*Math.PI);
+            canvas_context.fill();
+        }
+
         function callback_canvas_clicks(event) 
         {
-            // prevent right-click context menu
-            canvas.oncontextmenu = () => false;
-
-            function draw_clicks([x, y], color)
-            {
-                canvas_context.fillStyle = color; 
-                canvas_context.beginPath(); 
-                canvas_context.arc(x, y, 4, 0, 2*Math.PI);
-                canvas_context.fill();
-            }
-
             const rect = canvas.getBoundingClientRect();
             const pt = [event.clientX - rect.left, event.clientY - rect.top];
             // left
@@ -75,14 +81,14 @@
         async function callback_submit_image() 
         {
             // if no file uploaded, alert
-            if (document.getElementById('fileInput').files.length === 0) 
+            if (file_input.files.length === 0) 
             {
                 alert('Please upload a file first.');
                 return;
             }
 
             // put the image on the canvas
-            const file = document.getElementById('fileInput').files[0];
+            const file = file_input.files[0];
             const reader = new FileReader();
             reader.onload = function(event)
             {
@@ -112,15 +118,13 @@
         {
             if (event.key === 'Enter')
             {
-                // get file uploaded
-                const f = document.getElementById('fileInput').files[0];
-
-                // get clicks
+                // get data
+                const file = file_input.files[0];
                 const clicks = JSON.stringify({left: leftClicks, right: rightClicks});
 
                 // convert both to form
                 const form = new FormData();
-                form.append('file', f);
+                form.append('file', file);
                 form.append('clicks', clicks);
 
                 // submit to server and get task_id
@@ -130,13 +134,13 @@
                 let result;
                 do 
                 { 
-                    result = await fetch(`/result/${id}`).then(r=>r.json()); 
+                    result = await fetch(`/result/${task_id}`).then(r=>r.json()); 
                     await new Promise(r=>setTimeout(r,1000)); 
                 }
                 while (!result.ready);
                 
                 // show result in the pre named blueprint
-                document.getElementById('blueprint').textContent = result.blueprint;
+                preformatted_text.textContent = result.blueprint;
 
                 // draw the image on the canvas
                 const img = new Image(); 
