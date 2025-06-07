@@ -8,11 +8,13 @@ from skimage.feature import peak_local_max
 import numpy as np
 import cv2 
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 class AstroidParser:
-    def __init__(self, img_bgr: np.ndarray, task_id: str):
+    def __init__(self, img_bgr: np.ndarray, peak_threshold_rel: float = 0.5):
         self.img_bgr = img_bgr
-        self.task_id = task_id
+        self.peak_threshold_rel = peak_threshold_rel
 
         self.point1: Optional[tuple[int, int]] = None
         self.point2: Optional[tuple[int, int]] = None
@@ -22,10 +24,14 @@ class AstroidParser:
         
         self.simple_coordinate_image_buffer = None
         self.simple_coordinate_image_updated = False
+        
+        self.simple_coordinates = None
 
     def add_click(self, x: int, y: int, left: bool):
         if left:
             self.point1 = (x, y)
+            # reset point2
+            self.point2 = None
         else:
             self.point2 = (x, y)
         
@@ -53,7 +59,7 @@ class AstroidParser:
             cv2.rectangle(preview_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
             # perform template matching to find peaks
-            peaks = template_matching(preview_image, x, y, w, h, peak_threshold_rel=0.5)
+            peaks = template_matching(preview_image, x, y, w, h, peak_threshold_rel=self.peak_threshold_rel)
             
             for (row, col) in peaks:
                 cx = col + w // 2
@@ -75,6 +81,9 @@ class AstroidParser:
             buffer.seek(0)
             self.simple_coordinate_image_buffer = buffer
             self.simple_coordinate_image_updated = True
+            
+            # store simple coordinates
+            self.simple_coordinates = simple_coordinates
 
         # store preview image as image buffer
         success, encoded_image = cv2.imencode('.png', preview_image)
@@ -106,6 +115,9 @@ class AstroidParser:
             self.simple_coordinate_image_updated = False
             return self.simple_coordinate_image_buffer    
 
+    def get_simple_coordinates(self) -> Optional[np.ndarray]:
+        return self.simple_coordinates
+    
 def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_threshold_rel: float):
     # get template
     template_bgr = img_bgr[y : y + h, x : x + w]
@@ -182,21 +194,7 @@ def peaks_to_simple_coordinate(peaks: np.ndarray, tol: float | None = None) -> n
     
     return np.column_stack((col_idx, row_idx))
 
-def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
-    """
-    A simple parser to detect peaks in an image using template matching.
-    The user can select a template by clicking and dragging the mouse.
-    Peaks are detected based on the template and displayed on the image.
-    """
-    
-    # -------------------------------------------------------------
-    # parser data
-    # -------------------------------------------------------------
-    point1: Optional[tuple[int, int]] = None
-    point2: Optional[tuple[int, int]] = None
-    previous_point1: Optional[tuple[int, int]] = None
-    previous_point2: Optional[tuple[int, int]] = None
-    
+def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):    
     # -------------------------------------------------------------
     # validate input
     # -------------------------------------------------------------
@@ -211,6 +209,11 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
         raise FileNotFoundError(f"cv2.imread failed: {image_path}")
     
     # -------------------------------------------------------------
+    # create parser
+    # -------------------------------------------------------------        
+    astroid_parser = AstroidParser(img_bgr, peak_threshold_rel=peak_threshold_rel)
+    
+    # -------------------------------------------------------------
     # create windows
     # -------------------------------------------------------------        
     
@@ -220,55 +223,45 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     window_image = "Image Window"
     cv2.namedWindow(window_image, cv2.WINDOW_AUTOSIZE)    
     
+    preview_image_buffer = astroid_parser.request_preview_image()
+    if preview_image_buffer is not None:
+        preview_image = cv2.imdecode(np.frombuffer(preview_image_buffer.getvalue(), np.uint8), cv2.IMREAD_COLOR)
+        cv2.imshow(window_image, preview_image)
+        
     # -------------------------------------------------------------
     # link callback
     # -------------------------------------------------------------        
     def mouse_callback(event: int, x_clicked: int, y_clicked: int, flags: int, param):
-        nonlocal point1, point2
         if event == cv2.EVENT_LBUTTONDOWN:
             point1 = (x_clicked, y_clicked)
-            point2 = None  # reset second point
+            astroid_parser.add_click(x_clicked, y_clicked, left=True)
         elif event == cv2.EVENT_RBUTTONDOWN:
             point2 = (x_clicked, y_clicked)
-    cv2.setMouseCallback(window_image, mouse_callback)
-
-    # -------------------------------------------------------------
-    # render image for inspection
-    # -------------------------------------------------------------
-    
-    while True:
-        # update to points
-        first_run = (previous_point1 is None and previous_point2 is None)
-        update_to_points = (point1 != previous_point1 or point2 != previous_point2)
+            astroid_parser.add_click(x_clicked, y_clicked, left=False)
         
-        if update_to_points or first_run:
-            previous_point1, previous_point2 = point1, point2
-            
-            # render image
-            preview_image_buffer, simple_plot_buffer = render_template_matching_and_simple_coordinates(img_bgr, point1, point2)
-            
-            # show image 1
-            preview_image = cv2.imdecode(np.frombuffer(preview_image_buffer.getvalue(), np.uint8), cv2.IMREAD_COLOR)   
+        preview_image_buffer = astroid_parser.request_preview_image()
+        if preview_image_buffer is not None:
+            preview_image = cv2.imdecode(np.frombuffer(preview_image_buffer.getvalue(), np.uint8), cv2.IMREAD_COLOR)
             cv2.imshow(window_image, preview_image)
-            
-            # show image 2
-            if simple_plot_buffer is not None:
-                simple_coordinates_image = cv2.imdecode(np.frombuffer(simple_plot_buffer.getvalue(), np.uint8), cv2.IMREAD_COLOR)
-                cv2.imshow(window_simple_coordinates, simple_coordinates_image)
-                    
-        # quit on 'q' key press
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            break
         
+        simple_coordinates_image_buffer = astroid_parser.request_simple_coordinates_image()
+        if simple_coordinates_image_buffer is not None:
+            simple_coordinates_image = cv2.imdecode(np.frombuffer(simple_coordinates_image_buffer.getvalue(), np.uint8), cv2.IMREAD_COLOR)
+            cv2.imshow(window_simple_coordinates, simple_coordinates_image)
+    cv2.setMouseCallback(window_image, mouse_callback)
+    
+    # keep alive
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            break
+    
+    return astroid_parser.get_simple_coordinates()
     # cv2.destroyAllWindows()
     # plt.close()
-    
-    # -------------------------------------------------------------
-    # return
-    # -------------------------------------------------------------
-    return simple_coordinates
 
 if __name__ == "__main__":
-    simple_coordinates = astroid_parser(Path("images/example3.png"), 0.5)
-    print(simple_coordinates)
+    # example usage
+    image_path = Path("images/example3.png")
+    simple_coordinates = astroid_parser(image_path, peak_threshold_rel=0.5)
+    print("Simple Coordinates:", simple_coordinates)
