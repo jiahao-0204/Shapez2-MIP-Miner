@@ -50,98 +50,101 @@ def process_data(task_id : str, tmp_path : Path, clicks : str):
 # send clicks
 @app.post("/send_clicks/")
 async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = Form(...), left: bool = Form(...)):
-    # --- log ---
-    print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
-    # -----------
-
-    # check if image path exists
+    # -----------------------------
+    # local processing
+    # -----------------------------
+    
+    # skip if task id not found
     image_path = Path(f"/tmp/{task_id}.png")
     if not image_path.exists():
         return JSONResponse(status_code=404, content={"error": "Image not found"})
     
     # --- log ---
+    print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
     print(f"Image path: {image_path}")
     # -----------
     
-    # send clicks to the parser
-    if task_id in tasks:
-        parser = tasks[task_id]
-        parser.add_click(x, y, left)
-        print(f"Click added to task {task_id}: x={x}, y={y}, left={left}")
-    else:
-        print(f"Task {task_id} not found. Cannot add click.")
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    # -----------------------------
+    # send data to the parser
+    # -----------------------------
+    parser = tasks[task_id]
+    parser.add_click(x, y, left)
     
-    # get updated image from the parser
-    preview_image = tasks[task_id].request_preview_image()
-    simple_coordinate_image = tasks[task_id].request_simple_coordinates_image()
-        
-    # # Create a zip in memory
-    # zip_buffer = BytesIO()
-    # with ZipFile(zip_buffer, "w") as zip_file:
-    #     if preview_image is not None:
-    #         zip_file.writestr("preview.png", preview_image.read())
-    #     if simple_coordinate_image is not None:
-    #         zip_file.writestr("coordinates.png", simple_coordinate_image.read())
-    # zip_buffer.seek(0)
-
-    # return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={task_id}_results.zip"})
-    
-    preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
-    simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
-    current_threshold = tasks[task_id].get_threshold()
-
-    return {
-        "task_id": task_id,
-        "preview_image": preview_b64,
-        "simple_coordinate_image": simple_b64,
-        "current_threshold": current_threshold
-    }
-        
+    # -----------------------------
+    # response ok
+    # -----------------------------
+    return JSONResponse(status_code=200, content={"message": "Click added successfully"})
+            
 @app.post("/increase_threshold/", response_class=JSONResponse)
 async def increase_threshold(task_id: str = Form(...)):
+    # -----------------------------
+    # local processing
+    # -----------------------------
+    
+    # skip if task id not found
+    if task_id not in tasks:
+        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    
     # --- log ---
     print(f"Increasing threshold for task {task_id}")
     # -----------
     
-    # check if task exists
-    if task_id not in tasks:
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    # ------------------------------
+    # send data to the parser
+    # ------------------------------
+    parser = tasks[task_id]
+    parser.increase_threshold()
     
-    # increase threshold
-    current_threshold = tasks[task_id].increase_threshold()
-    
-    # get updated image from the parser
-    preview_image = tasks[task_id].request_preview_image()
-    simple_coordinate_image = tasks[task_id].request_simple_coordinates_image()
-            
-    preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
-    simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
-
-    return {
-        "task_id": task_id,
-        "preview_image": preview_b64,
-        "simple_coordinate_image": simple_b64,
-        "current_threshold": current_threshold
-    }
+    # ------------------------------
+    # response ok
+    # ------------------------------
+    return JSONResponse(status_code=200, content={"message": "Threshold updated successfully"})
 
 @app.post("/decrease_threshold/", response_class=JSONResponse)
 async def decrease_threshold(task_id: str = Form(...)):
+    # -----------------------------
+    # local processing
+    # -----------------------------
+        
+    # skip if task id not found
+    if task_id not in tasks:
+        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    
     # --- log ---
     print(f"Decreasing threshold for task {task_id}")
     # -----------
     
-    # check if task exists
+    # ------------------------------
+    # send data to the parser
+    # ------------------------------
+    parser = tasks[task_id]
+    parser.decrease_threshold()
+    
+    # ------------------------------
+    # response ok
+    # ------------------------------
+    return JSONResponse(status_code=200, content={"message": "Threshold updated successfully"})
+    
+# update preview
+@app.get("/update_preview/{task_id}", response_class=JSONResponse)
+async def update_preview(task_id: str):
+    # ------------------------------
+    # local processing
+    # ------------------------------
     if task_id not in tasks:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
     
-    # decrease threshold
-    current_threshold = tasks[task_id].decrease_threshold()
+    # --- log ---
+    print(f"Updating preview for task {task_id}")
+    # -----------
     
-    # get updated image from the parser
-    preview_image = tasks[task_id].request_preview_image()
-    simple_coordinate_image = tasks[task_id].request_simple_coordinates_image()
-            
+    # ------------------------------
+    # return data to the client
+    # ------------------------------
+    parser = tasks[task_id]
+    current_threshold = parser.get_threshold()
+    preview_image = parser.request_preview_image()
+    simple_coordinate_image = parser.request_simple_coordinates_image()
     preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
     simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
 

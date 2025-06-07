@@ -117,6 +117,49 @@ async function callback_upload_file()
     task_id = data.task_id;
 }
 
+async function update_preview()
+{
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
+    // request update from server
+    if (!task_id)
+    {
+        console.error('No task_id available. Please upload a file first.');
+        return;
+    }
+
+    // ----------------------------------------------------
+    // send data
+    // ----------------------------------------------------
+    const response = await fetch(`/update_preview/` + task_id, {method: 'GET'});
+
+    // ----------------------------------------------------
+    // process response
+    // ----------------------------------------------------
+
+    // decode image
+    const data = await response.json();
+    const current_threshold = data.current_threshold;
+    const preview_image_base64 = data.preview_image;
+    const simple_coordinates_image_base64 = data.simple_coordinate_image;
+    
+    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
+
+    if (preview_image_base64) 
+    {
+        const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
+        update_canvas_image(canvas_preview, previewImageUrl);
+    } 
+    
+    if (simple_coordinates_image_base64) 
+    {
+        const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
+        update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
+    }
+}
+
 async function callback_canvas_clicks(event) 
 {                        
     // ----------------------------------------------------
@@ -171,46 +214,8 @@ async function callback_canvas_clicks(event)
         console.error('Failed to send click data:', response.statusText);
         return;
     }
-    
-    // // read zip
-    // const zipBlob = await response.blob();
-    // const zip = await JSZip.loadAsync(zipBlob);
 
-    // // Draw preview if it exists
-    // if (zip.files["preview.png"]) 
-    // {
-    //     const previewImage = await zip.files["preview.png"].async("blob");
-    //     const previewImageUrl = URL.createObjectURL(previewImage);
-    //     update_canvas_image(preview_canvas, previewImageUrl);
-    // } 
-
-    // // Draw simple coordinates if it exists
-    // if (zip.files["coordinates.png"]) 
-    // {
-    //     const coordinatesImage = await zip.files["coordinates.png"].async("blob");
-    //     const coordinatesImageUrl = URL.createObjectURL(coordinatesImage);
-    //     update_canvas_image(simple_coordinates_canvas, coordinatesImageUrl);
-    // } 
-
-    // decode image
-    const data = await response.json();
-    const preview_image_base64 = data.preview_image;
-    const simple_coordinates_image_base64 = data.simple_coordinate_image;
-    
-    if (preview_image_base64) 
-    {
-        const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
-        update_canvas_image(canvas_preview, previewImageUrl);
-    } 
-    
-    if (simple_coordinates_image_base64) 
-    {
-        const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
-        update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
-    }
-
-    const current_threshold = data.current_threshold;
-    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
+    update_preview()
 }
 
 async function callback_decrease_threshold()
@@ -241,25 +246,7 @@ async function callback_decrease_threshold()
         return;
     }
 
-    // decode image
-    const data = await response.json();
-    const preview_image_base64 = data.preview_image;
-    const simple_coordinates_image_base64 = data.simple_coordinate_image;
-    
-    if (preview_image_base64) 
-    {
-        const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
-        update_canvas_image(canvas_preview, previewImageUrl);
-    } 
-    
-    if (simple_coordinates_image_base64) 
-    {
-        const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
-        update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
-    }
-
-    const current_threshold = data.current_threshold;
-    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
+    update_preview()
 }
 
 async function callback_increase_threshold()
@@ -291,25 +278,7 @@ async function callback_increase_threshold()
         return;
     }
 
-    // decode image
-    const data = await response.json();
-    const preview_image_base64 = data.preview_image;
-    const simple_coordinates_image_base64 = data.simple_coordinate_image;
-    
-    if (preview_image_base64) 
-    {
-        const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
-        update_canvas_image(canvas_preview, previewImageUrl);
-    } 
-    
-    if (simple_coordinates_image_base64) 
-    {
-        const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
-        update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
-    }
-
-    const current_threshold = data.current_threshold;
-    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
+    update_preview()
 }   
 
 async function callback_run_solver() 
