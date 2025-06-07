@@ -65,9 +65,6 @@
             const img = new Image();
             img.onload = function() 
             {
-                canvas_context.clearRect(0, 0, preview_canvas.width, preview_canvas.height); // clear the canvas
-                canvas_context.drawImage(img, 0, 0, preview_canvas.width, preview_canvas.height); // draw the updated image
-
                 // clear canvas
                 canvas_context.clearRect(0, 0, preview_canvas.width, preview_canvas.height); 
 
