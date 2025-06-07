@@ -11,6 +11,8 @@ from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, Fil
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+import cv2
+
 # project
 from astroid_parser import AstroidParser
 
@@ -110,6 +112,15 @@ async def add_task(file: UploadFile = File(...)):
     print(f"File saved to: {file_path}")
     # -----------
 
+    # add to task list
+    # convert file to cv2 BGR image
+    img_bgr = cv2.imread(str(file_path))
+    if img_bgr is None:
+        return JSONResponse(status_code=415, content={"error": "Invalid image format or corrupted file"})
+
+    # store in task dictionary or your object
+    tasks[task_id] = AstroidParser(img_bgr=img_bgr)
+    
     # return the task_id as json response
     response = JSONResponse(status_code=200, content={"task_id": task_id})
     
