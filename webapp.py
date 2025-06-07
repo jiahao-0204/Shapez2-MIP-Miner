@@ -158,6 +158,10 @@ async def update_preview(task_id: str):
 # add task
 @app.post("/add_task/", response_class=JSONResponse)
 async def add_task(file: UploadFile = File(...)):
+    # -------------------------------
+    # local processing
+    # -------------------------------
+    
     # --- log ---
     print(f"Received file: {file.filename}")
     # -----------
@@ -190,6 +194,10 @@ async def add_task(file: UploadFile = File(...)):
     # store in task dictionary or your object
     tasks[task_id] = AstroidParser(img_bgr=img_bgr)
     
+    # -------------------------------
+    # response to the client
+    # -------------------------------
+    
     # return the task_id as json response
     response = JSONResponse(status_code=200, content={"task_id": task_id})
     
@@ -203,6 +211,10 @@ async def add_task(file: UploadFile = File(...)):
 # run solver
 @app.post("/run_solver/", response_class=JSONResponse)
 async def run_solver(task_id: str = Form(...)):
+    # -----------------------------
+    # local processing
+    # -----------------------------
+    
     # --- log ---
     print(f"Running solver for task {task_id}")
     # -----------
@@ -210,6 +222,11 @@ async def run_solver(task_id: str = Form(...)):
     # check if task exists
     if task_id not in tasks:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
+    
+    
+    # -----------------------------
+    # send data to the solver
+    # -----------------------------
     
     astroid_solver = AstroidSolver()
     
@@ -219,6 +236,10 @@ async def run_solver(task_id: str = Form(...)):
     
     astroid_solver.add_astroid_locations(astroid_location=astroid_location)
     astroid_solver.run_solver()
+    
+    # -----------------------------
+    # response to the client
+    # -----------------------------
     
     # get the solution image
     solution_image = astroid_solver.get_solution_image()
