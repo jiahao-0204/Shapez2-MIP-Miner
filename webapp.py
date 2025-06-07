@@ -1,13 +1,18 @@
 # system
 from pathlib import Path
 from uuid import uuid4
+from io import BytesIO
+from zipfile import ZipFile
 
 # third party
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Request
-from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, FileResponse, StreamingResponse
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
+# project
+from astroid_parser import AstroidParser
 
 # ------------------------------------------
 # Setup
@@ -22,6 +27,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # templates
 templates = Jinja2Templates(directory="templates")
 
+# list of tasks
+tasks : dict[str, AstroidParser] = {}
 
 # ------------------------------------------
 # Web API
@@ -37,25 +44,52 @@ def process_data(task_id : str, tmp_path : Path, clicks : str):
     print(f"Processing task {task_id} with file {tmp_path} and clicks {clicks}")
 
 # send clicks
-@app.post("/send_clicks/", response_class=FileResponse)
-async def send_clicks(task_id: str = Form(...), x: float = Form(...), y: float = Form(...), left: bool = Form(...)):
-    # log
+@app.post("/send_clicks/", response_class=StreamingResponse)
+async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = Form(...), left: bool = Form(...)):
+    # --- log ---
     print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
+    # -----------
 
     # check if image path exists
     image_path = Path(f"/tmp/{task_id}.png")
     if not image_path.exists():
         return JSONResponse(status_code=404, content={"error": "Image not found"})
-    print(f"Image path: {image_path}")
     
-    # return the image file
-    return FileResponse(image_path, media_type="image/png")    
+    # --- log ---
+    print(f"Image path: {image_path}")
+    # -----------
+    
+    # send clicks to the parser
+    if task_id in tasks:
+        parser = tasks[task_id]
+        parser.add_click(x, y, left)
+        print(f"Click added to task {task_id}: x={x}, y={y}, left={left}")
+    else:
+        print(f"Task {task_id} not found. Cannot add click.")
+        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    
+    # get updated image from the parser
+    preview_image = tasks[task_id].request_preview_image()
+    simple_coordinate_image = tasks[task_id].request_simple_coordinates_image()
+        
+    # Create a zip in memory
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, "w") as zip_file:
+        if preview_image is not None:
+            zip_file.writestr("preview.png", preview_image.read())
+        if simple_coordinate_image is not None:
+            zip_file.writestr("coordinates.png", simple_coordinate_image.read())
+    zip_buffer.seek(0)
+
+    return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={task_id}_results.zip"})
+        
 
 # get task id
-@app.post("/get_task_id/", response_class=JSONResponse)
-async def get_task_id(file: UploadFile = File(...)):
-    # log
+@app.post("/add_task/", response_class=JSONResponse)
+async def add_task(file: UploadFile = File(...)):
+    # --- log ---
     print(f"Received file: {file.filename}")
+    # -----------
     
     # throw an error if the file is not provided
     if not file.filename:
@@ -72,14 +106,16 @@ async def get_task_id(file: UploadFile = File(...)):
     with file_path.open("wb") as f:
         f.write(await file.read())
     
-    # log the file path
+    # --- log ---
     print(f"File saved to: {file_path}")
+    # -----------
 
     # return the task_id as json response
     response = JSONResponse(status_code=200, content={"task_id": task_id})
     
-    # log the response
+    # --- log ---
     print(f"Response: {bytes(response.body).decode('utf-8')}")
+    # -----------
     
     # return
     return response    

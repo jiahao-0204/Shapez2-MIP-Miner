@@ -11,13 +11,18 @@
 
     <!-- a canvas for us to click-->
     <canvas id="canvas" width="800" height="600" style="border:1px solid black;"></canvas>
-
+    
     <!-- a button to call a script function -->
     <button id="submit_image">Submit image</button>
+
+    <!-- a canvas to show preview -->
+    <canvas id="simple_coordinates_canvas" width="800" height="600" style="border:1px solid black;"></canvas>
     
     <!-- a place to show the result as preformatted text -->
     <pre id="blueprint"></pre>
 
+    <!-- include -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         // -----------------------------------------------
         // data
@@ -30,9 +35,12 @@
         // get web page elements
         // -----------------------------------------------
         const file_input = document.getElementById('fileInput'); 
-        const canvas = document.getElementById('canvas');
-        const canvas_context = canvas.getContext('2d');
-        const canvas_rectangle = canvas.getBoundingClientRect();
+        const preview_canvas = document.getElementById('canvas');
+        const preview_canvas_context = preview_canvas.getContext('2d');
+        const preview_canvas_rectangle = preview_canvas.getBoundingClientRect();
+        
+        const simple_coordinates_canvas = document.getElementById('simple_coordinates_canvas');
+
         const button_submit_image = document.getElementById('submit_image');
         const preformatted_text = document.getElementById('blueprint');
         
@@ -40,37 +48,39 @@
         // setup canvas
         // -----------------------------------------------
         const canvas_display_width = 800;
-        canvas.style.width = `${canvas_display_width}px`;
-        canvas.style.height = 'auto'; // set height to auto
-        canvas.oncontextmenu = () => false;
+        preview_canvas.style.width = `${canvas_display_width}px`;
+        preview_canvas.style.height = 'auto'; // set height to auto
+        preview_canvas.oncontextmenu = () => false;
 
         // -----------------------------------------------
         // link element to callbacks
         // -----------------------------------------------
-        canvas.addEventListener('mousedown', callback_canvas_clicks);
+        preview_canvas.addEventListener('mousedown', callback_canvas_clicks);
         button_submit_image.addEventListener('click', callback_submit_image);
         window.addEventListener('keydown', callback_keyboard);
 
         // -----------------------------------------------
         // callback functions and helpers
         // -----------------------------------------------
-        function update_canvas_image(image_url) 
+        function update_canvas_image(canvas, image_url) 
         {
+            const canvas_context = canvas.getContext('2d');
+
             const img = new Image();
             img.onload = function() 
             {
-                canvas_context.clearRect(0, 0, canvas.width, canvas.height); // clear the canvas
-                canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); // draw the updated image
+                canvas_context.clearRect(0, 0, preview_canvas.width, preview_canvas.height); // clear the canvas
+                canvas_context.drawImage(img, 0, 0, preview_canvas.width, preview_canvas.height); // draw the updated image
 
                 // clear canvas
-                canvas_context.clearRect(0, 0, canvas.width, canvas.height); 
+                canvas_context.clearRect(0, 0, preview_canvas.width, preview_canvas.height); 
 
                 // set canvas size to image size
                 canvas.width = img.width;
                 canvas.height = img.height;
 
                 // draw image on the canvas
-                canvas_context.drawImage(img, 0, 0, canvas.width, canvas.height); 
+                canvas_context.drawImage(img, 0, 0, preview_canvas.width, preview_canvas.height); 
                 
                 // free the object URL
                 URL.revokeObjectURL(image_url);
@@ -97,7 +107,7 @@
             const reader = new FileReader();
             reader.onload = function(event)
             {
-                update_canvas_image(event.target.result); // update canvas with the image
+                update_canvas_image(preview_canvas, event.target.result); // update canvas with the image
             };
             reader.readAsDataURL(file); // read file as data URL
             
@@ -108,7 +118,7 @@
             // send file to server and get task_id
             const form = new FormData();
             form.append('file', file);
-            const response = await fetch('/get_task_id/', {method: 'POST', body: form});
+            const response = await fetch('/add_task/', {method: 'POST', body: form});
 
             // ensure the response is ok
             if (!response.ok)
@@ -134,10 +144,10 @@
             // compute position
             const screen_x = event.clientX;
             const screen_y = event.clientY;
-            const rect_x = screen_x - canvas_rectangle.left; // relative to canvas rectange
-            const rect_y = screen_y - canvas_rectangle.top; // relative to canvas rectange
-            const canvas_x = rect_x * (canvas.width / canvas_rectangle.width);
-            const canvas_y = rect_y * (canvas.height / canvas_rectangle.height);
+            const rect_x = screen_x - preview_canvas_rectangle.left; // relative to canvas rectange
+            const rect_y = screen_y - preview_canvas_rectangle.top; // relative to canvas rectange
+            const canvas_x = rect_x * (preview_canvas.width / preview_canvas_rectangle.width);
+            const canvas_y = rect_y * (preview_canvas.height / preview_canvas_rectangle.height);
             const pt = [canvas_x, canvas_y];
 
             // get left or right click
@@ -158,12 +168,25 @@
                 return;
             }
             
-            // convert the response to a blob (binary large object)
-            const blob = await response.blob();
-            const image_url = URL.createObjectURL(blob);
+            // read zip
+            const zipBlob = await response.blob();
+            const zip = await JSZip.loadAsync(zipBlob);
 
-            // update the canvas with the new image
-            update_canvas_image(image_url);
+            // Draw preview if it exists
+            if (zip.files["preview.png"]) 
+            {
+                const previewImage = await zip.files["preview.png"].async("blob");
+                const previewImageUrl = URL.createObjectURL(previewImage);
+                update_canvas_image(preview_canvas, previewImageUrl);
+            } 
+
+            // Draw simple coordinates if it exists
+            if (zip.files["coordinates.png"]) 
+            {
+                const coordinatesImage = await zip.files["coordinates.png"].async("blob");
+                const coordinatesImageUrl = URL.createObjectURL(coordinatesImage);
+                update_canvas_image(simple_coordinates_canvas, coordinatesImageUrl);
+            } 
         }
 
         async function callback_keyboard(event)
@@ -197,7 +220,7 @@
                 // draw the image on the canvas
                 const img = new Image(); 
                 img.src = `/static/results/${result.image}`;
-                img.onload = () => canvas_context.drawImage(img,0,0);
+                img.onload = () => preview_canvas_context.drawImage(img,0,0);
             }
         }
     </script>
