@@ -38,7 +38,13 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 - [ ] better readme (include instruction of git clone, how to star XD, python command etc)
 - [ ] better window layout
 - [ ] store output to folder
-- [ ] make into a web application
+- [x] make into a web application
+  - [x] better blueprint showing box and add copy button
+  - [x] add button to adjust peak identification threshold
+  - [x] better layout
+  - [ ] run gorubi as background process so can support multiple users
+  - [ ] show optimization progress to webpage
+  - [ ] add text box to adjust solver duration
 
 
 *Questions or suggestions?* Feel free to open an issue or a pull request.
