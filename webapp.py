@@ -97,7 +97,7 @@ async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = For
     }
         
 
-# get task id
+# add task
 @app.post("/add_task/", response_class=JSONResponse)
 async def add_task(file: UploadFile = File(...)):
     # --- log ---
@@ -142,11 +142,11 @@ async def add_task(file: UploadFile = File(...)):
     # return
     return response    
     
-# run optimizer
+# run solver
 @app.post("/run_solver/", response_class=JSONResponse)
 async def run_solver(task_id: str = Form(...)):
     # --- log ---
-    print(f"Running optimizer for task {task_id}")
+    print(f"Running solver for task {task_id}")
     # -----------
     
     # check if task exists
