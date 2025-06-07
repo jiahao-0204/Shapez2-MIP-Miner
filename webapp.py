@@ -36,7 +36,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # list of tasks
-tasks : dict[str, AstroidParser] = {}
+tasks_parsers : dict[str, AstroidParser] = {}
 
 # ------------------------------------------
 # Web API
@@ -71,7 +71,7 @@ async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = For
     # -----------------------------
     # send data to the parser
     # -----------------------------
-    parser = tasks[task_id]
+    parser = tasks_parsers[task_id]
     parser.add_click(x, y, left)
     
     # -----------------------------
@@ -86,7 +86,7 @@ async def increase_threshold(task_id: str = Form(...)):
     # -----------------------------
     
     # skip if task id not found
-    if task_id not in tasks:
+    if task_id not in tasks_parsers:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
     
     # --- log ---
@@ -96,7 +96,7 @@ async def increase_threshold(task_id: str = Form(...)):
     # ------------------------------
     # send data to the parser
     # ------------------------------
-    parser = tasks[task_id]
+    parser = tasks_parsers[task_id]
     parser.increase_threshold()
     
     # ------------------------------
@@ -111,7 +111,7 @@ async def decrease_threshold(task_id: str = Form(...)):
     # -----------------------------
         
     # skip if task id not found
-    if task_id not in tasks:
+    if task_id not in tasks_parsers:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
     
     # --- log ---
@@ -121,7 +121,7 @@ async def decrease_threshold(task_id: str = Form(...)):
     # ------------------------------
     # send data to the parser
     # ------------------------------
-    parser = tasks[task_id]
+    parser = tasks_parsers[task_id]
     parser.decrease_threshold()
     
     # ------------------------------
@@ -135,7 +135,7 @@ async def update_preview(task_id: str):
     # ------------------------------
     # local processing
     # ------------------------------
-    if task_id not in tasks:
+    if task_id not in tasks_parsers:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
     
     # --- log ---
@@ -145,7 +145,7 @@ async def update_preview(task_id: str):
     # ------------------------------
     # return data to the client
     # ------------------------------
-    parser = tasks[task_id]
+    parser = tasks_parsers[task_id]
     current_threshold = parser.get_threshold()
     preview_image = parser.request_preview_image()
     simple_coordinate_image = parser.request_simple_coordinates_image()
@@ -196,7 +196,7 @@ async def add_task(file: UploadFile = File(...)):
         return JSONResponse(status_code=415, content={"error": "Invalid image format or corrupted file"})
 
     # store in task dictionary or your object
-    tasks[task_id] = AstroidParser(img_bgr=img_bgr)
+    tasks_parsers[task_id] = AstroidParser(img_bgr=img_bgr)
     
     # -------------------------------
     # response to the client
@@ -219,13 +219,13 @@ async def solver_stream(task_id: str):
     # ------------------------------
     
     # skip if task id not found
-    if task_id not in tasks:
+    if task_id not in tasks_parsers:
         async def err_task():
             yield "data: Task not found\n\n"
         return StreamingResponse(err_task(), media_type="text/event-stream")
     
     # skip if no astroid locations
-    coords = tasks[task_id].get_simple_coordinates()
+    coords = tasks_parsers[task_id].get_simple_coordinates()
     if coords is None:
         async def err_location():
             yield "data: No astroid locations found\n\n"
@@ -307,7 +307,7 @@ async def run_solver(task_id: str = Form(...)):
     # -----------
     
     # check if task exists
-    if task_id not in tasks:
+    if task_id not in tasks_parsers:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
     
     
@@ -317,7 +317,7 @@ async def run_solver(task_id: str = Form(...)):
     
     astroid_solver = AstroidSolver()
     
-    astroid_location = tasks[task_id].get_simple_coordinates()
+    astroid_location = tasks_parsers[task_id].get_simple_coordinates()
     if astroid_location is None:
         return JSONResponse(status_code=400, content={"error": "No astroid location found for the task"})
     
