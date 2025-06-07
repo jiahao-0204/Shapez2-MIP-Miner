@@ -21,10 +21,7 @@ class AstroidOptimizer:
     def __init__(self):
         # general settings
         self.BELT_MAX_FLOW = 12 * 4
-        self.OPTIMIZE_MINER_TIMEOUT = 120  # seconds
-        self.OPTIMIZE_BELT_TIMEOUT = 60  # seconds
-        self.OPTIMIZE_BELT_GAP = 0.05
-                    
+        
         # margin for the board
         self.MARGIN_X = 5
         self.MARGIN_Y = 5
@@ -121,15 +118,6 @@ class AstroidOptimizer:
         # set second objective to minimize the number of belts used
         model.setObjectiveN(quicksum(all_miner_platforms + all_extender_platforms), index=0, priority=1, name="maximize_extractors", weight=-1.0)
         model.setObjectiveN(quicksum(all_belts), index=1, priority=0, name="minimize_belts", weight=1.0)
-        
-        # set time limit
-        env0 = model.getMultiobjEnv(0)
-        # env0.setParam('MIPGap', 0.05)
-        env0.setParam('TimeLimit', self.OPTIMIZE_MINER_TIMEOUT)
-        
-        env1 = model.getMultiobjEnv(1)
-        env1.setParam('MIPGap', self.OPTIMIZE_BELT_GAP)
-        env1.setParam('TimeLimit', self.OPTIMIZE_BELT_TIMEOUT)
         
         # ----------------------------------------------------------
         # add constraints for the problem
@@ -325,11 +313,15 @@ class AstroidOptimizer:
         self.nodes_sink = nodes_sink
         self.node_flow_in = node_flow_in        
         
-    def solve_problem(self):
+    def solve_problem(self, miner_timelimit = 5, belt_timelimit = 5, belt_gap = 0.05) -> None:
+        # set limits
+        optimize_miner = self.model.getMultiobjEnv(0)
+        optimize_miner.setParam('TimeLimit', miner_timelimit)
+        optimize_belts = self.model.getMultiobjEnv(1)
+        optimize_belts.setParam('MIPGap', belt_gap)
+        optimize_belts.setParam('TimeLimit', belt_timelimit)
         
-        # ----------------------------------------------------
-        # solve the model
-        # ----------------------------------------------------
+        # optimize the model
         self.model.optimize()
         
     def save_variables(self, filename: str) -> None:
