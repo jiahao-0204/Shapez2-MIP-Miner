@@ -57,7 +57,7 @@
         // -----------------------------------------------
         preview_canvas.addEventListener('mousedown', callback_canvas_clicks);
         button_submit_image.addEventListener('click', callback_submit_image);
-        window.addEventListener('keydown', callback_keyboard);
+        // window.addEventListener('keydown', callback_keyboard);
 
         // -----------------------------------------------
         // callback functions and helpers
@@ -206,40 +206,40 @@
             }
         }
 
-        async function callback_keyboard(event)
-        {
-            if (event.key === 'Enter')
-            {
-                // get data
-                const file = file_input.files[0];
-                const clicks = JSON.stringify({left: leftClicks, right: rightClicks});
+        // async function callback_keyboard(event)
+        // {
+        //     if (event.key === 'Enter')
+        //     {
+        //         // get data
+        //         const file = file_input.files[0];
+        //         const clicks = JSON.stringify({left: leftClicks, right: rightClicks});
 
-                // convert both to form
-                const form = new FormData();
-                form.append('file', file);
-                form.append('clicks', clicks);
+        //         // convert both to form
+        //         const form = new FormData();
+        //         form.append('file', file);
+        //         form.append('clicks', clicks);
 
-                // submit to server and get task_id
-                const {task_id} = await fetch('/uploads/', {method:'POST', body:form}).then(r=>r.json());
+        //         // submit to server and get task_id
+        //         const {task_id} = await fetch('/uploads/', {method:'POST', body:form}).then(r=>r.json());
 
-                // poll for result
-                let result;
-                do 
-                { 
-                    result = await fetch(`/result/${task_id}`).then(r=>r.json()); 
-                    await new Promise(r=>setTimeout(r,1000)); 
-                }
-                while (!result.ready);
+        //         // poll for result
+        //         let result;
+        //         do 
+        //         { 
+        //             result = await fetch(`/result/${task_id}`).then(r=>r.json()); 
+        //             await new Promise(r=>setTimeout(r,1000)); 
+        //         }
+        //         while (!result.ready);
                 
-                // show result in the pre named blueprint
-                preformatted_text.textContent = result.blueprint;
+        //         // show result in the pre named blueprint
+        //         preformatted_text.textContent = result.blueprint;
 
-                // draw the image on the canvas
-                const img = new Image(); 
-                img.src = `/static/results/${result.image}`;
-                img.onload = () => preview_canvas_context.drawImage(img,0,0);
-            }
-        }
+        //         // draw the image on the canvas
+        //         const img = new Image(); 
+        //         img.src = `/static/results/${result.image}`;
+        //         img.onload = () => preview_canvas_context.drawImage(img,0,0);
+        //     }
+        // }
     </script>
 </body>
 </html>
