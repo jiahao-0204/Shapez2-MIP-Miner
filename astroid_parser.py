@@ -11,6 +11,81 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
 
+def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_threshold_rel: float):
+    # get template
+    template_bgr = img_bgr[y : y + h, x : x + w]
+    
+    # convert to grayscale
+    img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    template_gray = cv2.cvtColor(template_bgr, cv2.COLOR_BGR2GRAY)
+    
+    # perform template matching
+    result = cv2.matchTemplate(img_gray, template_gray, cv2.TM_CCOEFF_NORMED)
+    
+    # update peaks
+    min_dist = min(w, h) // 2
+    peaks = peak_local_max(result, min_distance=min_dist, threshold_rel=peak_threshold_rel)
+    
+    return peaks
+
+# todo - refactor this
+def peaks_to_simple_coordinate(peaks: np.ndarray, tol: float | None = None) -> np.ndarray:
+    # check input
+    peaks = np.asarray(peaks, dtype=float)
+    if peaks.ndim != 2 or peaks.shape[1] != 2:
+        raise ValueError("peaks must be (N, 2) array of (row, col) positions")
+
+    # get x and y coordinates
+    ys, xs = peaks[:, 0], peaks[:, 1]
+
+    # ---------------------------------------------------------------------
+    # Helper – greedy 1-D clustering into bins separated by > tol_axis
+    # ---------------------------------------------------------------------
+    def cluster_axis(vals: np.ndarray, tol_axis: float) -> np.ndarray:
+        sort_idx = np.argsort(vals)
+        sorted_vals = vals[sort_idx]
+        labels_sorted = np.empty_like(sorted_vals, dtype=int)
+        cluster_centers: list[float] = []
+
+        for i, v in enumerate(sorted_vals):
+            # Assign to first existing cluster within tolerance
+            for c_idx, c in enumerate(cluster_centers):
+                if abs(v - c) <= tol_axis:
+                    labels_sorted[i] = c_idx
+                    # Running update of cluster centre for stability
+                    cluster_centers[c_idx] = (c + v) / 2.0
+                    break
+            else:  # No break → new cluster
+                cluster_centers.append(v)
+                labels_sorted[i] = len(cluster_centers) - 1
+
+        # Map to 0, 1, 2, ... in ascending spatial order
+        order = np.argsort(cluster_centers)
+        remap = {old: new for new, old in enumerate(order)}
+        labels_sorted = np.vectorize(remap.get)(labels_sorted)
+        # Restore original order of peaks
+        labels = np.empty_like(labels_sorted)
+        labels[sort_idx] = labels_sorted
+        return labels
+
+    # ---------------------------------------------------------------------
+    # Helper - Auto-estimate tolerance if not supplied (half median spacing)
+    # ---------------------------------------------------------------------
+    def auto_tol(v: np.ndarray) -> float:
+        diffs = np.diff(np.sort(v))
+        diffs = diffs[diffs > 5]  
+        return float(np.median(diffs)) / 2
+    tol_x = tol if tol is not None else auto_tol(xs)
+    tol_y = tol if tol is not None else auto_tol(ys)
+
+    # cluster
+    row_idx = cluster_axis(ys, tol_y)
+    col_idx = cluster_axis(xs, tol_x)
+    
+    # invert y and shift up
+    row_idx = np.max(row_idx) - row_idx
+    
+    return np.column_stack((col_idx, row_idx))
 class AstroidParser:
     def __init__(self, img_bgr: np.ndarray, peak_threshold_rel: float = 0.5):
         self.img_bgr = img_bgr
@@ -118,82 +193,6 @@ class AstroidParser:
     def get_simple_coordinates(self) -> Optional[np.ndarray]:
         return self.simple_coordinates
     
-def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_threshold_rel: float):
-    # get template
-    template_bgr = img_bgr[y : y + h, x : x + w]
-    
-    # convert to grayscale
-    img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-    template_gray = cv2.cvtColor(template_bgr, cv2.COLOR_BGR2GRAY)
-    
-    # perform template matching
-    result = cv2.matchTemplate(img_gray, template_gray, cv2.TM_CCOEFF_NORMED)
-    
-    # update peaks
-    min_dist = min(w, h) // 2
-    peaks = peak_local_max(result, min_distance=min_dist, threshold_rel=peak_threshold_rel)
-    
-    return peaks
-
-# todo - refactor this
-def peaks_to_simple_coordinate(peaks: np.ndarray, tol: float | None = None) -> np.ndarray:
-    # check input
-    peaks = np.asarray(peaks, dtype=float)
-    if peaks.ndim != 2 or peaks.shape[1] != 2:
-        raise ValueError("peaks must be (N, 2) array of (row, col) positions")
-
-    # get x and y coordinates
-    ys, xs = peaks[:, 0], peaks[:, 1]
-
-    # ---------------------------------------------------------------------
-    # Helper – greedy 1-D clustering into bins separated by > tol_axis
-    # ---------------------------------------------------------------------
-    def cluster_axis(vals: np.ndarray, tol_axis: float) -> np.ndarray:
-        sort_idx = np.argsort(vals)
-        sorted_vals = vals[sort_idx]
-        labels_sorted = np.empty_like(sorted_vals, dtype=int)
-        cluster_centers: list[float] = []
-
-        for i, v in enumerate(sorted_vals):
-            # Assign to first existing cluster within tolerance
-            for c_idx, c in enumerate(cluster_centers):
-                if abs(v - c) <= tol_axis:
-                    labels_sorted[i] = c_idx
-                    # Running update of cluster centre for stability
-                    cluster_centers[c_idx] = (c + v) / 2.0
-                    break
-            else:  # No break → new cluster
-                cluster_centers.append(v)
-                labels_sorted[i] = len(cluster_centers) - 1
-
-        # Map to 0, 1, 2, ... in ascending spatial order
-        order = np.argsort(cluster_centers)
-        remap = {old: new for new, old in enumerate(order)}
-        labels_sorted = np.vectorize(remap.get)(labels_sorted)
-        # Restore original order of peaks
-        labels = np.empty_like(labels_sorted)
-        labels[sort_idx] = labels_sorted
-        return labels
-
-    # ---------------------------------------------------------------------
-    # Helper - Auto-estimate tolerance if not supplied (half median spacing)
-    # ---------------------------------------------------------------------
-    def auto_tol(v: np.ndarray) -> float:
-        diffs = np.diff(np.sort(v))
-        diffs = diffs[diffs > 5]  
-        return float(np.median(diffs)) / 2
-    tol_x = tol if tol is not None else auto_tol(xs)
-    tol_y = tol if tol is not None else auto_tol(ys)
-
-    # cluster
-    row_idx = cluster_axis(ys, tol_y)
-    col_idx = cluster_axis(xs, tol_x)
-    
-    # invert y and shift up
-    row_idx = np.max(row_idx) - row_idx
-    
-    return np.column_stack((col_idx, row_idx))
-
 def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):    
     # -------------------------------------------------------------
     # validate input
