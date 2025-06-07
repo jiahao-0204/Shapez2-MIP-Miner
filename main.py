@@ -18,31 +18,29 @@ from blueprint_composer import compose_blueprint
 DIRECTIONS = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 
 class AstroidOptimizer:
-    def __init__(self, astroid_location: List[Tuple[int, int]], miner_blueprint: str):        
-        # ----------------------------------------------------------
-        # define the board
-        # ----------------------------------------------------------
-        
+    def __init__(self):
         # general settings
-        BELT_MAX_FLOW = 12 * 4
-        OPTIMIZE_MINER_TIMEOUT = 120  # seconds
-        OPTIMIZE_BELT_TIMEOUT = 60  # seconds
-        OPTIMIZE_BELT_GAP = 0.05
+        self.BELT_MAX_FLOW = 12 * 4
+        self.OPTIMIZE_MINER_TIMEOUT = 120  # seconds
+        self.OPTIMIZE_BELT_TIMEOUT = 60  # seconds
+        self.OPTIMIZE_BELT_GAP = 0.05
                     
-        # define the nodes to extract    
-        MARGIN_X = 5
-        MARGIN_Y = 5
+        # margin for the board
+        self.MARGIN_X = 5
+        self.MARGIN_Y = 5
         
+    def set_up_model(self, astroid_location: np.ndarray) -> None:
+        # define board size
+        width = max(x for x, y in astroid_location) + 2 * self.MARGIN_X
+        height = max(y for x, y in astroid_location) + 2 * self.MARGIN_Y
         
-        nodes_to_extract = [(x + MARGIN_X, y + MARGIN_Y) for x, y in astroid_location]
-        
-        width = max(x for x, y in astroid_location) + 2 * MARGIN_X
-        height = max(y for x, y in astroid_location) + 2 * MARGIN_Y
-        
-        # a list of all nodes
+        # list of all nodes
         nodes = [(x, y) for x in range(width) for y in range(height)]
         
-        # set a list of nodes that can be sinks
+        # list of source nodes
+        nodes_to_extract = [(x + self.MARGIN_X, y + self.MARGIN_Y) for x, y in astroid_location]
+                        
+        # list of sink nodes
         x_min_sink = 0
         x_max_sink = width
         y_min_sink = height - 1
@@ -87,7 +85,7 @@ class AstroidOptimizer:
                 
                 # create a variable to represent the flow of resources from the node to the end node
                 flow_var_name = f"flow_{node[0]}_{node[1]}_{end_node[0]}_{end_node[1]}"
-                flow_var = model.addVar(vtype=GRB.INTEGER, name=flow_var_name, lb=0, ub=BELT_MAX_FLOW)
+                flow_var = model.addVar(vtype=GRB.INTEGER, name=flow_var_name, lb=0, ub=self.BELT_MAX_FLOW)
                 all_flows.append(flow_var)
                 node_flow_out[node].append(flow_var)
                 node_flow_in[end_node].append(flow_var)
@@ -127,11 +125,11 @@ class AstroidOptimizer:
         # set time limit
         env0 = model.getMultiobjEnv(0)
         # env0.setParam('MIPGap', 0.05)
-        env0.setParam('TimeLimit', OPTIMIZE_MINER_TIMEOUT)
+        env0.setParam('TimeLimit', self.OPTIMIZE_MINER_TIMEOUT)
         
         env1 = model.getMultiobjEnv(1)
-        env1.setParam('MIPGap', OPTIMIZE_BELT_GAP)
-        env1.setParam('TimeLimit', OPTIMIZE_BELT_TIMEOUT)
+        env1.setParam('MIPGap', self.OPTIMIZE_BELT_GAP)
+        env1.setParam('TimeLimit', self.OPTIMIZE_BELT_TIMEOUT)
         
         # ----------------------------------------------------------
         # add constraints for the problem
@@ -233,7 +231,7 @@ class AstroidOptimizer:
                 True,
                 quicksum(node_flow_out[node]),
                 GRB.LESS_EQUAL,
-                BELT_MAX_FLOW,
+                self.BELT_MAX_FLOW,
                 name=f"belt_flow_cap_{node[0]}_{node[1]}"
             )
             
@@ -316,31 +314,57 @@ class AstroidOptimizer:
                 name=f"belt_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
             )
         
+        # ----------------------------------------------------
+        # store the model
+        # ----------------------------------------------------
+        self.model = model
+        self.all_extender_platforms = all_extender_platforms
+        self.all_miner_platforms = all_miner_platforms
+        self.all_belts = all_belts
+        self.nodes_to_extract = nodes_to_extract
+        self.nodes_sink = nodes_sink
+        self.node_flow_in = node_flow_in        
         
+    def solve_problem(self):
         
         # ----------------------------------------------------
         # solve the model
         # ----------------------------------------------------
-        model.optimize()
+        self.model.optimize()
         
+    def save_variables(self, filename: str) -> None:
         # save the variables to a file
-        var_to_txt("variables.txt", all_extender_platforms, all_miner_platforms, all_belts)
+        var_to_txt(filename, self.all_extender_platforms, self.all_miner_platforms, self.all_belts)
         
+    def get_blueprint(self, miner_blueprint: Optional[str] = None) -> str:
         # generate blueprint
-        print(compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, miner_blueprint=miner_blueprint))
-        
+        return compose_blueprint(self.all_miner_platforms, self.all_extender_platforms, self.all_belts, miner_blueprint=miner_blueprint)
+    
+    def get_rendered_image(self) -> BytesIO:
         # render the result
         blob = render_result(
-            all_miner_platforms,
-            all_extender_platforms,
-            all_belts,
-            nodes_to_extract=nodes_to_extract,
-            nodes_sink=nodes_sink,
-            node_flow_in=node_flow_in)
+            self.all_miner_platforms,
+            self.all_extender_platforms,
+            self.all_belts,
+            nodes_to_extract=self.nodes_to_extract,
+            nodes_sink=self.nodes_sink,
+            node_flow_in=self.node_flow_in)
+        
+        # return the blob
+        return blob
+    
+    def show_rendered_image(self) -> None:
+        # render the result
+        blob = render_result(
+            self.all_miner_platforms,
+            self.all_extender_platforms,
+            self.all_belts,
+            nodes_to_extract=self.nodes_to_extract,
+            nodes_sink=self.nodes_sink,
+            node_flow_in=self.node_flow_in)
         
         # show in cv2 window
         cv2.imshow("Astroid Miner Solution", cv2.imdecode(np.frombuffer(blob.getvalue(), np.uint8), cv2.IMREAD_COLOR))
-        
         cv2.waitKey(0)
 
 def render_result(all_miner_platforms: List[Var],
@@ -483,7 +507,10 @@ if __name__ == "__main__":
     # created by ET01
     MINER_BLUEPRINT = "SHAPEZ2-2-H4sIAN0dd2cA/6xaXW+bMBT9L9Ye0YTNl0Haw7J2UrVEqtqs2jRVE0qcDo1C5JBtUZX/PhIMNRCofU37ELXhnHt8fX2uDbygBxRhbHsWmt2i6AW9Kw5bhiJ0s0vjbI0sdLPKs9MXV3ERo+gHSsq/o+rb2zResWeWFeVl53+n8SHfF+/n54+f97/iLVskGePIyvZpKi66ft4WB/R4tNB1VvCE7UrWF7QsY17AoZksarZP0nWSPQ3JKgUVm5w/70TAKuruxBfd7avfXuRvKPIt9B1FZQ7uUORYZy3X/woer4qcX7FNvE+Lm6xgPIvTh5gncTnio3VGBmAklZBYCxmCkZVaV1Y7Y2khQHO26QIXCec5Z+uawO8TzJNNgb9uFcBN9HmjW4r+Oed/Y74ezRYMizF4kgRUccA9sbXM25wX9yxbM95FWOhTec2Xj+efD01Y5xLDHVux5M8QRwl/xRNwiYjQIKgLz7MrD3jB+BPjZJnj+Rslhb1uotRrWWBbI9WsR38Aq7wYKgKiGdwfxY4UpqgLA9liQcB0Y9sAHPalD9dJp5p90BxXEQOD+jiFV7XadmEIJKwyBsEqE2ybxA8vDFt9NQs0GUia0tBdcFsEQakMdQBtHAQVgj31ddzJUgv5dkN7jQdu3UCw8BvQ3NRYxcF2q/FVt2Eb71Jo93FQjdTBXXg7hmXdbQ1awaO9XpYUOpl3YXTqVUXA9lwXFcwf60lxYLK9AYPULkxPam0OuDq9CQbT2gxUxbI8HwDHywuy+XEN+rlQS1smMotXv8cwbo2pjA8oOJTwGLBGQpjx+ibgRjlcM1AtRCeVdd5v06Qor8bL3BlfxVSe0lNJkNEmKlBVRgkgNW4bD6lfINg3ARNp2RG4ZwXDNBqW5Yx6gPIdkEDzGEJk4zZOwmUe7SwMbrTf3j8S2AZfoLHBBp+C7Nsf9SOlg4Wt3KICeZRYp2METajG8R34zYVasoKjBVJ+nJah6SiGm1otVXsrZMOsTB/ndqYGqhbeiqFotzNFBsqJkXICOzja5gcwG+qUdCDzBkL6REA5ZCo54D4SNizgu2sYq+/8bbn3aPlqDcWmxioRqe4VbTlJWt7aVg0xV9xSC6oU/yKFxl4Dd1I/gRKTJdTWQ6bSA9+LBfLBUkXI4qkjJOiefYAMOk47RIGNKahuoQznYxIeffMfyc0kRFS3dEczRKbKEJkqQwZEocEZITQ4IwirvnCrRqtBUcnpTfpTaw2pN6mg3x7P8q/yv5nyAIBNiho7MTVsCXSiDkUnaVB0ov5EDduT3X7xAvxM0O0vDYU9X/Oqy8gdUMXHxoYMgQFDvZHzjLPYonA004jd0e2v6pNdUwpiToHNKWxjitCYoeUUo9P4aKFZksX88MD4Ljm9+XZ6Z+94fDwe/wsgwABYhMLTwicAAA==$"
     
-    AstroidOptimizer(
-        astroid_location=astroid_location,
-        miner_blueprint=MINER_BLUEPRINT
-    )
+    optimizer = AstroidOptimizer()
+    optimizer.set_up_model(astroid_location)
+    optimizer.solve_problem()
+    optimizer.save_variables("variables.txt")
+    blueprint = optimizer.get_blueprint(MINER_BLUEPRINT)
+    print(blueprint)
+    optimizer.show_rendered_image()
