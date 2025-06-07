@@ -18,6 +18,9 @@ const canvas_results = document.getElementById('result_canvas');
 const button_copy_blueprint = document.getElementById('copy_blueprint');
 const text_blueprint = document.getElementById('blueprint_text');
 
+const button_stream_solver_logs = document.getElementById('stream_solver_logs');
+const text_solver_output = document.getElementById("solver_output");
+
 const text_threshold = document.getElementById('threshold_text');
 const button_decrease_threshold = document.getElementById('decrease_threshold');
 const button_increase_threshold = document.getElementById('increase_threshold');
@@ -36,6 +39,7 @@ button_run_solver.addEventListener('click', callback_run_solver);
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
 button_decrease_threshold.addEventListener('click', callback_decrease_threshold);
 button_increase_threshold.addEventListener('click', callback_increase_threshold);
+button_stream_solver_logs.addEventListener('click', stream_solver_logs);
 
 // -----------------------------------------------
 // callback functions and helpers
@@ -280,6 +284,26 @@ async function callback_increase_threshold()
 
     update_preview()
 }   
+
+function stream_solver_logs() 
+{
+    // clear output
+    text_solver_output.textContent = "";
+
+    const eventSource = new EventSource(`/solver_stream/${task_id}`);
+
+    eventSource.onmessage = function(event)
+    {
+        text_solver_output.textContent += event.data + "\n";
+        text_solver_output.scrollTop = text_solver_output.scrollHeight;
+    };
+
+    eventSource.onerror = function()
+    {
+        text_solver_output.textContent += "\n[Connection closed]\n";
+        eventSource.close();
+    };
+}
 
 async function callback_run_solver() 
 {

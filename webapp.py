@@ -4,6 +4,10 @@ from uuid import uuid4
 from io import BytesIO
 from zipfile import ZipFile
 import base64
+from contextlib import redirect_stdout
+import io
+import asyncio
+import threading
 
 # third party
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Request
@@ -207,7 +211,90 @@ async def add_task(file: UploadFile = File(...)):
     
     # return
     return response    
+
+@app.get("/solver_stream/{task_id}")
+async def solver_stream(task_id: str):
+    # ------------------------------
+    # local processing
+    # ------------------------------
     
+    # skip if task id not found
+    if task_id not in tasks:
+        async def err_task():
+            yield "data: Task not found\n\n"
+        return StreamingResponse(err_task(), media_type="text/event-stream")
+    
+    # skip if no astroid locations
+    coords = tasks[task_id].get_simple_coordinates()
+    if coords is None:
+        async def err_location():
+            yield "data: No astroid locations found\n\n"
+        return StreamingResponse(err_location(), media_type="text/event-stream")
+    
+    # create solver and add astroid locations
+    solver = AstroidSolver()
+    solver.add_astroid_locations(astroid_location=coords)
+    
+    # -------------------------------
+    # separate thread
+    # -------------------------------
+    
+    # get the queue and loop to handle multithreading
+    queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+    
+    # run the solver in a separate thread to avoid blocking the event loop
+    def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
+        # run solver and redirect output
+        
+        class StreamToQueue(io.StringIO):
+            def __init__(self, queue, loop):
+                super().__init__()
+                self.queue = queue
+                self.loop = loop
+                self._buffer = ""
+
+            def write(self, s):
+                self._buffer += s
+                while "\n" in self._buffer:
+                    line, self._buffer = self._buffer.split("\n", 1)
+                    self.loop.call_soon_threadsafe(self.queue.put_nowait, f"data: {line}\n\n")
+                return len(s)
+
+            def flush(self):
+                if self._buffer:
+                    self.loop.call_soon_threadsafe(self.queue.put_nowait, f"data: {self._buffer}\n\n")
+                    self._buffer = ""
+
+        stream_writer = StreamToQueue(queue, loop)
+        with redirect_stdout(stream_writer):
+            astroid_solver.run_solver()
+            
+        # push None so stream() can break the loop
+        loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
+        loop.call_soon_threadsafe(queue.put_nowait, None)
+        
+    threading.Thread(target=separate_thread_run_solver, args=(solver, queue, loop)).start()
+
+    # -------------------------------
+    # current thread
+    # -------------------------------
+    
+    # collect from the queue and yield as a stream
+    async def stream():
+        while True:
+            # get the next line from the queue
+            line = await queue.get()
+            
+            # break if None is received
+            if line is None:
+                break
+            
+            # yield the line as a server-sent event
+            yield line
+            
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
 # run solver
 @app.post("/run_solver/", response_class=JSONResponse)
 async def run_solver(task_id: str = Form(...)):
