@@ -13,7 +13,7 @@
     <button id="submit_image">Submit image</button>
 
     <!-- a button to call a script function -->
-    <button id="run_optimizer">Run optimizer</button>
+    <button id="run_solver">Run Solver</button>
 
     <!-- a canvas for us to click-->
     <canvas id="canvas" width="800" height="600" style="border:1px solid black;"></canvas>
@@ -40,12 +40,12 @@
         // -----------------------------------------------
         // get web page elements
         // -----------------------------------------------
-        const file_input = document.getElementById('fileInput'); 
-        const preview_canvas = document.getElementById('canvas');
-        const simple_coordinates_canvas = document.getElementById('simple_coordinates_canvas');
-        const result_canvas = document.getElementById('result_canvas');
+        const button_upload_file = document.getElementById('fileInput'); 
         const button_submit_image = document.getElementById('submit_image');
-        const button_run_optimizer = document.getElementById('run_optimizer');
+        const button_run_solver = document.getElementById('run_solver');
+        const canvas_preview = document.getElementById('canvas');
+        const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
+        const canvas_results = document.getElementById('result_canvas');
 
         const preformatted_text = document.getElementById('blueprint');
         
@@ -53,26 +53,26 @@
         // setup canvas
         // -----------------------------------------------
         const preview_canvas_width = 800;
-        preview_canvas.style.width = `${preview_canvas_width}px`;
-        preview_canvas.style.height = 'auto'; // set height to auto
-        preview_canvas.oncontextmenu = () => false;
+        canvas_preview.style.width = `${preview_canvas_width}px`;
+        canvas_preview.style.height = 'auto'; // set height to auto
+        canvas_preview.oncontextmenu = () => false;
 
         const simple_coordinates_canvas_width = 300;
-        simple_coordinates_canvas.style.width = `${simple_coordinates_canvas_width}px`;
-        simple_coordinates_canvas.style.height = 'auto'; // set height to auto
-        simple_coordinates_canvas.oncontextmenu = () => false;
+        canvas_simple_coordinates.style.width = `${simple_coordinates_canvas_width}px`;
+        canvas_simple_coordinates.style.height = 'auto'; // set height to auto
+        canvas_simple_coordinates.oncontextmenu = () => false;
 
         const result_canvas_width = 800;
-        result_canvas.style.width = `${result_canvas_width}px`;
-        result_canvas.style.height = 'auto'; // set height to auto
-        result_canvas.oncontextmenu = () => false;
+        canvas_results.style.width = `${result_canvas_width}px`;
+        canvas_results.style.height = 'auto'; // set height to auto
+        canvas_results.oncontextmenu = () => false;
 
         // -----------------------------------------------
         // link element to callbacks
         // -----------------------------------------------
-        preview_canvas.addEventListener('mousedown', callback_canvas_clicks);
+        canvas_preview.addEventListener('mousedown', callback_canvas_clicks);
         button_submit_image.addEventListener('click', callback_submit_image);
-        button_run_optimizer.addEventListener('click', callback_run_optimizer);
+        button_run_solver.addEventListener('click', callback_run_solver);
         // window.addEventListener('keydown', callback_keyboard);
 
         // -----------------------------------------------
@@ -105,7 +105,7 @@
         async function callback_submit_image() 
         {
             // ensure a file is selected
-            if (file_input.files.length === 0) 
+            if (button_upload_file.files.length === 0) 
             {
                 console.error('Please upload a file first.');
                 return;
@@ -116,11 +116,11 @@
             rightClicks = [];
 
             // show the file in the convas
-            const file = file_input.files[0];
+            const file = button_upload_file.files[0];
             const reader = new FileReader();
             reader.onload = function(event)
             {
-                update_canvas_image(preview_canvas, event.target.result); // update canvas with the image
+                update_canvas_image(canvas_preview, event.target.result); // update canvas with the image
             };
             reader.readAsDataURL(file); // read file as data URL
             
@@ -155,13 +155,13 @@
             }
 
             // compute position
-            const preview_canvas_rectangle = preview_canvas.getBoundingClientRect(); // update the rectangle entity every time
+            const preview_canvas_rectangle = canvas_preview.getBoundingClientRect(); // update the rectangle entity every time
             const screen_x = event.clientX;
             const screen_y = event.clientY;
             const rect_x = screen_x - preview_canvas_rectangle.left; // relative to canvas rectange
             const rect_y = screen_y - preview_canvas_rectangle.top; // relative to canvas rectange
-            const canvas_x = rect_x * (preview_canvas.width / preview_canvas_rectangle.width);
-            const canvas_y = rect_y * (preview_canvas.height / preview_canvas_rectangle.height);
+            const canvas_x = rect_x * (canvas_preview.width / preview_canvas_rectangle.width);
+            const canvas_y = rect_y * (canvas_preview.height / preview_canvas_rectangle.height);
             const int_canvas_x = Math.round(canvas_x);
             const int_canvas_y = Math.round(canvas_y);
 
@@ -215,17 +215,17 @@
             if (preview_image_base64) 
             {
                 const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
-                update_canvas_image(preview_canvas, previewImageUrl);
+                update_canvas_image(canvas_preview, previewImageUrl);
             } 
             
             if (simple_coordinates_image_base64) 
             {
                 const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
-                update_canvas_image(simple_coordinates_canvas, coordinatesImageUrl);
+                update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
             }
         }
 
-        async function callback_run_optimizer() 
+        async function callback_run_solver() 
         {
             // ensure a task_id is available
             if (!task_id) 
@@ -237,7 +237,7 @@
             // send request to run optimizer
             const form = new FormData();
             form.append('task_id', task_id); // add task_id to the form
-            const response = await fetch(`/run_optimizer/`, {method: 'POST', body: form});
+            const response = await fetch(`/run_solver/`, {method: 'POST', body: form});
 
             // ensure the response is ok
             if (!response.ok) 
@@ -250,46 +250,11 @@
             const result = await response.json();
 
             // draw the image on the canvas
-            update_canvas_image(result_canvas, `data:image/png;base64,${result.solution_image}`);
+            update_canvas_image(canvas_results, `data:image/png;base64,${result.solution_image}`);
 
             // show result in the pre named blueprint
             preformatted_text.textContent = result.blueprint;
         }
-
-        // async function callback_keyboard(event)
-        // {
-        //     if (event.key === 'Enter')
-        //     {
-        //         // get data
-        //         const file = file_input.files[0];
-        //         const clicks = JSON.stringify({left: leftClicks, right: rightClicks});
-
-        //         // convert both to form
-        //         const form = new FormData();
-        //         form.append('file', file);
-        //         form.append('clicks', clicks);
-
-        //         // submit to server and get task_id
-        //         const {task_id} = await fetch('/uploads/', {method:'POST', body:form}).then(r=>r.json());
-
-        //         // poll for result
-        //         let result;
-        //         do 
-        //         { 
-        //             result = await fetch(`/result/${task_id}`).then(r=>r.json()); 
-        //             await new Promise(r=>setTimeout(r,1000)); 
-        //         }
-        //         while (!result.ready);
-                
-        //         // show result in the pre named blueprint
-        //         preformatted_text.textContent = result.blueprint;
-
-        //         // draw the image on the canvas
-        //         const img = new Image(); 
-        //         img.src = `/static/results/${result.image}`;
-        //         img.onload = () => preview_canvas_context.drawImage(img,0,0);
-        //     }
-        // }
     </script>
 </body>
 </html>

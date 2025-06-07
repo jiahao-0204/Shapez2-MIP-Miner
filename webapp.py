@@ -16,7 +16,7 @@ import cv2
 
 # project
 from astroid_parser import AstroidParser
-from astroid_optimizer import AstroidOptimizer
+from astroid_solver import AstroidSolver
 
 # ------------------------------------------
 # Setup
@@ -142,26 +142,9 @@ async def add_task(file: UploadFile = File(...)):
     # return
     return response    
     
-    # # create a unique task id
-    # task_id = uuid4().hex
-    
-    # # save file to temp location and pass the path to the background task
-    # filename = file.filename or ""
-    # suffix = Path(filename).suffix if filename else ""
-    # tmp_path = Path(f"/tmp/{uuid4()}{suffix}")
-    # file_content = await file.read()
-    # with tmp_path.open("wb") as f:
-    #     f.write(file_content)
-        
-    # # add the task to the background tasks
-    # background_tasks.add_task(process_data, task_id, tmp_path, clicks)
-    
-    # # return the response
-    # return {"task_id": task_id}
-
 # run optimizer
-@app.post("/run_optimizer/", response_class=JSONResponse)
-async def run_optimizer(task_id: str = Form(...)):
+@app.post("/run_solver/", response_class=JSONResponse)
+async def run_solver(task_id: str = Form(...)):
     # --- log ---
     print(f"Running optimizer for task {task_id}")
     # -----------
@@ -170,17 +153,17 @@ async def run_optimizer(task_id: str = Form(...)):
     if task_id not in tasks:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
     
-    astroid_optimizer = AstroidOptimizer()
+    astroid_solver = AstroidSolver()
     
     astroid_location = tasks[task_id].get_simple_coordinates()
     if astroid_location is None:
         return JSONResponse(status_code=400, content={"error": "No astroid location found for the task"})
     
-    astroid_optimizer.set_up_model(astroid_location=astroid_location)
-    astroid_optimizer.solve_problem()
+    astroid_solver.add_astroid_locations(astroid_location=astroid_location)
+    astroid_solver.run_solver()
     
     # get the solution image
-    solution_image = astroid_optimizer.get_rendered_image()
+    solution_image = astroid_solver.get_solution_image()
     
     if solution_image is None:
         return JSONResponse(status_code=500, content={"error": "Failed to generate solution image"})
@@ -189,7 +172,7 @@ async def run_optimizer(task_id: str = Form(...)):
     solution_b64 = base64.b64encode(solution_image.getvalue()).decode()
     
     # get blue print
-    blueprint = astroid_optimizer.get_blueprint()
+    blueprint = astroid_solver.get_solution_blueprint()
     
     if blueprint is None:
         return JSONResponse(status_code=500, content={"error": "Failed to generate blueprint"})
