@@ -18,6 +18,10 @@ const canvas_results = document.getElementById('result_canvas');
 const button_copy_blueprint = document.getElementById('copy_blueprint');
 const text_blueprint = document.getElementById('blueprint_text');
 
+const text_threshold = document.getElementById('threshold_text');
+const button_decrease_threshold = document.getElementById('decrease_threshold');
+const button_increase_threshold = document.getElementById('increase_threshold');
+
 // -----------------------------------------------
 // setup elements
 // -----------------------------------------------
@@ -30,6 +34,8 @@ canvas_preview.addEventListener('mousedown', callback_canvas_clicks);
 button_upload_file.addEventListener('click', callback_upload_file);
 button_run_solver.addEventListener('click', callback_run_solver);
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
+button_decrease_threshold.addEventListener('click', callback_decrease_threshold);
+button_increase_threshold.addEventListener('click', callback_increase_threshold);
 
 // -----------------------------------------------
 // callback functions and helpers
@@ -202,7 +208,109 @@ async function callback_canvas_clicks(event)
         const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
         update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
     }
+
+    const current_threshold = data.current_threshold;
+    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
 }
+
+async function callback_decrease_threshold()
+{
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
+    // won't work if no task_id
+    if (!task_id) 
+    {
+        console.error('No task_id available. Please upload a file first.');
+        return;
+    }
+
+    // send request to decrease threshold
+    const form = new FormData();
+    form.append('task_id', task_id); // add task_id to the form
+    const response = await fetch(`/decrease_threshold/`, {method: 'POST', body: form})
+
+    // ----------------------------------------------------
+    // process response
+    // ----------------------------------------------------
+    // ensure the response is ok
+    if (!response.ok) 
+    {
+        console.error('Failed to decrease threshold:', response.statusText);
+        return;
+    }
+
+    // decode image
+    const data = await response.json();
+    const preview_image_base64 = data.preview_image;
+    const simple_coordinates_image_base64 = data.simple_coordinate_image;
+    
+    if (preview_image_base64) 
+    {
+        const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
+        update_canvas_image(canvas_preview, previewImageUrl);
+    } 
+    
+    if (simple_coordinates_image_base64) 
+    {
+        const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
+        update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
+    }
+
+    const current_threshold = data.current_threshold;
+    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
+}
+
+async function callback_increase_threshold()
+{
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
+    // won't work if no task_id
+    if (!task_id) 
+    {
+        console.error('No task_id available. Please upload a file first.');
+        return;
+    }
+
+    // send request to increase threshold
+    const form = new FormData();
+    form.append('task_id', task_id); // add task_id to the form
+    const response = await fetch(`/increase_threshold/`, {method: 'POST', body: form})
+
+    // ----------------------------------------------------
+    // process response
+    // ----------------------------------------------------
+    
+    // ensure the response is ok
+    if (!response.ok) 
+    {
+        console.error('Failed to increase threshold:', response.statusText);
+        return;
+    }
+
+    // decode image
+    const data = await response.json();
+    const preview_image_base64 = data.preview_image;
+    const simple_coordinates_image_base64 = data.simple_coordinate_image;
+    
+    if (preview_image_base64) 
+    {
+        const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
+        update_canvas_image(canvas_preview, previewImageUrl);
+    } 
+    
+    if (simple_coordinates_image_base64) 
+    {
+        const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
+        update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
+    }
+
+    const current_threshold = data.current_threshold;
+    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
+}   
 
 async function callback_run_solver() 
 {

@@ -89,13 +89,68 @@ async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = For
     
     preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
     simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
+    current_threshold = tasks[task_id].get_threshold()
 
     return {
         "task_id": task_id,
         "preview_image": preview_b64,
-        "simple_coordinate_image": simple_b64
+        "simple_coordinate_image": simple_b64,
+        "current_threshold": current_threshold
     }
         
+@app.post("/increase_threshold/", response_class=JSONResponse)
+async def increase_threshold(task_id: str = Form(...)):
+    # --- log ---
+    print(f"Increasing threshold for task {task_id}")
+    # -----------
+    
+    # check if task exists
+    if task_id not in tasks:
+        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    
+    # increase threshold
+    current_threshold = tasks[task_id].increase_threshold()
+    
+    # get updated image from the parser
+    preview_image = tasks[task_id].request_preview_image()
+    simple_coordinate_image = tasks[task_id].request_simple_coordinates_image()
+            
+    preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
+    simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
+
+    return {
+        "task_id": task_id,
+        "preview_image": preview_b64,
+        "simple_coordinate_image": simple_b64,
+        "current_threshold": current_threshold
+    }
+
+@app.post("/decrease_threshold/", response_class=JSONResponse)
+async def decrease_threshold(task_id: str = Form(...)):
+    # --- log ---
+    print(f"Decreasing threshold for task {task_id}")
+    # -----------
+    
+    # check if task exists
+    if task_id not in tasks:
+        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    
+    # decrease threshold
+    current_threshold = tasks[task_id].decrease_threshold()
+    
+    # get updated image from the parser
+    preview_image = tasks[task_id].request_preview_image()
+    simple_coordinate_image = tasks[task_id].request_simple_coordinates_image()
+            
+    preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
+    simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
+
+    return {
+        "task_id": task_id,
+        "preview_image": preview_b64,
+        "simple_coordinate_image": simple_b64,
+        "current_threshold": current_threshold
+    }
 
 # add task
 @app.post("/add_task/", response_class=JSONResponse)
