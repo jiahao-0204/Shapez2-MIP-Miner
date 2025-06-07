@@ -25,7 +25,8 @@
     <canvas id="result_canvas" width="800" height="600" style="border:1px solid black;"></canvas>
     
     <!-- a place to show the result as preformatted text -->
-    <pre id="blueprint"></pre>
+    <button id="copy_blueprint">Copy Blueprint</button>
+    <code id="blueprint_text" style="display: block; white-space: pre-wrap; word-break: break-word;"></code>
 
     <!-- include -->
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script> -->
@@ -47,10 +48,11 @@
         const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
         const canvas_results = document.getElementById('result_canvas');
 
-        const preformatted_text = document.getElementById('blueprint');
+        const button_copy_blueprint = document.getElementById('copy_blueprint');
+        const text_blueprint = document.getElementById('blueprint_text');
         
         // -----------------------------------------------
-        // setup canvas
+        // setup elements
         // -----------------------------------------------
         const preview_canvas_width = 800;
         canvas_preview.style.width = `${preview_canvas_width}px`;
@@ -67,13 +69,16 @@
         canvas_results.style.height = 'auto'; // set height to auto
         canvas_results.oncontextmenu = () => false;
 
+        // default text for the blueprint
+        text_blueprint.textContent = 'No blueprint available. Please run the solver first.';
+
         // -----------------------------------------------
         // link element to callbacks
         // -----------------------------------------------
         canvas_preview.addEventListener('mousedown', callback_canvas_clicks);
         button_submit_image.addEventListener('click', callback_submit_image);
         button_run_solver.addEventListener('click', callback_run_solver);
-        
+        button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
 
         // -----------------------------------------------
         // callback functions and helpers
@@ -253,7 +258,26 @@
             update_canvas_image(canvas_results, `data:image/png;base64,${result.solution_image}`);
 
             // show result in the pre named blueprint
-            preformatted_text.textContent = result.blueprint;
+            text_blueprint.textContent = result.blueprint;
+        }
+
+        function callback_copy_blueprint() 
+        {
+            // ensure a blueprint is available
+            if (!text_blueprint.textContent) 
+            {
+                console.error('No blueprint available to copy.');
+                return;
+            }
+
+            // copy the blueprint to clipboard
+            navigator.clipboard.writeText(text_blueprint.textContent)
+                .then(() => {
+                    console.log('Blueprint copied to clipboard successfully!');
+                })
+                .catch(err => {
+                    console.error('Failed to copy blueprint:', err);
+                });
         }
     </script>
 </body>
