@@ -12,11 +12,17 @@
     <!-- a button to call a script function -->
     <button id="submit_image">Submit image</button>
 
+    <!-- a button to call a script function -->
+    <button id="run_optimizer">Run optimizer</button>
+
     <!-- a canvas for us to click-->
     <canvas id="canvas" width="800" height="600" style="border:1px solid black;"></canvas>
 
     <!-- a canvas to show preview -->
     <canvas id="simple_coordinates_canvas" width="800" height="600" style="border:1px solid black;"></canvas>
+
+    <!-- a canvas to show preview -->
+    <canvas id="result_canvas" width="800" height="600" style="border:1px solid black;"></canvas>
     
     <!-- a place to show the result as preformatted text -->
     <pre id="blueprint"></pre>
@@ -37,7 +43,10 @@
         const file_input = document.getElementById('fileInput'); 
         const preview_canvas = document.getElementById('canvas');
         const simple_coordinates_canvas = document.getElementById('simple_coordinates_canvas');
+        const result_canvas = document.getElementById('result_canvas');
         const button_submit_image = document.getElementById('submit_image');
+        const button_run_optimizer = document.getElementById('run_optimizer');
+
         const preformatted_text = document.getElementById('blueprint');
         
         // -----------------------------------------------
@@ -53,11 +62,17 @@
         simple_coordinates_canvas.style.height = 'auto'; // set height to auto
         simple_coordinates_canvas.oncontextmenu = () => false;
 
+        const result_canvas_width = 800;
+        result_canvas.style.width = `${result_canvas_width}px`;
+        result_canvas.style.height = 'auto'; // set height to auto
+        result_canvas.oncontextmenu = () => false;
+
         // -----------------------------------------------
         // link element to callbacks
         // -----------------------------------------------
         preview_canvas.addEventListener('mousedown', callback_canvas_clicks);
         button_submit_image.addEventListener('click', callback_submit_image);
+        button_run_optimizer.addEventListener('click', callback_run_optimizer);
         // window.addEventListener('keydown', callback_keyboard);
 
         // -----------------------------------------------
@@ -208,6 +223,37 @@
                 const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
                 update_canvas_image(simple_coordinates_canvas, coordinatesImageUrl);
             }
+        }
+
+        async function callback_run_optimizer() 
+        {
+            // ensure a task_id is available
+            if (!task_id) 
+            {
+                console.error('No task_id available. Please upload a file first.');
+                return;
+            }
+
+            // send request to run optimizer
+            const form = new FormData();
+            form.append('task_id', task_id); // add task_id to the form
+            const response = await fetch(`/run_optimizer/`, {method: 'POST', body: form});
+
+            // ensure the response is ok
+            if (!response.ok) 
+            {
+                console.error('Failed to run optimizer:', response.statusText);
+                return;
+            }
+
+            // result is a file and a string
+            const result = await response.json();
+
+            // draw the image on the canvas
+            update_canvas_image(result_canvas, `data:image/png;base64,${result.solution_image}`);
+
+            // show result in the pre named blueprint
+            preformatted_text.textContent = result.blueprint;
         }
 
         // async function callback_keyboard(event)
