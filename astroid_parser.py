@@ -256,9 +256,9 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
         if key == ord('q'):
             break
     
-    return astroid_parser.get_simple_coordinates()
     # cv2.destroyAllWindows()
     # plt.close()
+    return astroid_parser.get_simple_coordinates()
 
 if __name__ == "__main__":
     # example usage
