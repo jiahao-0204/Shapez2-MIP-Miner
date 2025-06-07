@@ -168,25 +168,42 @@
                 return;
             }
             
-            // read zip
-            const zipBlob = await response.blob();
-            const zip = await JSZip.loadAsync(zipBlob);
+            // // read zip
+            // const zipBlob = await response.blob();
+            // const zip = await JSZip.loadAsync(zipBlob);
 
-            // Draw preview if it exists
-            if (zip.files["preview.png"]) 
+            // // Draw preview if it exists
+            // if (zip.files["preview.png"]) 
+            // {
+            //     const previewImage = await zip.files["preview.png"].async("blob");
+            //     const previewImageUrl = URL.createObjectURL(previewImage);
+            //     update_canvas_image(preview_canvas, previewImageUrl);
+            // } 
+
+            // // Draw simple coordinates if it exists
+            // if (zip.files["coordinates.png"]) 
+            // {
+            //     const coordinatesImage = await zip.files["coordinates.png"].async("blob");
+            //     const coordinatesImageUrl = URL.createObjectURL(coordinatesImage);
+            //     update_canvas_image(simple_coordinates_canvas, coordinatesImageUrl);
+            // } 
+
+            // returned json 
+            const data = await response.json();
+            const preview_image_base64 = data.preview_image;
+            const simple_coordinates_image_base64 = data.simple_coordinate_image;
+            
+            if (preview_image_base64) 
             {
-                const previewImage = await zip.files["preview.png"].async("blob");
-                const previewImageUrl = URL.createObjectURL(previewImage);
+                const previewImageUrl = `data:image/png;base64,${preview_image_base64}`;
                 update_canvas_image(preview_canvas, previewImageUrl);
             } 
-
-            // Draw simple coordinates if it exists
-            if (zip.files["coordinates.png"]) 
+            
+            if (simple_coordinates_image_base64) 
             {
-                const coordinatesImage = await zip.files["coordinates.png"].async("blob");
-                const coordinatesImageUrl = URL.createObjectURL(coordinatesImage);
+                const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
                 update_canvas_image(simple_coordinates_canvas, coordinatesImageUrl);
-            } 
+            }
         }
 
         async function callback_keyboard(event)

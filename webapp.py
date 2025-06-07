@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 from io import BytesIO
 from zipfile import ZipFile
+import base64
 
 # third party
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Request
@@ -46,7 +47,7 @@ def process_data(task_id : str, tmp_path : Path, clicks : str):
     print(f"Processing task {task_id} with file {tmp_path} and clicks {clicks}")
 
 # send clicks
-@app.post("/send_clicks/", response_class=StreamingResponse)
+@app.post("/send_clicks/")
 async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = Form(...), left: bool = Form(...)):
     # --- log ---
     print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
@@ -74,16 +75,25 @@ async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = For
     preview_image = tasks[task_id].request_preview_image()
     simple_coordinate_image = tasks[task_id].request_simple_coordinates_image()
         
-    # Create a zip in memory
-    zip_buffer = BytesIO()
-    with ZipFile(zip_buffer, "w") as zip_file:
-        if preview_image is not None:
-            zip_file.writestr("preview.png", preview_image.read())
-        if simple_coordinate_image is not None:
-            zip_file.writestr("coordinates.png", simple_coordinate_image.read())
-    zip_buffer.seek(0)
+    # # Create a zip in memory
+    # zip_buffer = BytesIO()
+    # with ZipFile(zip_buffer, "w") as zip_file:
+    #     if preview_image is not None:
+    #         zip_file.writestr("preview.png", preview_image.read())
+    #     if simple_coordinate_image is not None:
+    #         zip_file.writestr("coordinates.png", simple_coordinate_image.read())
+    # zip_buffer.seek(0)
 
-    return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={task_id}_results.zip"})
+    # return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={task_id}_results.zip"})
+    
+    preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
+    simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
+
+    return {
+        "task_id": task_id,
+        "preview_image": preview_b64,
+        "simple_coordinate_image": simple_b64
+    }
         
 
 # get task id
