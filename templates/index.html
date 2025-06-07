@@ -20,22 +20,21 @@
             gap: 10px;
         }
         
-        .image
-        {
-            width: 100%;
-            height: auto;
-            border: 1px solid black;
-        }
-
         .blueprint_text
         {
             display: block;
             width: 100%;
             height: auto;
             overflow-y: auto;
-            /* white-space: pre-wrap; */
             word-break: break-word;
-            /* style="display: block; white-space: pre-wrap; word-break: break-word;" */
+        }
+
+        /* element type selector */
+        canvas
+        {
+            width: 100%;
+            height: auto;
+            border: 1px solid black;
         }
     </style>
 </head>
@@ -50,10 +49,10 @@
         <!-- preview and simple coordinate -->
         <div class="two_col_container">
             <!-- preview -->
-            <canvas class="image" id="preview_canvas"></canvas>
+            <canvas id="preview_canvas"></canvas>
 
             <!-- simple coordinates -->
-            <canvas class="image" id="simple_coordinates_canvas"></canvas>
+            <canvas id="simple_coordinates_canvas"></canvas>
         </div>
         
         <!-- run solver -->
@@ -63,7 +62,7 @@
         <div class="two_col_container">
             
             <!-- solution -->
-            <canvas class="image" id="result_canvas"></canvas>
+            <canvas id="result_canvas"></canvas>
 
             <!-- blueprint with copy button -->
             <div class="list_container">    
