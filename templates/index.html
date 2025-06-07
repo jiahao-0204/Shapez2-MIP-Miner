@@ -43,10 +43,15 @@
         // -----------------------------------------------
         // setup canvas
         // -----------------------------------------------
-        const canvas_display_width = 800;
-        preview_canvas.style.width = `${canvas_display_width}px`;
+        const preview_canvas_width = 800;
+        preview_canvas.style.width = `${preview_canvas_width}px`;
         preview_canvas.style.height = 'auto'; // set height to auto
         preview_canvas.oncontextmenu = () => false;
+
+        const simple_coordinates_canvas_width = 300;
+        simple_coordinates_canvas.style.width = `${simple_coordinates_canvas_width}px`;
+        simple_coordinates_canvas.style.height = 'auto'; // set height to auto
+        simple_coordinates_canvas.oncontextmenu = () => false;
 
         // -----------------------------------------------
         // link element to callbacks
