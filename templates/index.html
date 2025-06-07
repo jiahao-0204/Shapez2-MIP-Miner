@@ -4,31 +4,60 @@
 <head>
     <meta charset="UTF-8">
     <title>Shapez2 Solver</title>
+    <style>
+        /* class selector */
+        .two_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px;
+        }
+
+        .list_container 
+        {
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+        
+        .image
+        {
+            width: 100%;
+            height: auto;
+            border: 1px solid black;
+        }
+    </style>
 </head>
 <body>
-    <!-- a file type with id fileInput, that allow us to upload file -->
-    <input type="file" id="fileInput">
+    <div class="list_container">
+        <!-- File input -->
+        <input type="file" id="fileInput">
+        
+        <button id="submit_image">Create Task</button>
 
-    <!-- a button to call a script function -->
-    <button id="submit_image">Submit image</button>
+        <div class="two_col_container">
+            <!-- preview -->
+            <canvas class="image" id="canvas"></canvas>
 
-    <!-- a button to call a script function -->
-    <button id="run_solver">Run Solver</button>
+            <!-- simple coordinates -->
+            <canvas class="image" id="simple_coordinates_canvas"></canvas>
+        </div>
+        
+        <button id="run_solver">Run Solver</button>
+        
+        
+        <div class="two_col_container">
+            
+            <canvas class="image" id="result_canvas"></canvas>
 
-    <!-- a canvas for us to click-->
-    <canvas id="canvas" width="800" height="600" style="border:1px solid black;"></canvas>
+            <div class="list_container">    
+                <button id="copy_blueprint">Copy Blueprint</button>
+                <code id="blueprint_text" style="display: block; white-space: pre-wrap; word-break: break-word;"></code>
+            </div>
+        </div>
+    </div>
 
-    <!-- a canvas to show preview -->
-    <canvas id="simple_coordinates_canvas" width="800" height="600" style="border:1px solid black;"></canvas>
-
-    <!-- a canvas to show preview -->
-    <canvas id="result_canvas" width="800" height="600" style="border:1px solid black;"></canvas>
-    
-    <!-- a place to show the result as preformatted text -->
-    <button id="copy_blueprint">Copy Blueprint</button>
-    <code id="blueprint_text" style="display: block; white-space: pre-wrap; word-break: break-word;"></code>
-
-    <!-- include -->
+    <!-- Script include -->
     <script src="/static/main.js" defer></script>
 </body>
 </html>

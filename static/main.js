@@ -21,20 +21,7 @@ const text_blueprint = document.getElementById('blueprint_text');
 // -----------------------------------------------
 // setup elements
 // -----------------------------------------------
-const preview_canvas_width = 800;
-canvas_preview.style.width = `${preview_canvas_width}px`;
-canvas_preview.style.height = 'auto'; // set height to auto
 canvas_preview.oncontextmenu = () => false;
-
-const simple_coordinates_canvas_width = 300;
-canvas_simple_coordinates.style.width = `${simple_coordinates_canvas_width}px`;
-canvas_simple_coordinates.style.height = 'auto'; // set height to auto
-canvas_simple_coordinates.oncontextmenu = () => false;
-
-const result_canvas_width = 800;
-canvas_results.style.width = `${result_canvas_width}px`;
-canvas_results.style.height = 'auto'; // set height to auto
-canvas_results.oncontextmenu = () => false;
 
 // default text for the blueprint
 text_blueprint.textContent = 'No blueprint available. Please run the solver first.';
