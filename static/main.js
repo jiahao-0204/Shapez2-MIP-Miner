@@ -8,10 +8,10 @@ let task_id = null;
 // -----------------------------------------------
 // get web page elements
 // -----------------------------------------------
-const button_upload_file = document.getElementById('fileInput'); 
-const button_submit_image = document.getElementById('submit_image');
+const button_choose_file = document.getElementById('choose_file'); 
+const button_upload_file = document.getElementById('upload_file');
 const button_run_solver = document.getElementById('run_solver');
-const canvas_preview = document.getElementById('canvas');
+const canvas_preview = document.getElementById('preview_canvas');
 const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
 const canvas_results = document.getElementById('result_canvas');
 
@@ -23,14 +23,11 @@ const text_blueprint = document.getElementById('blueprint_text');
 // -----------------------------------------------
 canvas_preview.oncontextmenu = () => false;
 
-// default text for the blueprint
-text_blueprint.textContent = 'No blueprint available. Please run the solver first.';
-
 // -----------------------------------------------
 // link element to callbacks
 // -----------------------------------------------
 canvas_preview.addEventListener('mousedown', callback_canvas_clicks);
-button_submit_image.addEventListener('click', callback_submit_image);
+button_upload_file.addEventListener('click', callback_upload_file);
 button_run_solver.addEventListener('click', callback_run_solver);
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
 
@@ -61,14 +58,16 @@ function update_canvas_image(canvas, image_url)
 }
 
 
-async function callback_submit_image() 
+async function callback_upload_file() 
 {
+    // upload file and get back task_id
+
     // ----------------------------------------------------
     // local processing
     // ----------------------------------------------------
 
     // check file input
-    if (button_upload_file.files.length === 0) 
+    if (button_choose_file.files.length === 0) 
     {
         console.error('Please upload a file first.');
         return;
@@ -79,7 +78,7 @@ async function callback_submit_image()
     rightClicks = [];
 
     // show the file in the convas
-    const file = button_upload_file.files[0];
+    const file = button_choose_file.files[0];
     const reader = new FileReader();
     reader.onload = function(event)
     {

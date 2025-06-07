@@ -26,33 +26,51 @@
             height: auto;
             border: 1px solid black;
         }
+
+        .blueprint_text
+        {
+            display: block;
+            width: 100%;
+            height: auto;
+            overflow-y: auto;
+            /* white-space: pre-wrap; */
+            word-break: break-word;
+            /* style="display: block; white-space: pre-wrap; word-break: break-word;" */
+        }
     </style>
 </head>
 <body>
     <div class="list_container">
         <!-- File input -->
-        <input type="file" id="fileInput">
+        <input type="file" id="choose_file" accept=".png, .jpg, .jpeg" />
         
-        <button id="submit_image">Create Task</button>
+        <!-- Create task -->
+        <button id="upload_file">Upload File</button>
 
+        <!-- preview and simple coordinate -->
         <div class="two_col_container">
             <!-- preview -->
-            <canvas class="image" id="canvas"></canvas>
+            <canvas class="image" id="preview_canvas"></canvas>
 
             <!-- simple coordinates -->
             <canvas class="image" id="simple_coordinates_canvas"></canvas>
         </div>
         
+        <!-- run solver -->
         <button id="run_solver">Run Solver</button>
         
-        
+        <!-- solution and blueprint -->
         <div class="two_col_container">
             
+            <!-- solution -->
             <canvas class="image" id="result_canvas"></canvas>
 
+            <!-- blueprint with copy button -->
             <div class="list_container">    
                 <button id="copy_blueprint">Copy Blueprint</button>
-                <code id="blueprint_text" style="display: block; white-space: pre-wrap; word-break: break-word;"></code>
+                <code id="blueprint_text" class="blueprint_text">
+                    No blueprint available. Please run the solver first.
+                </code>
             </div>
         </div>
     </div>
