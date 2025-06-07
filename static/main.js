@@ -76,7 +76,11 @@ function update_canvas_image(canvas, image_url)
 
 async function callback_submit_image() 
 {
-    // ensure a file is selected
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
+    // check file input
     if (button_upload_file.files.length === 0) 
     {
         console.error('Please upload a file first.');
@@ -95,15 +99,19 @@ async function callback_submit_image()
         update_canvas_image(canvas_preview, event.target.result); // update canvas with the image
     };
     reader.readAsDataURL(file); // read file as data URL
-    
+
     // ----------------------------------------------------
-    // get task_id from server
+    // send data
     // ----------------------------------------------------
     
     // send file to server and get task_id
     const form = new FormData();
     form.append('file', file);
     const response = await fetch('/add_task/', {method: 'POST', body: form});
+    
+    // ----------------------------------------------------
+    // process response
+    // ----------------------------------------------------
 
     // ensure the response is ok
     if (!response.ok)
@@ -119,7 +127,11 @@ async function callback_submit_image()
 
 async function callback_canvas_clicks(event) 
 {                        
-    // skip if no task_id
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+    
+    // won't work if no task_id
     if (!task_id)
     {
         console.error('No task_id available. Please upload a file first.');
@@ -144,6 +156,11 @@ async function callback_canvas_clicks(event)
     console.log(`${left? 'Left' : 'Right'} click at (${int_canvas_x}, ${int_canvas_y}) on task_id: ${task_id}`);
     // -----------
 
+
+    // ----------------------------------------------------
+    // send data
+    // ----------------------------------------------------
+
     // create a form with the click data
     const form = new FormData();
     form.append('task_id', task_id); // add task_id to the form
@@ -151,6 +168,10 @@ async function callback_canvas_clicks(event)
     form.append('y', int_canvas_y.toString());
     form.append('left', left ? 'true' : 'false');
     const response = await fetch('/send_clicks/', {method: 'POST', body: form});
+
+    // ----------------------------------------------------
+    // process response
+    // ----------------------------------------------------
 
     // ensure the response is ok
     if (!response.ok) 
@@ -179,7 +200,7 @@ async function callback_canvas_clicks(event)
     //     update_canvas_image(simple_coordinates_canvas, coordinatesImageUrl);
     // } 
 
-    // returned json 
+    // decode image
     const data = await response.json();
     const preview_image_base64 = data.preview_image;
     const simple_coordinates_image_base64 = data.simple_coordinate_image;
@@ -199,17 +220,29 @@ async function callback_canvas_clicks(event)
 
 async function callback_run_solver() 
 {
-    // ensure a task_id is available
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
+    // won't work if no task_id
     if (!task_id) 
     {
         console.error('No task_id available. Please upload a file first.');
         return;
     }
 
+    // ----------------------------------------------------
+    // send data
+    // ----------------------------------------------------
+
     // send request to run optimizer
     const form = new FormData();
     form.append('task_id', task_id); // add task_id to the form
     const response = await fetch(`/run_solver/`, {method: 'POST', body: form});
+
+    // ----------------------------------------------------
+    // process response
+    // ----------------------------------------------------
 
     // ensure the response is ok
     if (!response.ok) 
@@ -230,7 +263,11 @@ async function callback_run_solver()
 
 function callback_copy_blueprint() 
 {
-    // ensure a blueprint is available
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
+    // won't work if no blueprint
     if (!text_blueprint.textContent) 
     {
         console.error('No blueprint available to copy.');
