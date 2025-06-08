@@ -290,14 +290,14 @@ async def run_solver_and_stream(task_id: str):
         while True:
             # get the next line from the queue
             line = await queue.get()
+                                    
+            # break if None is received
+            if line is None:
+                break
             
             # skip the line that contains "Academic license"
             if "Academic license" in line:
                 continue
-                        
-            # break if None is received
-            if line is None:
-                break
             
             # yield the line as a server-sent event
             yield line
