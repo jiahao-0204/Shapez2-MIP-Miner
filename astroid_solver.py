@@ -327,6 +327,13 @@ class AstroidSolver:
         # optimize the model
         self.model.optimize()
         
+        # store solution
+        self.all_miner_platforms_sol = [FakeVar(VarName=miner.VarName, X=miner.X) for miner in self.all_miner_platforms]
+        self.all_extender_platforms_sol = [FakeVar(VarName=extender.VarName, X=extender.X) for extender in self.all_extender_platforms]
+        self.all_belts_sol = [FakeVar(VarName=belt.VarName, X=belt.X) for belt in self.all_belts]
+        self.nodes_to_extract_sol = self.nodes_to_extract
+        self.node_flow_in_sol = {node: [FakeVar(VarName=flow.VarName, X=flow.X) for flow in flows] for node, flows in self.node_flow_in.items()}
+                
     def save_variables(self, filename: str) -> None:
         # save the variables to a file
         var_to_txt(filename, self.all_extender_platforms, self.all_miner_platforms, self.all_belts)
@@ -342,12 +349,12 @@ class AstroidSolver:
     def get_solution_image(self) -> BytesIO:
         # render the result
         blob = render_result(
-            self.all_miner_platforms,
-            self.all_extender_platforms,
-            self.all_belts,
+            self.all_miner_platforms_sol,
+            self.all_extender_platforms_sol,
+            self.all_belts_sol,
             nodes_to_extract=self.nodes_to_extract,
             nodes_sink=self.nodes_sink,
-            node_flow_in=self.node_flow_in)
+            node_flow_in=self.node_flow_in_sol)
         
         # return the blob
         return blob
@@ -355,12 +362,12 @@ class AstroidSolver:
     def show_solution_image(self) -> None:
         # render the result
         blob = render_result(
-            self.all_miner_platforms,
-            self.all_extender_platforms,
-            self.all_belts,
+            self.all_miner_platforms_sol,
+            self.all_extender_platforms_sol,
+            self.all_belts_sol,
             nodes_to_extract=self.nodes_to_extract,
             nodes_sink=self.nodes_sink,
-            node_flow_in=self.node_flow_in)
+            node_flow_in=self.node_flow_in_sol)
         
         # show in cv2 window
         cv2.imshow("Astroid Miner Solution", cv2.imdecode(np.frombuffer(blob.getvalue(), np.uint8), cv2.IMREAD_COLOR))
