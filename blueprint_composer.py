@@ -70,7 +70,7 @@ def json_to_blueprint(json_str):
     compressed_b64 = base64.b64encode(compressed_bytes).decode("utf-8")
 
     # Add the prefix back
-    return f"{PREFIX}{compressed_b64}{"$"}"
+    return f"{PREFIX}{compressed_b64}{'$'}"
 
 def create_miner_json(x, y, direction, platform_json = None):
     if direction == (1, 0):
