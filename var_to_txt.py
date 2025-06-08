@@ -9,9 +9,9 @@ class FakeVar:
     A fake variable class to mimic Gurobi's Var class.
     This is used to create a variable with a name and value.
     """
-    def __init__(self):
-        self.VarName = ""
-        self.X = 0.0
+    def __init__(self, VarName: str = "", X: float = 0.0):
+        self.VarName = VarName
+        self.X = X
         pass
 
     def setAttr(self, attr, value):
@@ -21,7 +21,7 @@ class FakeVar:
         return f"FakeVar(VarName={self.VarName}, X={self.X})"
 
 
-def var_to_txt(filename : str, all_extender_platforms : List[Var], all_miner_platforms : List[Var], all_belts : List[Var]) -> None:
+def var_to_txt(filename : str, all_extender_platforms : List[FakeVar], all_miner_platforms : List[FakeVar], all_belts : List[FakeVar]) -> None:
     # save the variables to a file
     with open(filename, "w") as f:
         f.write("All Extender Platforms:\n")

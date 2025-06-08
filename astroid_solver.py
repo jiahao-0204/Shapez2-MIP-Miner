@@ -12,7 +12,7 @@ import numpy as np
 
 # project
 from astroid_parser import astroid_parser
-from var_to_txt import var_to_txt
+from var_to_txt import var_to_txt, FakeVar
 from blueprint_composer import compose_blueprint
 
 DIRECTIONS = [(1, 0), (0, 1), (-1, 0), (0, -1)]
@@ -366,12 +366,12 @@ class AstroidSolver:
         cv2.imshow("Astroid Miner Solution", cv2.imdecode(np.frombuffer(blob.getvalue(), np.uint8), cv2.IMREAD_COLOR))
         cv2.waitKey(0)
 
-def render_result(all_miner_platforms: List[Var],
-                  all_extender_platforms: List[Var],
-                  all_belts: List[Var],
+def render_result(all_miner_platforms: List[FakeVar],
+                  all_extender_platforms: List[FakeVar],
+                  all_belts: List[FakeVar],
                   nodes_to_extract: List[Tuple[int, int]] = [],
                   nodes_sink: List[Tuple[int, int]] = [],
-                  node_flow_in: Dict[Tuple[int, int], List[Var]] = defaultdict(list)) -> BytesIO:
+                  node_flow_in: Dict[Tuple[int, int], List[FakeVar]] = defaultdict(list)) -> BytesIO:
     
     # -------------------------------------------
     # settings

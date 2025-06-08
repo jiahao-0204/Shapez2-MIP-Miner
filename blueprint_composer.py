@@ -1,5 +1,5 @@
 # system
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 import copy
 
 # third party
@@ -7,7 +7,7 @@ import base64, gzip, json
 import matplotlib.pyplot as plt
 
 # project
-from var_to_txt import txt_to_var
+from var_to_txt import txt_to_var, FakeVar
 
 PREFIX = "SHAPEZ2-3-"
 
@@ -252,7 +252,7 @@ class SpaceBelt:
             # throw error
             return None
 
-def compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, miner_blueprint = None):
+def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms: List[FakeVar], all_belts: List[FakeVar], miner_blueprint: Optional[str] = None) -> str:
     # extract platform B code from the miner blueprint if provided
     if miner_blueprint is not None:    
         miner_json = blueprint_to_json(miner_blueprint)
