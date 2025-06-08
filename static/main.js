@@ -4,6 +4,8 @@
 let leftClicks = [];
 let rightClicks = [];
 let task_id = null;
+const default_threshold = 0.4;
+let threshold = default_threshold;
 
 // -----------------------------------------------
 // get web page elements
@@ -23,7 +25,7 @@ const text_blueprint = document.getElementById('blueprint_text');
 const button_run_solver_and_stream = document.getElementById('run_solver_and_stream');
 const text_solver_output = document.getElementById("solver_output");
 
-const text_threshold = document.getElementById('threshold_text');
+const input_threshold = document.getElementById('input_threshold');
 const button_decrease_threshold = document.getElementById('decrease_threshold');
 const button_increase_threshold = document.getElementById('increase_threshold');
 
@@ -32,6 +34,7 @@ const button_increase_threshold = document.getElementById('increase_threshold');
 // -----------------------------------------------
 canvas_preview.oncontextmenu = () => false;
 callback_use_default_blueprint();
+input_threshold.value = threshold.toFixed(2); // set initial value in the input field
 
 // -----------------------------------------------
 // link element to callbacks
@@ -39,6 +42,7 @@ callback_use_default_blueprint();
 canvas_preview.addEventListener('mousedown', callback_canvas_clicks);
 button_upload_file.addEventListener('click', callback_upload_file);
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
+input_threshold.addEventListener('change', callback_threshold_change);
 button_decrease_threshold.addEventListener('click', callback_decrease_threshold);
 button_increase_threshold.addEventListener('click', callback_increase_threshold);
 button_run_solver_and_stream.addEventListener('click', callback_run_solver_and_stream);
@@ -141,7 +145,10 @@ async function update_preview()
     // ----------------------------------------------------
     // send data
     // ----------------------------------------------------
-    const response = await fetch(`/update_preview/` + task_id, {method: 'GET'});
+    form = new FormData();
+    form.append('task_id', task_id); // add task_id to the form
+    form.append('threshold', threshold.toString()); // add threshold to the form
+    const response = await fetch(`/update_preview/`, {method: 'POST', body: form});
 
     // ----------------------------------------------------
     // process response
@@ -153,7 +160,8 @@ async function update_preview()
     const preview_image_base64 = data.preview_image;
     const simple_coordinates_image_base64 = data.simple_coordinate_image;
     
-    text_threshold.textContent = `Current Threshold: ${current_threshold}`;
+    threshold = current_threshold; // update the threshold value
+    input_threshold.value = threshold.toFixed(2); // update the input field
 
     if (preview_image_base64) 
     {
@@ -226,67 +234,32 @@ async function callback_canvas_clicks(event)
     update_preview()
 }
 
-async function callback_decrease_threshold()
+async function callback_threshold_change()
 {
-    // ----------------------------------------------------
-    // local processing
-    // ----------------------------------------------------
+    // set threshold value from input
+    threshold = parseFloat(input_threshold.value);
 
-    // won't work if no task_id
-    if (!task_id) 
+    if (isNaN(threshold)) 
     {
-        console.error('No task_id available. Please upload a file first.');
-        return;
-    }
-
-    // send request to decrease threshold
-    const form = new FormData();
-    form.append('task_id', task_id); // add task_id to the form
-    const response = await fetch(`/decrease_threshold/`, {method: 'POST', body: form})
-
-    // ----------------------------------------------------
-    // process response
-    // ----------------------------------------------------
-    // ensure the response is ok
-    if (!response.ok) 
-    {
-        console.error('Failed to decrease threshold:', response.statusText);
-        return;
+        threshold = default_threshold; // reset to default if input is not a number
+        input_threshold.value = threshold.toFixed(2); // update the input field
     }
 
     update_preview()
 }
 
+async function callback_decrease_threshold()
+{
+    threshold -= 0.05; // decrease threshold by 0.01
+    input_threshold.value = threshold.toFixed(2); // update the input field
+    callback_threshold_change(); // call the threshold change callback to update the preview
+}
+
 async function callback_increase_threshold()
 {
-    // ----------------------------------------------------
-    // local processing
-    // ----------------------------------------------------
-
-    // won't work if no task_id
-    if (!task_id) 
-    {
-        console.error('No task_id available. Please upload a file first.');
-        return;
-    }
-
-    // send request to increase threshold
-    const form = new FormData();
-    form.append('task_id', task_id); // add task_id to the form
-    const response = await fetch(`/increase_threshold/`, {method: 'POST', body: form})
-
-    // ----------------------------------------------------
-    // process response
-    // ----------------------------------------------------
-    
-    // ensure the response is ok
-    if (!response.ok) 
-    {
-        console.error('Failed to increase threshold:', response.statusText);
-        return;
-    }
-
-    update_preview()
+    threshold += 0.05; // increase threshold by 0.01
+    input_threshold.value = threshold.toFixed(2); // update the input field
+    callback_threshold_change(); // call the threshold change callback to update the preview
 }   
 
 function callback_run_solver_and_stream() 

@@ -80,59 +80,9 @@ async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = For
     # -----------------------------
     return JSONResponse(status_code=200, content={"message": "Click added successfully"})
             
-@app.post("/increase_threshold/", response_class=JSONResponse)
-async def increase_threshold(task_id: str = Form(...)):
-    # -----------------------------
-    # local processing
-    # -----------------------------
-    
-    # skip if task id not found
-    if task_id not in tasks_parsers:
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
-    
-    # --- log ---
-    print(f"Increasing threshold for task {task_id}")
-    # -----------
-    
-    # ------------------------------
-    # send data to the parser
-    # ------------------------------
-    parser = tasks_parsers[task_id]
-    parser.increase_threshold()
-    
-    # ------------------------------
-    # response ok
-    # ------------------------------
-    return JSONResponse(status_code=200, content={"message": "Threshold updated successfully"})
-
-@app.post("/decrease_threshold/", response_class=JSONResponse)
-async def decrease_threshold(task_id: str = Form(...)):
-    # -----------------------------
-    # local processing
-    # -----------------------------
-        
-    # skip if task id not found
-    if task_id not in tasks_parsers:
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
-    
-    # --- log ---
-    print(f"Decreasing threshold for task {task_id}")
-    # -----------
-    
-    # ------------------------------
-    # send data to the parser
-    # ------------------------------
-    parser = tasks_parsers[task_id]
-    parser.decrease_threshold()
-    
-    # ------------------------------
-    # response ok
-    # ------------------------------
-    return JSONResponse(status_code=200, content={"message": "Threshold updated successfully"})
-    
 # update preview
-@app.get("/update_preview/{task_id}", response_class=JSONResponse)
-async def update_preview(task_id: str):
+@app.post("/update_preview/", response_class=JSONResponse)
+async def update_preview(task_id: str = Form(...), threshold: float = Form(...)):
     # ------------------------------
     # local processing
     # ------------------------------
@@ -147,7 +97,7 @@ async def update_preview(task_id: str):
     # return data to the client
     # ------------------------------
     parser = tasks_parsers[task_id]
-    current_threshold = parser.get_threshold()
+    current_threshold = parser.set_threshold(threshold)
     preview_image = parser.request_preview_image()
     simple_coordinate_image = parser.request_simple_coordinates_image()
     preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None

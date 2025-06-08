@@ -197,30 +197,14 @@ class AstroidParser:
     def get_simple_coordinates(self) -> Optional[np.ndarray]:
         return self.simple_coordinates
 
-    def increase_threshold(self) -> float:
-        # increase the peak threshold relative value
-        self.peak_threshold_rel += 0.05
-        
-        # cap between 0 and 1
-        self.peak_threshold_rel = min(max(self.peak_threshold_rel, 0.0), 1.0)
+    def set_threshold(self, peak_threshold_rel: float):
+        # set the peak threshold relative value
+        self.peak_threshold_rel = min(max(peak_threshold_rel, 0.0), 1.0)
         
         # update images
         self.update_images()
         
-        # return the new threshold
-        return self.peak_threshold_rel
-
-    def decrease_threshold(self) -> float:
-        # decrease the peak threshold relative value
-        self.peak_threshold_rel -= 0.05
-        
-        # cap between 0 and 1
-        self.peak_threshold_rel = min(max(self.peak_threshold_rel, 0.0), 1.0)
-        
-        # update images
-        self.update_images()
-        
-        # return the new threshold
+        # return the capped threshold
         return self.peak_threshold_rel
     
     def get_threshold(self) -> float:
