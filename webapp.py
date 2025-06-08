@@ -304,7 +304,7 @@ async def run_solver_and_stream(task_id: str):
             
     return StreamingResponse(stream(), media_type="text/event-stream")
 
-# get solver result
+# get solver image
 @app.get("/get_solver_results/{task_id}")
 async def get_solver_results(task_id: str):    
     # skip if task id not found
@@ -322,15 +322,26 @@ async def get_solver_results(task_id: str):
     
     # convert to base64
     solution_b64 = base64.b64encode(solution_image.getvalue()).decode()
-    
-    # get blue print
-    blueprint = astroid_solver.get_solution_blueprint()
-    
-    if blueprint is None:
-        return JSONResponse(status_code=500, content={"error": "Failed to generate blueprint"})
-    
+        
     return {
         "task_id": task_id,
         "solution_image": solution_b64,
-        "blueprint": blueprint
     }
+    
+# get solver blueprint
+@app.post("/generate_blueprint/")
+async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Form(...)):
+    # skip if task id not found
+    if task_id not in tasks_solvers:
+        return JSONResponse(status_code=404, content={"error": "Task not found"})
+        
+    # get the solver
+    astroid_solver = tasks_solvers[task_id]
+    
+    # get the blueprint txt
+    blueprint = astroid_solver.get_solution_blueprint(miner_blueprint=miner_blueprint)
+    
+    if blueprint is None:
+        return JSONResponse(status_code=500, content={"error": "Failed to generate blueprint"})
+            
+    return {"blueprint": blueprint}

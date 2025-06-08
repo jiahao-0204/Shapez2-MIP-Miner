@@ -80,10 +80,15 @@
 
             <!-- blueprint with copy button -->
             <div class="list_container">    
+                <!-- a text area for user to input partial blueprint -->
+                <div class="two_col_container">
+                    <div>Input miner blueprint below, the miner must face to the east.</div>
+                    <button id="use_default_blueprint">Use default blueprint (1:12 Balanced Miner by ET01)</button>    
+                </div>
+                <textarea id="miner_blueprint" placeholder="Enter miner blueprint here..."></textarea>
+                <button id="generate_blueprint">Generate Platform Blueprint</button>
                 <button id="copy_blueprint">Copy Blueprint</button>
-                <code id="blueprint_text" class="blueprint_text">
-                    No blueprint available. Please run the solver first.
-                </code>
+                <code id="blueprint_text" class="blueprint_text">No blueprint available. Please run the solver first.</code>
             </div>
         </div>
     </div>

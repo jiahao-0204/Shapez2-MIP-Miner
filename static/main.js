@@ -14,6 +14,9 @@ const canvas_preview = document.getElementById('preview_canvas');
 const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
 const canvas_results = document.getElementById('result_canvas');
 
+const button_use_default_blueprint = document.getElementById('use_default_blueprint');
+const text_miner_blueprint = document.getElementById('miner_blueprint');
+const button_generate_blueprint = document.getElementById('generate_blueprint');
 const button_copy_blueprint = document.getElementById('copy_blueprint');
 const text_blueprint = document.getElementById('blueprint_text');
 
@@ -28,6 +31,7 @@ const button_increase_threshold = document.getElementById('increase_threshold');
 // setup elements
 // -----------------------------------------------
 canvas_preview.oncontextmenu = () => false;
+callback_use_default_blueprint();
 
 // -----------------------------------------------
 // link element to callbacks
@@ -38,6 +42,8 @@ button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
 button_decrease_threshold.addEventListener('click', callback_decrease_threshold);
 button_increase_threshold.addEventListener('click', callback_increase_threshold);
 button_run_solver_and_stream.addEventListener('click', callback_run_solver_and_stream);
+button_use_default_blueprint.addEventListener('click', callback_use_default_blueprint);
+button_generate_blueprint.addEventListener('click', callback_generate_blueprint);
 
 // -----------------------------------------------
 // callback functions and helpers
@@ -333,8 +339,8 @@ function callback_run_solver_and_stream()
                 // draw the image on the canvas
                 update_canvas_image(canvas_results, `data:image/png;base64,${result.solution_image}`);
 
-                // show result in the pre named blueprint
-                text_blueprint.textContent = result.blueprint;
+                // try generating the blueprint
+                callback_generate_blueprint();
             } 
             catch (err) 
             {
@@ -349,6 +355,51 @@ function callback_run_solver_and_stream()
         text_solver_output.textContent += "\n[Connection closed or error]\n";
         eventSource.close();
     };
+}
+
+function callback_use_default_blueprint()
+{
+    text_miner_blueprint.value = 'SHAPEZ2-3-H4sIAAPgQGgA/6yXUWujQBSF/8tlH33IaKKOj6FdCCQQ2hK6LGEZ6qQ7YMdyHemG4H9fbZrgbppEj0VQxPvNnZlzj5fZ0YoSIXzfo+mSkh19c9tXTQnNikzZlDyaPeW2+XCjnKLkJ5n6PVlmym1yfinIs2WW7W9U/FavOrkr9xetK49urWOjixrc0UM97Fxt89L9um8iF8ZqrjNM23mnpclSY5+/NPMjJaFHPyiZeHRXr9d7n8vtH8fqyeV8ozeqzNzMOs1WZSvFRllHlfdORjAZw6SESSFw1MfRAEfHQ9HmUbMBMmOM9QewAmcljsY4GuFoOHifwnZZTHXmPqi53lxRJ9wzC83Pmv2HXMwvV0L3+HHP+Ek7vrWG7zm/KU7PYeEZ7JOlLwxzzjr9j43ObF6nxDGw89GBPDDLnN29tqnmK3YI2iXSc7H+cYjLgpyAAQqOUXDyD9hXEhH0UuMD8s9sbbeUYoAw0XGIzvUQDi6HCNQmBjn5yYyv/xTkEG3kZWk6waMBuo6OQ/QrKQFyPsgFIDcGuQnIhSAXnXAd/QV01ahf04v7hcvTafV1INbs5MVe14WVQJ8cHUjEPxKzj8TcIzHzSMw7ErOOxJwjOxlnXZ9QjVW8XWkuTHMkbc7LVbWuqr8CDABeAPEsPg8AAA==$'
+}
+
+async function callback_generate_blueprint()
+{
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
+    // request the blueprint from the server
+    if (!task_id)
+    {
+        console.error('No task_id available. Please upload a file first.');
+        return;
+    }
+
+    // ----------------------------------------------------
+    // send data
+    // ----------------------------------------------------
+    form = new FormData();
+    form.append('task_id', task_id); // add task_id to the form
+    form.append('miner_blueprint', text_miner_blueprint.value); // add miner blueprint to the form
+    const response = await fetch(`/generate_blueprint/`, {method: 'POST', body: form});
+
+    // ----------------------------------------------------
+    // process response
+    // ----------------------------------------------------
+    // ensure the response is ok
+    if (!response.ok)
+    {
+        console.error('Failed to generate blueprint:', response.statusText);
+        return;
+    }
+
+    // get the blueprint text
+    const data = await response.json();
+    const blueprint = data.blueprint;
+
+    // show the blueprint in the text area
+    text_blueprint.textContent = blueprint;
+    console.log('Blueprint generated successfully!');
 }
 
 function callback_copy_blueprint() 
