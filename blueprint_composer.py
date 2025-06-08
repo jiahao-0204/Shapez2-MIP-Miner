@@ -255,8 +255,11 @@ class SpaceBelt:
 def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms: List[FakeVar], all_belts: List[FakeVar], miner_blueprint: Optional[str] = None) -> str:
     # extract platform B code from the miner blueprint if provided
     if miner_blueprint is not None:    
-        miner_json = blueprint_to_json(miner_blueprint)
-        B = json.loads(miner_json)["BP"]["Entries"][0]["B"]
+        try:
+            miner_json = blueprint_to_json(miner_blueprint)
+            B = json.loads(miner_json)["BP"]["Entries"][0]["B"]
+        except json.JSONDecodeError:
+            B = None
     else:
         B = None
     
