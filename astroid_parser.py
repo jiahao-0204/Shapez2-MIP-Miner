@@ -42,6 +42,10 @@ def peaks_to_simple_coordinate(peaks: np.ndarray, tol: float | None = None) -> n
     # Helper – greedy 1-D clustering into bins separated by > tol_axis
     # ---------------------------------------------------------------------
     def cluster_axis(vals: np.ndarray, tol_axis: float) -> np.ndarray:
+        # if only one value in vals 
+        if vals.size <= 1:
+            return np.array([0], dtype=int)
+        
         sort_idx = np.argsort(vals)
         sorted_vals = vals[sort_idx]
         labels_sorted = np.empty_like(sorted_vals, dtype=int)
