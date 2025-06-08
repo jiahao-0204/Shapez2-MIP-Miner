@@ -287,20 +287,68 @@ async function callback_increase_threshold()
 
 function stream_solver_logs() 
 {
+    // ----------------------------------------------------
+    // local processing
+    // ----------------------------------------------------
+
     // clear output
     text_solver_output.textContent = "";
 
+    // get event source for streaming logs
     const eventSource = new EventSource(`/solver_stream/${task_id}`);
 
-    eventSource.onmessage = function(event)
+    // upon message
+    eventSource.onmessage = async function(event) 
     {
-        text_solver_output.textContent += event.data + "\n";
+        const line = event.data;
+        text_solver_output.textContent += line + "\n";
         text_solver_output.scrollTop = text_solver_output.scrollHeight;
+
+        // when done
+        if (line === "DONE") 
+        {
+            eventSource.close();
+
+            try 
+            {
+                // -------------------------------------
+                // send to server
+                // -------------------------------------
+
+                // request the final result
+                const response = await fetch(`/get_solver_results/${task_id}`);
+                
+                // -------------------------------------
+                // process response
+                // -------------------------------------
+
+                // ensure the response is ok
+                if (!response.ok) 
+                {
+                    console.error('Failed to get final result:', response.statusText);
+                    return;
+                }
+
+                // get the final result
+                const result = await response.json();
+
+                // draw the image on the canvas
+                update_canvas_image(canvas_results, `data:image/png;base64,${result.solution_image}`);
+
+                // show result in the pre named blueprint
+                text_blueprint.textContent = result.blueprint;
+            } 
+            catch (err) 
+            {
+                console.error("Error fetching final result:", err);
+            }
+        }
     };
 
-    eventSource.onerror = function()
+    // upon error
+    eventSource.onerror = function() 
     {
-        text_solver_output.textContent += "\n[Connection closed]\n";
+        text_solver_output.textContent += "\n[Connection closed or error]\n";
         eventSource.close();
     };
 }
