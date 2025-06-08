@@ -10,7 +10,6 @@ let task_id = null;
 // -----------------------------------------------
 const button_choose_file = document.getElementById('choose_file'); 
 const button_upload_file = document.getElementById('upload_file');
-const button_run_solver = document.getElementById('run_solver');
 const canvas_preview = document.getElementById('preview_canvas');
 const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
 const canvas_results = document.getElementById('result_canvas');
@@ -18,7 +17,7 @@ const canvas_results = document.getElementById('result_canvas');
 const button_copy_blueprint = document.getElementById('copy_blueprint');
 const text_blueprint = document.getElementById('blueprint_text');
 
-const button_stream_solver_logs = document.getElementById('stream_solver_logs');
+const button_run_solver_and_stream = document.getElementById('run_solver_and_stream');
 const text_solver_output = document.getElementById("solver_output");
 
 const text_threshold = document.getElementById('threshold_text');
@@ -35,11 +34,10 @@ canvas_preview.oncontextmenu = () => false;
 // -----------------------------------------------
 canvas_preview.addEventListener('mousedown', callback_canvas_clicks);
 button_upload_file.addEventListener('click', callback_upload_file);
-button_run_solver.addEventListener('click', callback_run_solver);
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
 button_decrease_threshold.addEventListener('click', callback_decrease_threshold);
 button_increase_threshold.addEventListener('click', callback_increase_threshold);
-button_stream_solver_logs.addEventListener('click', stream_solver_logs);
+button_run_solver_and_stream.addEventListener('click', callback_run_solver_and_stream);
 
 // -----------------------------------------------
 // callback functions and helpers
@@ -285,7 +283,7 @@ async function callback_increase_threshold()
     update_preview()
 }   
 
-function stream_solver_logs() 
+function callback_run_solver_and_stream() 
 {
     // ----------------------------------------------------
     // local processing
@@ -295,7 +293,7 @@ function stream_solver_logs()
     text_solver_output.textContent = "";
 
     // get event source for streaming logs
-    const eventSource = new EventSource(`/solver_stream/${task_id}`);
+    const eventSource = new EventSource(`/run_solver_and_stream/${task_id}`);
 
     // upon message
     eventSource.onmessage = async function(event) 
@@ -351,49 +349,6 @@ function stream_solver_logs()
         text_solver_output.textContent += "\n[Connection closed or error]\n";
         eventSource.close();
     };
-}
-
-async function callback_run_solver() 
-{
-    // ----------------------------------------------------
-    // local processing
-    // ----------------------------------------------------
-
-    // won't work if no task_id
-    if (!task_id) 
-    {
-        console.error('No task_id available. Please upload a file first.');
-        return;
-    }
-
-    // ----------------------------------------------------
-    // send data
-    // ----------------------------------------------------
-
-    // send request to run optimizer
-    const form = new FormData();
-    form.append('task_id', task_id); // add task_id to the form
-    const response = await fetch(`/run_solver/`, {method: 'POST', body: form});
-
-    // ----------------------------------------------------
-    // process response
-    // ----------------------------------------------------
-
-    // ensure the response is ok
-    if (!response.ok) 
-    {
-        console.error('Failed to run optimizer:', response.statusText);
-        return;
-    }
-
-    // result is a file and a string
-    const result = await response.json();
-
-    // draw the image on the canvas
-    update_canvas_image(canvas_results, `data:image/png;base64,${result.solution_image}`);
-
-    // show result in the pre named blueprint
-    text_blueprint.textContent = result.blueprint;
 }
 
 function callback_copy_blueprint() 

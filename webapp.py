@@ -213,8 +213,8 @@ async def add_task(file: UploadFile = File(...)):
     # return
     return response    
 
-@app.get("/solver_stream/{task_id}")
-async def solver_stream(task_id: str):
+@app.get("/run_solver_and_stream/{task_id}")
+async def run_solver_and_stream(task_id: str):
     # ------------------------------
     # local processing
     # ------------------------------
@@ -309,60 +309,6 @@ async def get_solver_results(task_id: str):
     
     # get the solver
     astroid_solver = tasks_solvers[task_id]
-    
-    # get the solution image
-    solution_image = astroid_solver.get_solution_image()
-    
-    if solution_image is None:
-        return JSONResponse(status_code=500, content={"error": "Failed to generate solution image"})
-    
-    # convert to base64
-    solution_b64 = base64.b64encode(solution_image.getvalue()).decode()
-    
-    # get blue print
-    blueprint = astroid_solver.get_solution_blueprint()
-    
-    if blueprint is None:
-        return JSONResponse(status_code=500, content={"error": "Failed to generate blueprint"})
-    
-    return {
-        "task_id": task_id,
-        "solution_image": solution_b64,
-        "blueprint": blueprint
-    }
-
-# run solver
-@app.post("/run_solver/", response_class=JSONResponse)
-async def run_solver(task_id: str = Form(...)):
-    # -----------------------------
-    # local processing
-    # -----------------------------
-    
-    # --- log ---
-    print(f"Running solver for task {task_id}")
-    # -----------
-    
-    # check if task exists
-    if task_id not in tasks_parsers:
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
-    
-    
-    # -----------------------------
-    # send data to the solver
-    # -----------------------------
-    
-    astroid_solver = AstroidSolver()
-    
-    astroid_location = tasks_parsers[task_id].get_simple_coordinates()
-    if astroid_location is None:
-        return JSONResponse(status_code=400, content={"error": "No astroid location found for the task"})
-    
-    astroid_solver.add_astroid_locations(astroid_location=astroid_location)
-    astroid_solver.run_solver()
-    
-    # -----------------------------
-    # response to the client
-    # -----------------------------
     
     # get the solution image
     solution_image = astroid_solver.get_solution_image()
