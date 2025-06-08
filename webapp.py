@@ -291,6 +291,10 @@ async def run_solver_and_stream(task_id: str):
             # get the next line from the queue
             line = await queue.get()
             
+            # skip the line that contains "Academic license"
+            if line.startswith("Academic license"):
+                continue
+                        
             # break if None is received
             if line is None:
                 break
