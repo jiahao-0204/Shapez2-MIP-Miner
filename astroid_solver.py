@@ -45,9 +45,8 @@ class AstroidSolver:
         # list of sink nodes
         x_min_sink = 0
         x_max_sink = width
-        y_min_sink = height - 1
-        y_max_sink = height - 1
-        nodes_sink = [(x, y) for x in range(x_min_sink, x_max_sink + 1) for y in range(y_min_sink, y_max_sink + 1)]
+        y_sink = height - 1
+        nodes_sink = [(x, y_sink) for x in range(x_min_sink, x_max_sink)]
         
         # ----------------------------------------------------------
         # initialize the model
@@ -429,10 +428,6 @@ def render_result(all_miner_platforms: List[FakeVar],
             
     # draw sink nodes with flow value
     for node in nodes_sink:
-        # skip if node is not in node_flow_in
-        if node not in node_flow_in:
-            continue
-        
         # get flow value
         flow_value = sum(flow.X for flow in node_flow_in[node])
         
