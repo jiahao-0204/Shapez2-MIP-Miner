@@ -44,6 +44,10 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   - [x] better layout
   - [x] run gorubi as background process so can support multiple users
   - [x] show optimization progress to webpage
+  - [ ] dockerise app
+  - [ ] test docker locally
+  - [ ] ec2 deployment
+  - [ ] cloudflare setup
   - [ ] add text box to adjust solver duration
   - [ ] add text box to support custom miner blueprint
   - [ ] toggle between generating fluid miner or shape miner
