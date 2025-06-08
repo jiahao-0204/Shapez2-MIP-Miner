@@ -41,21 +41,20 @@
 <body>
     <div class="list_container">
         <!-- File input -->
-        <input type="file" id="choose_file" accept=".png, .jpg, .jpeg" />
-        
-        <!-- Create task -->
+        <div>1. Upload a PNG or JPG image of the shape you want to solve:</div>
+        <input type="file" id="choose_file" accept=".png, .jpg, .jpeg">
         <button id="upload_file">Upload File</button>
 
         <!-- preview and simple coordinate -->
         <div class="two_col_container">
             <!-- preview -->
-            <canvas id="preview_canvas"></canvas>
-
             <div class="list_container">
-                <!-- simple coordinates -->
-                <canvas id="simple_coordinates_canvas"></canvas>
-                
-                <div>Peak Identification Threshold:</div>
+                <div>2. Box a shape cell by LEFT and RIGHT clicks. </div>
+                <canvas id="preview_canvas"></canvas>
+            </div>  
+        
+            <div class="list_container">                
+                <div>3. Adjust threshold until COORDINATES are correct:</div>
                 
                 <div class="two_col_container">
                     <textarea id="input_threshold"></textarea>
@@ -65,11 +64,13 @@
                         <button id="decrease_threshold">Decrease Threshold</button>
                     </div>
                 </div>
-
+                
+                <canvas id="simple_coordinates_canvas"></canvas>
             </div>
         </div>
         
         <!-- run solver -->
+        <div>4. Run the solver to generate a platform blueprint:</div>
         <button id="run_solver_and_stream">Run Solver</button>
         
         <pre id="solver_output" style="height: 300px; overflow-y: auto; background: #111; color: #0f0; padding: 10px;">Solver output will appear here.</pre>
