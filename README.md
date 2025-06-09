@@ -87,7 +87,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   ```bash
   sudo apt update
   sudo apt install nginx
-  cp ./server/fastapi.conf /etc/nginx/sites-available/
+  sudo cp ./server/fastapi.conf /etc/nginx/sites-available/
   sudo ln -s /etc/nginx/sites-available/fastapi.conf /etc/nginx/sites-enabled/
   sudo nginx -t
   sudo systemctl reload nginx
