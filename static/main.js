@@ -14,13 +14,10 @@ const button_choose_file = document.getElementById('choose_file');
 const button_upload_file = document.getElementById('upload_file');
 const canvas_preview = document.getElementById('preview_canvas');
 const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
-const canvas_results = document.getElementById('result_canvas');
 
-const button_use_default_blueprint = document.getElementById('use_default_blueprint');
-const text_miner_blueprint = document.getElementById('miner_blueprint');
-const button_generate_blueprint = document.getElementById('generate_blueprint');
-const button_copy_blueprint = document.getElementById('copy_blueprint');
-const text_blueprint = document.getElementById('blueprint_text');
+const input_threshold = document.getElementById('input_threshold');
+const button_decrease_threshold = document.getElementById('decrease_threshold');
+const button_increase_threshold = document.getElementById('increase_threshold');
 
 const input_miner_timelimit = document.getElementById('miner_timelimit');
 const input_miner_threshold = document.getElementById('miner_threshold');
@@ -29,9 +26,12 @@ const belt_miner_threshold = document.getElementById('belt_threshold');
 const button_run_solver_and_stream = document.getElementById('run_solver_and_stream');
 const text_solver_output = document.getElementById("solver_output");
 
-const input_threshold = document.getElementById('input_threshold');
-const button_decrease_threshold = document.getElementById('decrease_threshold');
-const button_increase_threshold = document.getElementById('increase_threshold');
+const canvas_results = document.getElementById('result_canvas');
+const button_use_default_blueprint = document.getElementById('use_default_blueprint');
+const text_miner_blueprint = document.getElementById('miner_blueprint');
+const button_generate_blueprint = document.getElementById('generate_blueprint');
+const button_copy_blueprint = document.getElementById('copy_blueprint');
+const text_blueprint = document.getElementById('blueprint_text');
 
 // -----------------------------------------------
 // setup elements
