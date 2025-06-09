@@ -12,7 +12,7 @@ from var_to_txt import txt_to_var, FakeVar
 PREFIX = "SHAPEZ2-3-"
 
 
-def blueprint_to_json(blueprint_str):
+def blueprint_to_json(blueprint_str) -> dict:
     """
     Decodes a Shapez.io blueprint string into a human-readable format.
     
@@ -20,7 +20,7 @@ def blueprint_to_json(blueprint_str):
         blueprint_str (str): The encoded blueprint string.
         
     Returns:
-        str: The decoded blueprint in JSON format or as plain text if not JSON.
+        dict: The decoded blueprint in JSON format or as plain text if not JSON.
     """
     # remove prefix
     compressed_b64 = blueprint_str[len(PREFIX):]
@@ -35,9 +35,9 @@ def blueprint_to_json(blueprint_str):
     # try to parse as JSON for nicer formatting
     try:
         decoded_json = json.loads(decoded_text)
-        return json.dumps(decoded_json, indent=2)
+        return decoded_json
     except json.JSONDecodeError:
-        return decoded_text
+        raise
 
 def json_to_blueprint(json_str):
     """
@@ -72,7 +72,7 @@ def json_to_blueprint(json_str):
     # Add the prefix back
     return f"{PREFIX}{compressed_b64}{'$'}"
 
-def create_miner_json(x, y, direction, platform_json = None):
+def create_miner_json(x, y, direction, platform_json = None) -> dict:
     if direction == (1, 0):
         R = 0
     elif direction == (0, -1):
@@ -252,19 +252,14 @@ class SpaceBelt:
             # throw error
             return None
 
-def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms: List[FakeVar], all_belts: List[FakeVar], miner_blueprint: Optional[str] = None) -> str:
-    # extract platform B code from the miner blueprint if provided
-    if miner_blueprint is not None:    
-        try:
-            miner_json = blueprint_to_json(miner_blueprint)
-            B = json.loads(miner_json)["BP"]["Entries"][0]["B"]
-        except json.JSONDecodeError:
-            B = None
-    else:
-        B = None
+def create_empty_blueprint_json() -> dict:
+    """
+    Creates an empty blueprint JSON structure.
     
-    # initialize empty blueprint
-    all_json = {
+    Returns:
+        dict: An empty blueprint JSON structure.
+    """
+    return {
         "v": 1122,
         "BP": {
             "$type": "Island",
@@ -279,6 +274,20 @@ def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms
             "Entries": []
         }
     }
+
+def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms: List[FakeVar], all_belts: List[FakeVar], miner_blueprint: Optional[str] = None) -> str:
+    # extract platform B code from the miner blueprint if provided
+    if miner_blueprint is not None:    
+        try:
+            miner_json = blueprint_to_json(miner_blueprint)
+            B = miner_json["BP"]["Entries"][0]["B"]
+        except json.JSONDecodeError:
+            B = None
+    else:
+        B = None
+    
+    # initialize empty blueprint
+    all_json = create_empty_blueprint_json()
 
     # add miner
     for miner in all_miner_platforms:
