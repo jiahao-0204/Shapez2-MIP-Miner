@@ -291,11 +291,7 @@ def get_brush_blueprint(brush_size: int = 10) -> str:
     brush_blueprint = json_to_blueprint(brush_blueprint_json)
     return brush_blueprint
 
-def parse_using_blueprint(blueprint: str = "") -> Optional[list[tuple[int, int]]]:
-    # checks
-    if not blueprint or not blueprint.startswith(PREFIX):
-        raise ValueError("Invalid or empty blueprint string")
-    
+def parse_using_blueprint(blueprint: str = "") -> Optional[list[tuple[int, int]]]:    
     # try blueprint -> json
     try:
         blueprint_json = blueprint_to_json(blueprint)
