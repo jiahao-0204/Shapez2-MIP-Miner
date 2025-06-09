@@ -44,10 +44,7 @@ tasks_timestamps : dict[str, float] = {}
 cleanup_interval = 60  # 1 minute
 tasks_lifespan = 600  # 10 minutes
 
-def cleanup_tasks():
-    # log
-    print("Running cleanup_tasks...")
-    
+def cleanup_tasks():    
     now = time()
 
     for task_id, timestamp in list(tasks_timestamps.items()):
