@@ -315,12 +315,13 @@ class AstroidSolver:
         self.nodes_sink = nodes_sink
         self.node_flow_in = node_flow_in        
         
-    def run_solver(self, miner_timelimit = 5, belt_timelimit = 5, belt_gap = 0.05) -> None:
+    def run_solver(self, miner_timelimit : float = 5.0, miner_gap : float = 5.0, belt_timelimit : float = 5.0, belt_gap : float = 5.0) -> None:
         # set limits
         optimize_miner = self.model.getMultiobjEnv(0)
+        optimize_miner.setParam('MIPGap', miner_gap / 100.0)
         optimize_miner.setParam('TimeLimit', miner_timelimit)
         optimize_belts = self.model.getMultiobjEnv(1)
-        optimize_belts.setParam('MIPGap', belt_gap)
+        optimize_belts.setParam('MIPGap', belt_gap / 100.0)
         optimize_belts.setParam('TimeLimit', belt_timelimit)
         
         # optimize the model

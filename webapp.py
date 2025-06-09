@@ -201,8 +201,15 @@ async def add_task(file: UploadFile = File(...)):
     # return
     return response    
 
-@app.get("/run_solver_and_stream/{task_id}")
-async def run_solver_and_stream(task_id: str):
+@app.get("/run_solver_and_stream")
+async def run_solver_and_stream(
+    request: Request,
+    task_id: str,
+    miner_time: float,
+    miner_threshold: float,
+    belt_time: float,
+    belt_threshold: float
+):
     # ------------------------------
     # local processing
     # ------------------------------
@@ -237,7 +244,7 @@ async def run_solver_and_stream(task_id: str):
     loop = asyncio.get_running_loop()
     
     # run the solver in a separate thread to avoid blocking the event loop
-    def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
+    def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop, miner_time: float, miner_threshold: float, belt_time: float, belt_threshold: float):
         # run solver and redirect output
         
         class StreamToQueue(io.StringIO):
@@ -261,13 +268,18 @@ async def run_solver_and_stream(task_id: str):
 
         stream_writer = StreamToQueue(queue, loop)
         with redirect_stdout(stream_writer):
-            astroid_solver.run_solver()
+            astroid_solver.run_solver(
+                miner_timelimit=miner_time,
+                miner_gap=miner_threshold,
+                belt_timelimit=belt_time,
+                belt_gap=belt_threshold
+            )
             
         # push None so stream() can break the loop
         loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
         loop.call_soon_threadsafe(queue.put_nowait, None)
         
-    threading.Thread(target=separate_thread_run_solver, args=(solver, queue, loop)).start()
+    threading.Thread(target=separate_thread_run_solver, args=(solver, queue, loop, miner_time, miner_threshold, belt_time, belt_threshold)).start()
 
     # -------------------------------
     # current thread

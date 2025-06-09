@@ -13,6 +13,27 @@
             gap: 10px;
         }
 
+        .three_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 10px;
+        }
+
+        .four_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr; 
+            gap: 10px;
+        }
+
+        .five_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr; 
+            gap: 10px;
+        }
+
         .list_container 
         {
             display: flex; 
@@ -71,6 +92,18 @@
         
         <!-- run solver -->
         <div>4. Run the solver to generate a platform blueprint:</div>
+
+        <div class="five_col_container">
+            <label style="grid-column: 1/4">Miner Solver Time Limit (seconds) And Early Termination Threshold (%)</label>
+            <input type="number" id="miner_timelimit" value="10.00"/>
+            <input type="number" id="miner_threshold" value="2.00" />
+        </div>
+        <div class="five_col_container">
+            <label style="grid-column: 1/4">Belt Solver Time Limit (seconds) And Early Termination Threshold (%)</label>
+            <input type="number" id="belt_timelimit" value="3.00" />
+            <input type="number" id="belt_threshold" value="50.00" />
+        </div>
+        
         <button id="run_solver_and_stream">Run Solver</button>
         
         <pre id="solver_output" style="height: 300px; overflow-y: auto; background: #111; color: #0f0; padding: 10px;">Solver output will appear here.</pre>
