@@ -56,3 +56,28 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 
 
 *Questions or suggestions?* Feel free to open an issue or a pull request.
+
+
+## EC2 Deployment Notes
+- download and install `miniconda`
+- `conda create -n shapez2`
+- `conda activate shapez2`
+- then with `conda install`
+  - gurobi
+  - opencv
+  - scikit-image
+  - matplotlib
+  - uvicorn-standard
+  - 
+- to start the webapp
+```
+mkdir git
+cd git
+git clone https://github.com/jiahao-0204/Shapez2-MIP-Miner
+cd Shapez2-MIP-Miner
+sudo cp fastapi.service /etc/systemd/system/
+chmod +x ./start.sh
+sudo systemctl daemon-reload
+sudo systemctl restart fastapi
+sudo systemctl status fastapi
+```
