@@ -2,6 +2,7 @@
 from pathlib import Path
 from typing import Optional
 from io import BytesIO
+import json
 
 # third-party
 from skimage.feature import peak_local_max
@@ -10,6 +11,9 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
+
+# project
+from blueprint_composer import blueprint_to_json, create_empty_blueprint_json, create_miner_json, json_to_blueprint, PREFIX
 
 def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_threshold_rel: float):
     # get template
@@ -276,8 +280,59 @@ def astroid_parser(image_path: Path, peak_threshold_rel: float = 0.5):
     # plt.close()
     return astroid_parser.get_simple_coordinates()
 
+def get_brush_blueprint(brush_size: int = 10) -> str:
+    brush_blueprint_json = create_empty_blueprint_json()
+    
+    for x in range(brush_size):
+        for y in range(brush_size):
+            miner_blueprint = create_miner_json(x, y, (1, 0))
+            brush_blueprint_json["BP"]["Entries"].append(miner_blueprint)
+    
+    brush_blueprint = json_to_blueprint(brush_blueprint_json)
+    return brush_blueprint
+
+def parse_using_blueprint(blueprint: str = "") -> Optional[list[tuple[int, int]]]:
+    # checks
+    if not blueprint or not blueprint.startswith(PREFIX):
+        raise ValueError("Invalid or empty blueprint string")
+    
+    # try blueprint -> json
+    try:
+        blueprint_json = blueprint_to_json(blueprint)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to decode blueprint JSON: {e}")
+
+    # get platform entries
+    entires = blueprint_json["BP"]["Entries"]
+    
+    # get platform coodinate
+    nodes: list[tuple[int, int]] = []
+    for entry in entires:
+        x = entry.get("X", 0)
+        y = entry.get("Y", 0)
+        nodes.append((x, y))
+    
+    # shifts coordinates
+    min_x = min(x for x, _ in nodes)
+    min_y = min(y for _, y in nodes)
+    nodes = [(x - min_x, y - min_y) for x, y in nodes]
+    
+    # return
+    return nodes
+
+# if __name__ == "__main__":
+#     # example usage
+#     image_path = Path("images/example3.png")
+#     simple_coordinates = astroid_parser(image_path, peak_threshold_rel=0.5)
+#     print("Simple Coordinates:", simple_coordinates)
+
 if __name__ == "__main__":
-    # example usage
-    image_path = Path("images/example3.png")
-    simple_coordinates = astroid_parser(image_path, peak_threshold_rel=0.5)
-    print("Simple Coordinates:", simple_coordinates)
+    # get the brush blueprint
+    print(get_brush_blueprint())
+    
+    # the user brush out the asteroid shape and copy it here
+    blueprint = input("Enter the blueprint string: ").strip()
+    
+    # convert the blueprint to simple coordinates
+    simple_coordinates = parse_using_blueprint(blueprint)
+    print("Simple Coordinates from Blueprint:", simple_coordinates)
