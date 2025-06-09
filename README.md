@@ -47,6 +47,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   - [x] ec2 deployment
   - [x] add text box to adjust solver duration
   - [x] add text box to support custom miner blueprint
+  - [x] parse using blueprint
   - [ ] dockerise app
   - [ ] test docker locally
   - [ ] cloudflare setup

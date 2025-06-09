@@ -17,10 +17,10 @@ from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, Fil
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import cv2
+import numpy as np
 
 # project
-from astroid_parser import AstroidParser
+from astroid_parser import parse_using_blueprint_and_return_image, parse_using_blueprint
 from astroid_solver import AstroidSolver
 
 # ------------------------------------------
@@ -37,7 +37,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # list of tasks
-tasks_parsers : dict[str, AstroidParser] = {}
 tasks_solvers : dict[str, AstroidSolver] = {}
 tasks_timestamps : dict[str, float] = {}
 tasks_suffix : dict[str, str] = {}  # to store task type if needed
@@ -51,8 +50,6 @@ def cleanup_tasks():
     for task_id, timestamp in list(tasks_timestamps.items()):
         duration = now - timestamp
         if duration > tasks_lifespan:
-            if task_id in tasks_parsers:
-                del tasks_parsers[task_id]
             if task_id in tasks_solvers:
                 del tasks_solvers[task_id]
             
@@ -83,122 +80,33 @@ async def get_index(request: Request):
 def process_data(task_id : str, tmp_path : Path, clicks : str):
     print(f"Processing task {task_id} with file {tmp_path} and clicks {clicks}")
 
-# send clicks
-@app.post("/send_clicks/")
-async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = Form(...), left: bool = Form(...)):
-    # -----------------------------
-    # local processing
-    # -----------------------------
-    
-    # skip if task id not found
-    if task_id not in tasks_parsers:
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
-    
-    # skip if file not found
-    image_path = Path(f"/tmp/{task_id}{tasks_suffix.get(task_id, '.png')}")
-    if not image_path.exists():
-        return JSONResponse(status_code=404, content={"error": "File not found"})
-    
-    # --- log ---
-    print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
-    print(f"Image path: {image_path}")
-    # -----------
-    
-    # -----------------------------
-    # send data to the parser
-    # -----------------------------
-    parser = tasks_parsers[task_id]
-    parser.add_click(x, y, left)
-    
-    # -----------------------------
-    # response ok
-    # -----------------------------
-    return JSONResponse(status_code=200, content={"message": "Click added successfully"})
-            
-# update preview
-@app.post("/update_preview/", response_class=JSONResponse)
-async def update_preview(task_id: str = Form(...), threshold: float = Form(...)):
-    # ------------------------------
-    # local processing
-    # ------------------------------
-    if task_id not in tasks_parsers:
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
-    
-    # --- log ---
-    print(f"Updating preview for task {task_id}")
-    # -----------
-    
-    # ------------------------------
-    # return data to the client
-    # ------------------------------
-    parser = tasks_parsers[task_id]
-    current_threshold = parser.set_threshold(threshold)
-    preview_image = parser.request_preview_image()
-    simple_coordinate_image = parser.request_simple_coordinates_image()
-    preview_b64 = base64.b64encode(preview_image.read()).decode() if preview_image else None
-    simple_b64 = base64.b64encode(simple_coordinate_image.read()).decode() if simple_coordinate_image else None
 
-    return {
-        "task_id": task_id,
-        "preview_image": preview_b64,
-        "simple_coordinate_image": simple_b64,
-        "current_threshold": current_threshold
-    }
-
-# add task
-@app.post("/add_task/", response_class=JSONResponse)
-async def add_task(file: UploadFile = File(...)):
-    # -------------------------------
+@app.post("/get_simple_coordinates_preview/")
+async def get_simple_coordinates_preview(input_blueprint: str = Form(...)):
+    # -----------------------------
     # local processing
-    # -------------------------------
+    # -----------------------------
     
-    # --- log ---
-    print(f"Received file: {file.filename}")
-    # -----------
+    # parse the blueprint
+    try:
+        img = parse_using_blueprint_and_return_image(input_blueprint)
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
     
-    # throw an error if the file is not provided
-    if not file.filename:
-        return JSONResponse(status_code=400, content={"error": "file.filename not found"})
+    # convert to base64
+    img_b64 = base64.b64encode(img.getvalue()).decode()
     
+    # return the image as a response
+    return JSONResponse(status_code=200, content={"simple_coordinates_image": img_b64})
+
+@app.get("/get_task_id/")
+async def get_task_id():
     # create task id
     task_id = uuid4().hex
     tasks_timestamps[task_id] = time()
     
-    # create a temporary file path
-    suffix = Path(file.filename).suffix
-    file_path = Path(f"/tmp/{task_id}{suffix}")
-    tasks_suffix[task_id] = suffix
-
-    # save the file to the temporary location
-    with file_path.open("wb") as f:
-        f.write(await file.read())
-    
-    # --- log ---
-    print(f"File saved to: {file_path}")
-    # -----------
-
-    # add to task list
-    # convert file to cv2 BGR image
-    img_bgr = cv2.imread(str(file_path))
-    if img_bgr is None:
-        return JSONResponse(status_code=415, content={"error": "Invalid image format or corrupted file"})
-
-    # store in task dictionary or your object
-    tasks_parsers[task_id] = AstroidParser(img_bgr=img_bgr)
-    
-    # -------------------------------
-    # response to the client
-    # -------------------------------
-    
     # return the task_id as json response
-    response = JSONResponse(status_code=200, content={"task_id": task_id})
-    
-    # --- log ---
-    print(f"Response: {bytes(response.body).decode('utf-8')}")
-    # -----------
-    
-    # return
-    return response    
+    return JSONResponse(status_code=200, content={"task_id": task_id})
 
 @app.get("/run_solver_and_stream")
 async def run_solver_and_stream(
@@ -207,20 +115,15 @@ async def run_solver_and_stream(
     miner_time: float,
     miner_threshold: float,
     belt_time: float,
-    belt_threshold: float
+    belt_threshold: float,
+    input_miner_blueprint: str
 ):
     # ------------------------------
     # local processing
     # ------------------------------
-    
-    # skip if task id not found
-    if task_id not in tasks_parsers:
-        async def err_task():
-            yield "data: Task not found\n\n"
-        return StreamingResponse(err_task(), media_type="text/event-stream")
-    
+        
     # skip if no astroid locations
-    coords = tasks_parsers[task_id].get_simple_coordinates()
+    coords = parse_using_blueprint(input_miner_blueprint)
     if coords is None:
         async def err_location():
             yield "data: No astroid locations found\n\n"
@@ -232,7 +135,7 @@ async def run_solver_and_stream(
     
     # add locations to the solver
     solver = tasks_solvers[task_id]
-    solver.add_astroid_locations(astroid_location=coords)
+    solver.add_astroid_locations(astroid_location=np.array(coords))
     
     # -------------------------------
     # separate thread

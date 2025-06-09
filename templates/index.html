@@ -61,72 +61,49 @@
 </head>
 <body>
     <div class="list_container">
-        <!-- File input -->
-        <div>1. Upload a PNG or JPG image of the asteroid you want to mine:</div>
-        <input type="file" id="choose_file" accept=".png, .jpg, .jpeg">
-        <button id="upload_file">Upload File</button>
-
-        <!-- preview and simple coordinate -->
+        <div>1. Copy brush blueprint, "ctrl+v" to paste into the game, hold "shift" and drag to cover the asteroid with "miner".</div>
+        <button id="copy_brush_blueprint">Copy Brush Blueprint (Size = 10)</button>
+        
+        <div>2. Hold "shift" and drag to select all "miner" on the asteroid, paste in below:</div>
+        
         <div class="two_col_container">
-            <!-- preview -->
-            <div class="list_container">
-                <div>2. Box a shape cell by LEFT and RIGHT clicks. </div>
-                <canvas id="preview_canvas"></canvas>
-            </div>  
-        
-            <div class="list_container">                
-                <div>3. Adjust threshold until COORDINATES are correct:</div>
-                
-                <div class="two_col_container">
-                    <input type="number" id="input_threshold" step="0.01"></input>
-                    
-                    <div class="list_container">
-                        <button id="increase_threshold">Increase Threshold</button>
-                        <button id="decrease_threshold">Decrease Threshold</button>
-                    </div>
-                </div>
-                
-                <canvas id="simple_coordinates_canvas"></canvas>
-            </div>
+            <textarea id="input_miner_blueprint" placeholder="Or paste in the brush blueprint as an example ..."></textarea>
+            <canvas id="simple_coordinates_canvas"></canvas>
         </div>
-        
+
         <!-- run solver -->
-        <div>4. Run the solver to generate a platform blueprint:</div>
+        <div>3. Run the solver to generate a platform blueprint with the following settings:</div>
+        <button id="run_solver_and_stream">Run Solver</button>
 
         <div class="five_col_container">
             <label style="grid-column: 1/4">Miner: Solver Time Limit (seconds) / Terminate at Gap (%)</label>
-            <input type="number" id="miner_timelimit" value="10.00"/>
+            <input type="number" id="miner_timelimit" value="30.00"/>
             <input type="number" id="miner_threshold" value="2.00" />
         </div>
         <div class="five_col_container">
             <label style="grid-column: 1/4">Belt: Solver Time Limit (seconds) / Terminate at Gap (%)</label>
-            <input type="number" id="belt_timelimit" value="3.00" />
-            <input type="number" id="belt_threshold" value="50.00" />
+            <input type="number" id="belt_timelimit" value="30.00" />
+            <input type="number" id="belt_threshold" value="2.00" />
         </div>
         
-        <button id="run_solver_and_stream">Run Solver</button>
         
-        <pre id="solver_output" style="height: 300px; overflow-y: auto; background: #111; color: #0f0; padding: 10px;">Solver output will appear here.</pre>
-        
-        <!-- solution and blueprint -->
         <div class="two_col_container">
-            
-            <!-- solution -->
+            <pre id="solver_output" style="height: 200px; overflow-y: auto; background: #111; color: #0f0; padding: 10px;">Solver output will appear here.</pre>
             <canvas id="result_canvas"></canvas>
-
-            <!-- blueprint with copy button -->
-            <div class="list_container">    
-                <!-- a text area for user to input partial blueprint -->
-                <div class="two_col_container">
-                    <div>Input miner blueprint below, the miner must face to the east.</div>
-                    <button id="use_default_blueprint">Use default blueprint (1:12 Balanced Miner by ET01)</button>    
-                </div>
-                <textarea id="miner_blueprint" placeholder="Enter miner blueprint here..."></textarea>
-                <button id="generate_blueprint">Generate Platform Blueprint</button>
-                <button id="copy_blueprint">Copy Blueprint</button>
-                <code id="blueprint_text" class="blueprint_text">No blueprint available. Please run the solver first.</code>
-            </div>
         </div>
+
+        <!-- blueprint with copy button -->
+        <div>4. Input miner blueprint below, the miner must face to the east.</div>
+
+        <!-- a text area for user to input partial blueprint -->
+        <div class="two_col_container">
+            <textarea id="miner_blueprint" placeholder="Enter miner blueprint here..."></textarea>
+            <button id="use_default_blueprint">Use default blueprint (1:12 Balanced Miner by ET01)</button>    
+        </div>
+        <button id="generate_blueprint">Generate Platform Blueprint</button>
+        <button id="copy_blueprint">Copy Blueprint</button>
+        <code id="blueprint_text" class="blueprint_text">No blueprint available. Please run the solver first.</code>
+
     </div>
 
     <!-- Script include -->

@@ -316,6 +316,42 @@ def parse_using_blueprint(blueprint: str = "") -> Optional[list[tuple[int, int]]
     # return
     return nodes
 
+def parse_using_blueprint_and_return_image(blueprint: str = "") -> BytesIO:
+    try:
+        nodes = parse_using_blueprint(blueprint)
+    except:
+        raise
+    
+    # check if nodes are empty
+    if not nodes:
+        raise ValueError("No nodes found in the blueprint.")
+        
+    # plot and store as image buffer
+    plt.clf()
+    if nodes:
+        print("nodes: ", nodes)
+        xs, ys = zip(*nodes)
+        plt.scatter(xs, ys, marker='s', c='lightgrey')
+        plt.axis('equal')
+        x_min = min(xs)
+        x_max = max(xs)
+        y_min = min(ys)
+        y_max = max(ys)
+        plt.xlim(x_min - 5, x_max + 5)
+        plt.ylim(y_min - 5, y_max + 5)
+        plt.xlabel("X Coordinate")
+        plt.ylabel("Y Coordinate")
+        plt.xticks(np.arange(x_min - 5, x_max + 6, 1))
+        plt.yticks(np.arange(y_min - 5, y_max + 6, 1))
+        plt.grid(True)
+
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', bbox_inches='tight')
+    plt.close()
+    buffer.seek(0)
+    
+    return buffer
+
 # if __name__ == "__main__":
 #     # example usage
 #     image_path = Path("images/example3.png")

@@ -7,17 +7,62 @@ let task_id = null;
 const default_threshold = 0.4;
 let threshold = default_threshold;
 
+const brush_blueprint = "SHAPEZ2-3-H4sIAHZLR2gC/53SzUrDQBRA4Vcpg0sF753/LkUXBYVSXShSJGjEQExKkwql9N2dal247CGQGe7kTDbfznyZ6URE9XxiruZlvzNn43ZVl52ZDW3VvZlyMnvtu5+z62qsyubZNGUynbfV+N6vP4fyTbdp27+3GT6qVT1dbH4fs9yX2U03rpt6ONQ781iWyzJ8Oq6L4/pw+O9tte0348v94ZK7pqvXpvT/mwshkZLIksiRyJMokCiSKJEonxAJACEEhBAQQkAIASEEhBAQQkAIASEEhAIQSkAoAaEEhBIQSkAoAaEEhBIQSkBYAMISEJaAsASEJSAsAWEJCEtAWALCEhAOgHAEhCMgHAHhCAhHQDgCwhEQjoBwBIQHIDwB4QkIT0B4AsITEJ6A8ASEJyA8AREAiEBABAIiEBCBgAgERCAgAgERCIhAQEQAIhIQkYCIBEQkICIBEQmISEBEAiISEAmASAREIiASAZEIiERAJAIiERCJgEgERAYgMgGRCYhMQGQCIhMQmYDIBEQmIPIpIJb7/TeqFG9MIRUAAA==$"
+
 // -----------------------------------------------
 // get web page elements
 // -----------------------------------------------
-const button_choose_file = document.getElementById('choose_file'); 
-const button_upload_file = document.getElementById('upload_file');
-const canvas_preview = document.getElementById('preview_canvas');
-const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
+const button_copy_brush_blueprint = document.getElementById('copy_brush_blueprint');
+button_copy_brush_blueprint.addEventListener('click', () => {
+    // copy the brush blueprint to clipboard
+    navigator.clipboard.writeText(brush_blueprint)
+        .then(() => {
+            console.log('Brush blueprint copied to clipboard successfully!');
+        })
+        .catch(err => {
+            console.error('Failed to copy brush blueprint:', err);
+        });
+}
+);
 
-const input_threshold = document.getElementById('input_threshold');
-const button_decrease_threshold = document.getElementById('decrease_threshold');
-const button_increase_threshold = document.getElementById('increase_threshold');
+const input_miner_blueprint = document.getElementById('input_miner_blueprint');
+input_miner_blueprint.addEventListener('change', async function() 
+{
+    // send the blueprint to the server which returns the simple coordinate preview
+    const input_blueprint = input_miner_blueprint.value;
+    
+    // skip if empty
+    if (!input_blueprint.trim()) {
+        console.error('Blueprint is empty. Please enter a valid blueprint.');
+        return;
+    }
+
+    // send to fastapi
+    form = new FormData();
+    form.append('input_blueprint', input_blueprint); // add miner blueprint to the form
+    const response = await fetch(`/get_simple_coordinates_preview/`, {method: 'POST', body: form});
+
+    // ensure the response is ok
+    if (!response.ok) {
+        const error_text = await response.text();
+        console.error('Failed to get simple coordinates preview:', error_text);
+        task_not_found_alert(error_text);
+        return;
+    }
+
+    // get the simple coordinates image
+    const data = await response.json();
+    const simple_coordinates_image_base64 = data.simple_coordinates_image;
+    if (simple_coordinates_image_base64) {
+        const coordinatesImageUrl = `data:image/png;base64,${simple_coordinates_image_base64}`;
+        update_canvas_image(canvas_simple_coordinates, coordinatesImageUrl);
+    } else {
+        console.error('No simple coordinates image returned from the server.');
+    }
+
+});
+
+const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
 
 const input_miner_timelimit = document.getElementById('miner_timelimit');
 const input_miner_threshold = document.getElementById('miner_threshold');
@@ -36,20 +81,12 @@ const text_blueprint = document.getElementById('blueprint_text');
 // -----------------------------------------------
 // setup elements
 // -----------------------------------------------
-canvas_preview.oncontextmenu = () => false;
 callback_use_default_blueprint();
-input_threshold.value = threshold.toFixed(2); // set initial value in the input field
 
 // -----------------------------------------------
 // link element to callbacks
 // -----------------------------------------------
-canvas_preview.addEventListener('mousedown', callback_canvas_clicks);
-button_upload_file.addEventListener('click', callback_upload_file);
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
-input_threshold.addEventListener('change', callback_threshold_change);
-button_decrease_threshold.addEventListener('click', callback_decrease_threshold);
-button_increase_threshold.addEventListener('click', callback_increase_threshold);
-
 input_miner_timelimit.addEventListener('change', () => {
     const value = input_miner_timelimit.value;
     if (value) {
@@ -323,11 +360,38 @@ async function callback_increase_threshold()
     callback_threshold_change(); // call the threshold change callback to update the preview
 }   
 
-function callback_run_solver_and_stream() 
+async function callback_run_solver_and_stream() 
 {
     // ----------------------------------------------------
     // local processing
     // ----------------------------------------------------
+
+    // check input miner blueprint
+    if (!input_miner_blueprint.value.trim()) {
+        console.error('Blueprint is empty. Please enter a valid blueprint.');
+        return;
+    }
+
+    // send request to server for task_id
+    const response = await fetch('/get_task_id/', {method: 'GET'});
+    // ensure the response is ok
+    if (!response.ok) 
+    {
+        const error_text = await response.text();
+        console.error('Failed to get task_id:', error_text);
+        task_not_found_alert(error_text);
+        return;
+    }
+
+    // get the task_id from the response
+    const data = await response.json();
+    task_id = data.task_id;
+    if (!task_id) 
+    {
+        console.error('No task_id received from the server.');
+        return;
+    }
+    console.log('Task ID:', task_id);
 
     // clear output
     text_solver_output.textContent = "";
@@ -340,6 +404,7 @@ function callback_run_solver_and_stream()
         miner_threshold: input_miner_threshold.value,
         belt_time: belt_miner_timelimit.value,
         belt_threshold: belt_miner_threshold.value,
+        input_miner_blueprint: input_miner_blueprint.value,
     });
     const eventSource = new EventSource(`/run_solver_and_stream?${params.toString()}`);
 
