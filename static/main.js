@@ -302,6 +302,10 @@ async function callback_threshold_change()
         input_threshold.value = threshold.toFixed(2); // update the input field
     }
 
+    // cap between 0 and 1
+    threshold = Math.max(0, Math.min(1, threshold));
+    input_threshold.value = threshold.toFixed(2); // update the input field
+
     update_preview()
 }
 
