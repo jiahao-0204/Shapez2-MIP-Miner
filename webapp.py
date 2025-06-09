@@ -40,6 +40,7 @@ templates = Jinja2Templates(directory="templates")
 tasks_parsers : dict[str, AstroidParser] = {}
 tasks_solvers : dict[str, AstroidSolver] = {}
 tasks_timestamps : dict[str, float] = {}
+tasks_suffix : dict[str, str] = {}  # to store task type if needed
 
 cleanup_interval = 60  # 1 minute
 tasks_lifespan = 600  # 10 minutes
@@ -55,7 +56,7 @@ def cleanup_tasks():
             if task_id in tasks_solvers:
                 del tasks_solvers[task_id]
             
-            image_path = Path(f"/tmp/{task_id}.png")
+            image_path = Path(f"/tmp/{task_id}{tasks_suffix.get(task_id, '.png')}")
             if image_path.exists():
                 try:
                     image_path.unlink()  # delete the file
@@ -94,7 +95,7 @@ async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = For
         return JSONResponse(status_code=404, content={"error": "Task not found"})
     
     # skip if file not found
-    image_path = Path(f"/tmp/{task_id}.png")
+    image_path = Path(f"/tmp/{task_id}{tasks_suffix.get(task_id, '.png')}")
     if not image_path.exists():
         return JSONResponse(status_code=404, content={"error": "File not found"})
     
@@ -166,6 +167,7 @@ async def add_task(file: UploadFile = File(...)):
     # create a temporary file path
     suffix = Path(file.filename).suffix
     file_path = Path(f"/tmp/{task_id}{suffix}")
+    tasks_suffix[task_id] = suffix
 
     # save the file to the temporary location
     with file_path.open("wb") as f:
