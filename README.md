@@ -71,14 +71,32 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   - uvicorn-standard
   - 
 - to start the webapp
-```
-mkdir git
-cd git
-git clone https://github.com/jiahao-0204/Shapez2-MIP-Miner
-cd Shapez2-MIP-Miner
-sudo cp fastapi.service /etc/systemd/system/
-chmod +x ./start.sh
-sudo systemctl daemon-reload
-sudo systemctl restart fastapi
-sudo systemctl status fastapi
-```
+  ```bash
+  mkdir git
+  cd git
+  git clone https://github.com/jiahao-0204/Shapez2-MIP-Miner
+  cd Shapez2-MIP-Miner
+  sudo cp ./server/fastapi.service /etc/systemd/system/
+  chmod +x ./server/start.sh
+  sudo systemctl daemon-reload
+  sudo systemctl restart fastapi
+  sudo systemctl status fastapi
+  sudo journalctl -u fastapi -f
+  ```
+- nginx to port 8000 to 80/443
+  ```bash
+  sudo apt update
+  sudo apt install nginx
+  cp ./server/fastapi.conf /etc/nginx/sites-available/
+  sudo ln -s /etc/nginx/sites-available/fastapi.conf /etc/nginx/sites-enabled/
+  sudo nginx -t
+  sudo systemctl reload nginx
+  ```
+- on cloudflare
+  - setup DNS "A" record with "@" and "www" that points to server ip address
+- certbot to support https
+  ```bash
+  sudo apt install certbot python3-certbot-nginx
+  sudo certbot --nginx -d shapez2-tools.com
+  sudo certbot renew --dry-run
+  ```
