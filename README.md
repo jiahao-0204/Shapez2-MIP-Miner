@@ -100,3 +100,5 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   sudo certbot --nginx -d shapez2-tools.com
   sudo certbot renew --dry-run
   ```
+- notes
+  - after `sudo cp ./server/fastapi.conf /etc/nginx/sites-available/`, need to redo `sudo certbot --nginx -d shapez2-tools.com`
