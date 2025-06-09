@@ -75,6 +75,13 @@ function update_canvas_image(canvas, image_url)
     img.src = image_url; // set image source to the URL
 }
 
+function task_not_found_alert(error_text) 
+{
+    if (error_text.includes("Task not found")) 
+    {
+        alert("Task not found (Server delete tasks after 10 minutes). Please refresh or try again.");
+    }
+}
 
 async function callback_upload_file() 
 {
@@ -120,7 +127,9 @@ async function callback_upload_file()
     // ensure the response is ok
     if (!response.ok)
     {
-        console.error('Failed to upload file:', response.statusText);
+        const errorText = await response.text();
+        console.error("Failed to upload file:", errorText);
+        task_not_found_alert(error_text);
         return;
     }
 
@@ -153,6 +162,14 @@ async function update_preview()
     // ----------------------------------------------------
     // process response
     // ----------------------------------------------------
+
+    if (!response.ok)
+    {
+        const error_text = await response.text();
+        console.error("Failed to update preview:", error_text);
+        task_not_found_alert(error_text);
+        return;
+    }
 
     // decode image
     const data = await response.json();
@@ -225,9 +242,11 @@ async function callback_canvas_clicks(event)
     // ----------------------------------------------------
 
     // ensure the response is ok
-    if (!response.ok) 
+    if (!response.ok)
     {
-        console.error('Failed to send click data:', response.statusText);
+        const error_text = await response.text();
+        console.error('Failed to send click data:', error_text);
+        task_not_found_alert(error_text);
         return;
     }
 
@@ -300,9 +319,11 @@ function callback_run_solver_and_stream()
                 // -------------------------------------
 
                 // ensure the response is ok
-                if (!response.ok) 
+                if (!response.ok)
                 {
-                    console.error('Failed to get final result:', response.statusText);
+                    const error_text = await response.text();
+                    console.error('Failed to get final result:', error_text);
+                    task_not_found_alert(error_text);
                     return;
                 }
 
@@ -362,7 +383,9 @@ async function callback_generate_blueprint()
     // ensure the response is ok
     if (!response.ok)
     {
-        console.error('Failed to generate blueprint:', response.statusText);
+        const error_text = await response.text();
+        console.error('Failed to generate blueprint:', error_text);
+        task_not_found_alert(error_text);
         return;
     }
 

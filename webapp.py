@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 import io
 import asyncio
 import threading
+from time import time
 
 # third party
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Request
@@ -38,6 +39,38 @@ templates = Jinja2Templates(directory="templates")
 # list of tasks
 tasks_parsers : dict[str, AstroidParser] = {}
 tasks_solvers : dict[str, AstroidSolver] = {}
+tasks_timestamps : dict[str, float] = {}
+
+cleanup_interval = 60  # 1 minute
+tasks_lifespan = 600  # 10 minutes
+
+def cleanup_tasks():
+    # log
+    print("Running cleanup_tasks...")
+    
+    now = time()
+
+    for task_id, timestamp in list(tasks_timestamps.items()):
+        duration = now - timestamp
+        if duration > tasks_lifespan:
+            if task_id in tasks_parsers:
+                del tasks_parsers[task_id]
+            if task_id in tasks_solvers:
+                del tasks_solvers[task_id]
+            
+            image_path = Path(f"/tmp/{task_id}.png")
+            if image_path.exists():
+                try:
+                    image_path.unlink()  # delete the file
+                    print(f"Deleted file: {image_path}")
+                except Exception as e:
+                    print(f"Error deleting file {image_path}: {e}")
+            del tasks_timestamps[task_id]
+            
+    # Schedule the next cleanup
+    threading.Timer(cleanup_interval, cleanup_tasks).start()  # Run every 60 seconds
+
+cleanup_tasks()  # Start the cleanup process
 
 # ------------------------------------------
 # Web API
@@ -60,9 +93,13 @@ async def send_clicks(task_id: str = Form(...), x: int = Form(...), y: int = For
     # -----------------------------
     
     # skip if task id not found
+    if task_id not in tasks_parsers:
+        return JSONResponse(status_code=404, content={"error": "Task not found"})
+    
+    # skip if file not found
     image_path = Path(f"/tmp/{task_id}.png")
     if not image_path.exists():
-        return JSONResponse(status_code=404, content={"error": "Image not found"})
+        return JSONResponse(status_code=404, content={"error": "File not found"})
     
     # --- log ---
     print(f"Received clicks for task {task_id}: x={x}, y={y}, left={left}")
@@ -127,6 +164,7 @@ async def add_task(file: UploadFile = File(...)):
     
     # create task id
     task_id = uuid4().hex
+    tasks_timestamps[task_id] = time()
     
     # create a temporary file path
     suffix = Path(file.filename).suffix
