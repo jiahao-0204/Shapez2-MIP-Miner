@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=ubuntu
 WorkingDirectory=/home/ubuntu/git/Shapez2-MIP-Miner
-ExecStart=/home/ubuntu/git/Shapez2-MIP-Miner/start.sh
+ExecStart=/home/ubuntu/git/Shapez2-MIP-Miner/server/start.sh
 StandardOutput=append:/var/log/fastapi.log
 StandardError=append:/var/log/fastapi.err
 Restart=always
