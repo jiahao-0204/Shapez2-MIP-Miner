@@ -83,8 +83,8 @@ def create_miner_json(x, y, direction, platform_json = None) -> dict:
         R = 3
     
     entry = {
-        "x": x,
-        "y": -y,
+        "X": x,
+        "Y": -y,
         "R": R,
         "T": "Layout_ShapeMiner",
     }
@@ -134,8 +134,8 @@ def create_extender_json(x, y, direction):
         R = 3
     
     return {
-        "x": x,
-        "y": -y,
+        "X": x,
+        "Y": -y,
         "R": R,
         "T": "Layout_ShapeMinerExtension",
     }
