@@ -398,7 +398,7 @@ async function callback_run_solver_and_stream()
     text_solver_output.textContent = "";
 
     // get elevator checkbox value
-    const with_elevator_bool = checkbox_with_elevator.checked;
+    const with_elevator_bool = checkbox_with_elevator.checked.toString();
     console.log('With elevator:', with_elevator_bool);
     
     // get event source for streaming logs
