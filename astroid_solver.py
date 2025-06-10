@@ -400,6 +400,7 @@ class AstroidSolver:
             nodes_to_extract=self.nodes_to_extract,
             nodes_sink=self.nodes_sink,
             node_flow_in=self.node_flow_in_sol,
+            node_flow_out=self.node_flow_out_sol,
             node_used_by_elevator=self.node_used_by_elevator_sol)
         
         # return the blob
