@@ -113,7 +113,7 @@ async def run_solver_and_stream(
     request: Request,
     task_id: str,
     with_elevator_bool: bool,
-    extractors_timelimit: float,
+    miners_timelimit: float,
     saturation_timelimit: float,
     input_miner_blueprint: str
 ):
@@ -145,7 +145,7 @@ async def run_solver_and_stream(
     loop = asyncio.get_running_loop()
     
     # run the solver in a separate thread to avoid blocking the event loop
-    def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop, with_elevator_bool: bool, extractors_timelimit: float, saturation_timelimit: float):
+    def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop, with_elevator_bool: bool, miners_timelimit: float, saturation_timelimit: float):
         # run solver and redirect output
         
         class StreamToQueue(io.StringIO):
@@ -170,7 +170,7 @@ async def run_solver_and_stream(
         stream_writer = StreamToQueue(queue, loop)
         with redirect_stdout(stream_writer):
             astroid_solver.run_solver(
-                extractors_timelimit=extractors_timelimit,
+                miners_timelimit=miners_timelimit,
                 saturation_timelimit=saturation_timelimit,
                 with_elevator=with_elevator_bool
             )
@@ -179,7 +179,7 @@ async def run_solver_and_stream(
         loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
         loop.call_soon_threadsafe(queue.put_nowait, None)
         
-    threading.Thread(target=separate_thread_run_solver, args=(solver, queue, loop, with_elevator_bool, extractors_timelimit, saturation_timelimit)).start()
+    threading.Thread(target=separate_thread_run_solver, args=(solver, queue, loop, with_elevator_bool, miners_timelimit, saturation_timelimit)).start()
 
     # -------------------------------
     # current thread

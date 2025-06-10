@@ -65,7 +65,7 @@ input_miner_blueprint.addEventListener('change', async function()
 const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
 
 const checkbox_with_elevator = document.getElementById('with_elevator');
-const extractors_timelimit = document.getElementById('extractors_timelimit');
+const miners_timelimit = document.getElementById('miners_timelimit');
 const saturation_timelimit = document.getElementById('saturation_timelimit');
 const button_run_solver_and_stream = document.getElementById('run_solver_and_stream');
 const text_solver_output = document.getElementById("solver_output");
@@ -86,12 +86,12 @@ callback_use_default_blueprint();
 // link element to callbacks
 // -----------------------------------------------
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
-extractors_timelimit.addEventListener('change', () => {
-    const value = extractors_timelimit.value;
+miners_timelimit.addEventListener('change', () => {
+    const value = miners_timelimit.value;
     if (value) {
         // cap between 0 and 120
         const cappedValue = Math.max(0, Math.min(120, parseFloat(value)));
-        extractors_timelimit.value = cappedValue.toFixed(2);
+        miners_timelimit.value = cappedValue.toFixed(2);
     }
 });
 saturation_timelimit.addEventListener('change', () => {
@@ -388,7 +388,7 @@ async function callback_run_solver_and_stream()
     {
         task_id: task_id,
         with_elevator_bool: with_elevator_bool,
-        extractors_timelimit: extractors_timelimit.value,
+        miners_timelimit: miners_timelimit.value,
         saturation_timelimit: saturation_timelimit.value,
         input_miner_blueprint: input_miner_blueprint.value,
     });
