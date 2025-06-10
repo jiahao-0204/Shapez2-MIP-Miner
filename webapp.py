@@ -243,6 +243,8 @@ async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Fo
     astroid_solver = tasks_solvers[task_id]
     
     # get the blueprint txt
+    if miner_blueprint == "empty":
+        miner_blueprint = ""
     blueprint = astroid_solver.get_solution_blueprint(miner_blueprint=miner_blueprint)
     
     if blueprint is None:

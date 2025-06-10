@@ -490,6 +490,12 @@ async function callback_generate_blueprint()
         return;
     }
 
+    const miner_blueprint_value = input_miner_blueprint.value;
+    if (miner_blueprint_value === "") 
+    {
+        miner_blueprint_value = "empty"; 
+    }
+
     // ----------------------------------------------------
     // send data
     // ----------------------------------------------------
