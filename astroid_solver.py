@@ -374,12 +374,12 @@ class AstroidSolver:
         self.node_flow_out = node_flow_out
         self.node_used_by_elevator = node_used_by_elevator     
         
-    def run_solver(self, miner_timelimit : float = 5.0, miner_gap : float = 5.0, belt_timelimit : float = 5.0, belt_gap : float = 5.0, with_elevator : bool = False) -> None:
+    def run_solver(self, extractors_timelimit : float = 5.0, saturation_timelimit : float = 5.0, with_elevator : bool = False) -> None:
         # set limits
         optimize_extractors = self.model.getMultiobjEnv(0)
-        optimize_extractors.setParam('TimeLimit', miner_timelimit)
+        optimize_extractors.setParam('TimeLimit', extractors_timelimit)
         optimize_saturation = self.model.getMultiobjEnv(1)
-        optimize_saturation.setParam('TimeLimit', miner_timelimit)
+        optimize_saturation.setParam('TimeLimit', saturation_timelimit)
         
         if not with_elevator:
             # if not with elevator, set the elevator variables to zero
@@ -584,7 +584,8 @@ def render_result(all_miner_platforms: List[FakeVar],
     
 if __name__ == "__main__":
     # use simple coordinates
-    input_miner_blueprint = get_brush_blueprint(20)
+    input_miner_blueprint = get_brush_blueprint(10)
+    # input_miner_blueprint = "SHAPEZ2-3-H4sIAPxRSGgA/4zaX2tTQRAF8O+y+HgFZ2/u3vY+ij4UFIqKKFJK0IiBmJT8eSgh392U+OKDnR+FhtKT2ZlzzsLu7BzL5zJF1NqV17dlOpYX+8eHRZnKzW41X/8oXbn5vlk//ePNfD8v07eyPP893a7m+5+b7e9d6daH1eryq+x+zR8W04fD5afcnbrydr3fLhe78xeP5UuZXsarrnw9f/Zd+XRe5d38cXPY3398+uL75XqxLafuX2BVYAiQQgXi0tSuL5nNENcjTtcNwEmgMBimhVUiaUMGu7pwobgZ4nrEVcQF4CRQGAzTwiqRNNSgZbARJR1R0hElHVHSESUdLVAYDNPCKpE01AAlTQlpqHxD5Rsq31D5hso3CxQGw7SwSiQNNcBKU+UHVH5A5QdUfkDlB1QeCwiDYVpYJZKGJTSDpcrPLswqriFuQNwMcT3iKuICcBIoDIZpYZWYG2qAkqYO6dFJPTqpRyf16KQendSjk3p0Ei4YBsO0cFEkDTVASVOHVHRSRSdVdFJFJ1V0UkUnVXQSBgqDYTSsEklDDVDS1CGBTgp0UqCTAp0U2q7Rbo02aywQwjAtrBJJQw2elTT1RmqK1A2pDVL9U+FTxZ/9aiShs6Wz3LPiM/ayPYlbHHc4bnDc37i9cXfj5g4KYyhLyeozsox5kzHzBJ4f8PiApwc8PODZAY8OFiYIZbGsPiPLmDcZM0/grQMvHXjnwCsH3jhstSCUpWQrGlnGfCNUJjY2K7BXga0K7FRgo8KSCkJZSlaf5WXMN0JlYmOPE1uc2OHEBif2Ny33IJSlZPUZWZZ9I1QmNj5l4EsGPmTgOwY+YzQKE4SylKw+I8uYtxozsfHFEh8s8b0SnyvxtdJKDEJZSlafkWXMN0JlTOAkAQ4S4BwBjhFcUZgglKVk9RlZA6EyFXHaBodtcNbmmsIEoSwlq29GqPTOi8NaOquVjmrhpBYOav2F/Z+xu9PpjwADAPJbZEgpJwAA$"
     astroid_location = parse_using_blueprint(input_miner_blueprint)
     
     # return if none
@@ -597,7 +598,7 @@ if __name__ == "__main__":
     
     optimizer = AstroidSolver()
     optimizer.add_astroid_locations(np.array(astroid_location))
-    optimizer.run_solver(miner_timelimit=10.0, miner_gap=0.0, belt_timelimit=1.0, belt_gap=90.0, with_elevator=True)
+    optimizer.run_solver(extractors_timelimit = 20.0, saturation_timelimit = 5.0, with_elevator=True)
     optimizer.save_variables("variables.txt")
     blueprint = optimizer.get_solution_blueprint(MINER_BLUEPRINT)
     print(blueprint)

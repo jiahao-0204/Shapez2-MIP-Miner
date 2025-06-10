@@ -33,7 +33,6 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
 
 - [x] image recognition for importing astroid layouts
 - [x] spit out shapez blueprint
-- [ ] support sending to upper layer
 - [ ] add yaml file to expose settings
 - [ ] better readme (include instruction of git clone, how to star XD, python command etc)
 - [ ] better window layout
@@ -48,6 +47,10 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   - [x] add text box to adjust solver duration
   - [x] add text box to support custom miner blueprint
   - [x] parse using blueprint
+  - [x] support sending to upper layer
+  - [x] optimize for saturated miners
+  - [x] don't solve for belts
+  - [ ] fix empty miner blueprint not working
   - [ ] dockerise app
   - [ ] test docker locally
   - [ ] cloudflare setup

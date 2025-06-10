@@ -65,10 +65,8 @@ input_miner_blueprint.addEventListener('change', async function()
 const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
 
 const checkbox_with_elevator = document.getElementById('with_elevator');
-const input_miner_timelimit = document.getElementById('miner_timelimit');
-const input_miner_threshold = document.getElementById('miner_threshold');
-const belt_miner_timelimit = document.getElementById('belt_timelimit');
-const belt_miner_threshold = document.getElementById('belt_threshold');
+const extractors_timelimit = document.getElementById('extractors_timelimit');
+const saturation_timelimit = document.getElementById('saturation_timelimit');
 const button_run_solver_and_stream = document.getElementById('run_solver_and_stream');
 const text_solver_output = document.getElementById("solver_output");
 
@@ -88,36 +86,20 @@ callback_use_default_blueprint();
 // link element to callbacks
 // -----------------------------------------------
 button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
-input_miner_timelimit.addEventListener('change', () => {
-    const value = input_miner_timelimit.value;
+extractors_timelimit.addEventListener('change', () => {
+    const value = extractors_timelimit.value;
     if (value) {
         // cap between 0 and 120
         const cappedValue = Math.max(0, Math.min(120, parseFloat(value)));
-        input_miner_timelimit.value = cappedValue.toFixed(2);
+        extractors_timelimit.value = cappedValue.toFixed(2);
     }
 });
-input_miner_threshold.addEventListener('change', () => {
-    const value = input_miner_threshold.value;
-    if (value) {
-        // cap between 0 and 100
-        const cappedValue = Math.max(0, Math.min(100, parseFloat(value)));
-        input_miner_threshold.value = cappedValue.toFixed(2);
-    }
-});
-belt_miner_timelimit.addEventListener('change', () => {
-    const value = belt_miner_timelimit.value;
+saturation_timelimit.addEventListener('change', () => {
+    const value = saturation_timelimit.value;
     if (value) {
         // cap between 0 and 120
         const cappedValue = Math.max(0, Math.min(120, parseFloat(value)));
-        belt_miner_timelimit.value = cappedValue.toFixed(2);
-    }
-});
-belt_miner_threshold.addEventListener('change', () => {
-    const value = belt_miner_threshold.value;
-    if (value) {
-        // cap between 0 and 100
-        const cappedValue = Math.max(0, Math.min(100, parseFloat(value)));
-        belt_miner_threshold.value = cappedValue.toFixed(2);
+        saturation_timelimit.value = cappedValue.toFixed(2);
     }
 });
 
@@ -406,10 +388,8 @@ async function callback_run_solver_and_stream()
     {
         task_id: task_id,
         with_elevator_bool: with_elevator_bool,
-        miner_time: input_miner_timelimit.value,
-        miner_threshold: input_miner_threshold.value,
-        belt_time: belt_miner_timelimit.value,
-        belt_threshold: belt_miner_threshold.value,
+        extractors_timelimit: extractors_timelimit.value,
+        saturation_timelimit: saturation_timelimit.value,
         input_miner_blueprint: input_miner_blueprint.value,
     });
     const eventSource = new EventSource(`/run_solver_and_stream?${params.toString()}`);
