@@ -483,7 +483,7 @@ def render_result(all_miner_platforms: List[FakeVar],
     # draw elevator nodes
     for node, elevator in node_used_by_elevator.items():
         if elevator.X > 0.5:
-            plt.scatter(node[0], node[1], color=elevator_color, marker='x', s=150, edgecolors=edge_color, zorder=2)
+            plt.scatter(node[0], node[1], color=elevator_color, marker='x', s=150, zorder=2)
     
     # draw belts
     for belt in all_belts:
@@ -562,7 +562,6 @@ def render_result(all_miner_platforms: List[FakeVar],
                 plt.text(mid_x, mid_y, f"{flow_value:.0f}", fontsize=15, ha='center', va='center', color=belt_color, zorder=3)
     
     # add legend
-    plt.legend()
     plt.tight_layout()
         
     # return the figure as a PNG image blob
