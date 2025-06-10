@@ -72,6 +72,34 @@ def json_to_blueprint(json_str):
     # Add the prefix back
     return f"{PREFIX}{compressed_b64}{'$'}"
 
+def create_elevator_json(x, y, direction):
+    """
+    Creates a JSON representation of an elevator in Shapez.io.
+    
+    Args:
+        x (int): The x-coordinate of the elevator.
+        y (int): The y-coordinate of the elevator.
+        direction (tuple): The direction of the elevator as a tuple (dx, dy).
+        
+    Returns:
+        dict: A dictionary representing the elevator in Shapez.io format.
+    """
+    if direction == (1, 0):
+        R = 0
+    elif direction == (0, -1):
+        R = 1
+    elif direction == (-1, 0):
+        R = 2
+    elif direction == (0, 1):
+        R = 3
+    
+    return {
+        "X": x,
+        "Y": -y,
+        "R": R,
+        "T": "SpaceBelt_Lift1UpForward",
+    }
+
 def create_miner_json(x, y, direction, platform_json = None) -> dict:
     if direction == (1, 0):
         R = 0
@@ -275,7 +303,7 @@ def create_empty_blueprint_json() -> dict:
         }
     }
 
-def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms: List[FakeVar], all_belts: List[FakeVar], miner_blueprint: Optional[str] = None) -> str:
+def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms: List[FakeVar], all_belts: List[FakeVar], all_elevators: List[FakeVar] = [], miner_blueprint: Optional[str] = None) -> str:
     # extract platform B code from the miner blueprint if provided
     if miner_blueprint is not None:    
         try:
@@ -290,6 +318,7 @@ def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms
     all_json = create_empty_blueprint_json()
 
     # add miner
+    miner_and_belt_flow_to_from : Dict[Tuple[int, int], Tuple[int, int]] = {}
     for miner in all_miner_platforms:
         if miner.X > 0.5:
             # extract coordinates and direction from VarName
@@ -305,6 +334,11 @@ def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms
             
             # add miner to the blueprint
             all_json['BP']['Entries'].append(miner_json)
+            
+            # store the flow direction for the miner
+            if (x2, y2) not in miner_and_belt_flow_to_from:
+                # store the flow direction for the miner
+                miner_and_belt_flow_to_from[(x2, y2)] = (x, y)
     
     # add extenders
     for extender in all_extender_platforms:
@@ -346,6 +380,11 @@ def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms
             # add input and output locations
             map_of_space_belts[(x, y)].output_location.append(direction)
             map_of_space_belts[(x2, y2)].input_location.append(inv_direction)
+            
+            # add to flow direction map
+            if (x2, y2) not in miner_and_belt_flow_to_from:
+                miner_and_belt_flow_to_from[(x2, y2)] = (x, y)
+                
     for miner in all_miner_platforms:
         if miner.X > 0.5:
             # extract coordinates and direction from VarName
@@ -373,6 +412,29 @@ def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms
                 }
                 all_json['BP']['Entries'].append(belt_json)
     
+    # add elevators
+    for elevator in all_elevators:
+        if elevator.X > 0.5:
+            # extract coordinates and direction from VarName
+            # elevator_var_name = f"elevator_{node[0]}_{node[1]}"
+            parts = elevator.VarName.split('_')
+            x = int(parts[1])
+            y = int(parts[2])
+            
+            # elevator direction are obtained from miner out flow direction
+            from_node = miner_and_belt_flow_to_from.get((x, y), None)
+            
+            if from_node is None:
+                continue
+            
+            direction = (x - from_node[0], y - from_node[1])
+            
+            # encode elevator
+            elevator_json = create_elevator_json(x, y, direction)
+            
+            # add elevator to the blueprint
+            all_json['BP']['Entries'].append(elevator_json)
+    
     # encode the blueprint
     blueprint = json_to_blueprint(all_json)
     
@@ -386,4 +448,10 @@ if __name__ == "__main__":
     # miner blueprint (facing right)
     miner_blueprint = "SHAPEZ2-3-H4sIAAPgQGgA/6yXUWujQBSF/8tlH33IaKKOj6FdCCQQ2hK6LGEZ6qQ7YMdyHemG4H9fbZrgbppEj0VQxPvNnZlzj5fZ0YoSIXzfo+mSkh19c9tXTQnNikzZlDyaPeW2+XCjnKLkJ5n6PVlmym1yfinIs2WW7W9U/FavOrkr9xetK49urWOjixrc0UM97Fxt89L9um8iF8ZqrjNM23mnpclSY5+/NPMjJaFHPyiZeHRXr9d7n8vtH8fqyeV8ozeqzNzMOs1WZSvFRllHlfdORjAZw6SESSFw1MfRAEfHQ9HmUbMBMmOM9QewAmcljsY4GuFoOHifwnZZTHXmPqi53lxRJ9wzC83Pmv2HXMwvV0L3+HHP+Ek7vrWG7zm/KU7PYeEZ7JOlLwxzzjr9j43ObF6nxDGw89GBPDDLnN29tqnmK3YI2iXSc7H+cYjLgpyAAQqOUXDyD9hXEhH0UuMD8s9sbbeUYoAw0XGIzvUQDi6HCNQmBjn5yYyv/xTkEG3kZWk6waMBuo6OQ/QrKQFyPsgFIDcGuQnIhSAXnXAd/QV01ahf04v7hcvTafV1INbs5MVe14WVQJ8cHUjEPxKzj8TcIzHzSMw7ErOOxJwjOxlnXZ9QjVW8XWkuTHMkbc7LVbWuqr8CDABeAPEsPg8AAA==$" 
     
-    print(compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, miner_blueprint))
+    print(compose_blueprint(all_miner_platforms, all_extender_platforms, all_belts, miner_blueprint = miner_blueprint))
+
+# if __name__ == "__main__":
+#     blueprint = "SHAPEZ2-3-H4sIAPCSR2gA/ySMywrCMBRE/2VwmU26vMuiQsFF8bWRIpc2xUBMQ3KLSMi/GykDA8NhTsYdpHXTKLQ9KGMn32BA6JJjP0GhGxf/B3sWBj1g66bescxLfCcovzq3FdKLg6HzugVDUTh4idakesy4Vu0l8Gha4+R5srPoWzgu8cNxQhlK+QkgwADAG5kVjQAAAA==$"
+    
+#     blueprint_json = blueprint_to_json(blueprint)
+#     print(json.dumps(blueprint_json, indent=4))

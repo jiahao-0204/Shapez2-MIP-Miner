@@ -121,8 +121,8 @@ class AstroidSolver:
                 node_used_by_elevator[node] = elevator_var
             else:
                 # create a dummy variable for elevator if node is not in nodes_to_extract
-                elevator_var = model.addVar(vtype=GRB.BINARY, name=f"dummy_elevator_{node[0]}_{node[1]}")
-                model.addConstr(elevator_var == 0, name=f"dummy_elevator_constr_{node[0]}_{node[1]}")
+                elevator_var = model.addVar(vtype=GRB.BINARY, name=f"dummyelevator_{node[0]}_{node[1]}")
+                model.addConstr(elevator_var == 0, name=f"dummyelevator_constr_{node[0]}_{node[1]}")
                 node_used_by_elevator[node] = elevator_var
             
         # ----------------------------------------------------------
@@ -372,6 +372,7 @@ class AstroidSolver:
         self.node_flow_in_sol = {node: [FakeVar(VarName=flow.VarName, X=flow.X) for flow in flows] for node, flows in self.node_flow_in.items()}
         self.node_flow_out_sol = {node: [FakeVar(VarName=flow.VarName, X=flow.X) for flow in flows] for node, flows in self.node_flow_out.items()}
         self.node_used_by_elevator_sol = {node: FakeVar(VarName=elevator.VarName, X=elevator.X) for node, elevator in self.node_used_by_elevator.items()}
+        self.all_elevators_sol = [FakeVar(VarName=elevator.VarName, X=elevator.X) for elevator in self.node_used_by_elevator.values()]
                 
     def save_variables(self, filename: str) -> None:
         # save the variables to a file
@@ -383,7 +384,7 @@ class AstroidSolver:
             miner_blueprint = self.default_blueprint
         
         # generate blueprint
-        return compose_blueprint(self.all_miner_platforms, self.all_extender_platforms, self.all_belts, miner_blueprint=miner_blueprint)
+        return compose_blueprint(self.all_miner_platforms_sol, self.all_extender_platforms_sol, self.all_belts_sol, self.all_elevators_sol, miner_blueprint=miner_blueprint)
     
     def get_solution_image(self) -> BytesIO:
         # render the result
