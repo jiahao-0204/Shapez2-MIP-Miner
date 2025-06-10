@@ -65,6 +65,7 @@ class AstroidSolver:
         node_belts : Dict[Tuple[int, int], List[Var]] = defaultdict(list)
         node_flow_out : Dict[Tuple[int, int], List[Var]] = defaultdict(list)
         node_flow_in : Dict[Tuple[int, int], List[Var]] = defaultdict(list)
+        node_used_by_elevator : Dict[Tuple[int, int], Var] = {}
         
         flow_to_list_of_things_in_the_same_direction : Dict[Var, List[Var]] = defaultdict(list)
         
@@ -111,6 +112,17 @@ class AstroidSolver:
                     
                     flow_to_list_of_things_in_the_same_direction[flow_var].append(extender_var)
                     
+        for node in nodes:
+            if node in nodes_to_extract:
+                # create a variable to represent if an elevator is placed at the node
+                elevator_var_name = f"elevator_{node[0]}_{node[1]}"
+                elevator_var = model.addVar(vtype=GRB.BINARY, name=elevator_var_name)
+                node_used_by_elevator[node] = elevator_var
+            else:
+                # create a dummy variable for elevator if node is not in nodes_to_extract
+                elevator_var = model.addVar(vtype=GRB.BINARY, name=f"dummy_elevator_{node[0]}_{node[1]}")
+                model.addConstr(elevator_var == 0, name=f"dummy_elevator_constr_{node[0]}_{node[1]}")
+                node_used_by_elevator[node] = elevator_var
             
         # ----------------------------------------------------------
         # set objective of the problem
@@ -134,13 +146,6 @@ class AstroidSolver:
             node_used_by_belt[node] = node_used_by_belt_var
             model.addGenConstrOr(node_used_by_belt_var, [belt for belt in node_belts.get(node, [])], name=constr_name)
         
-        # constraint - XOR(belt, extender, miner)
-        for node in nodes:
-            # add constraint that only one thing can be at the node
-            sum_of_things = quicksum([node_used_by_belt.get(node, 0)] + node_extenders.get(node, []) + node_miners.get(node, []))
-            constr_name = f"only_one_thing_at_node_{node[0]}_{node[1]}"
-            model.addConstr(sum_of_things <= 1, name=constr_name)
-        
         # create - is_node_used_by_extractor
         node_used_by_extractor : Dict[Tuple[int, int], Var] = {}
         for node in nodes:
@@ -150,14 +155,21 @@ class AstroidSolver:
             node_used_by_extractor[node] = node_used_by_extractor_var
             model.addGenConstrOr(node_used_by_extractor_var, [miner for miner in node_miners.get(node, [])] + [extender for extender in node_extenders.get(node, [])], name=constr_name)
         
-        # create - is node used by nothing
+        # create - is node used by something
         node_used_by_something : Dict[Tuple[int, int], Var] = {}
         for node in nodes:
             var_name = f"node_used_by_something_{node[0]}_{node[1]}"
             constr_name = f"node_used_by_something_constr_{node[0]}_{node[1]}"
             node_used_by_something_var = model.addVar(vtype=GRB.BINARY, name=var_name)
             node_used_by_something[node] = node_used_by_something_var
-            model.addGenConstrOr(node_used_by_something_var, [node_used_by_belt[node], node_used_by_extractor[node]], name=constr_name)
+            model.addGenConstrOr(node_used_by_something_var, [node_used_by_belt[node], node_used_by_extractor[node], node_used_by_elevator[node]], name=constr_name)
+        
+        # constraint - XOR(belt, extender, miner, elevator)
+        for node in nodes:
+            # add constraint that only one thing can be at the node
+            sum_of_things = quicksum([node_used_by_belt.get(node, 0)] + node_extenders.get(node, []) + node_miners.get(node, []) + [node_used_by_elevator.get(node, 0)])
+            constr_name = f"only_one_thing_at_node_{node[0]}_{node[1]}"
+            model.addConstr(sum_of_things <= 1, name=constr_name)
         
         # constraint - flow input and output
         for node in nodes:
@@ -179,6 +191,16 @@ class AstroidSolver:
                 GRB.EQUAL,
                 1.0,
                 name=f"passthrough_out_flow_{node[0]}_{node[1]}"
+            )
+            
+            # used by elevator, no out flow
+            model.addGenConstrIndicator(
+                node_used_by_elevator[node],
+                True,
+                quicksum(node_flow_out[node]),
+                GRB.EQUAL,
+                0.0,
+                name=f"elevator_out_flow_{node[0]}_{node[1]}"
             )
             
             # skip the last condition if the node is in sink nodes
@@ -215,7 +237,7 @@ class AstroidSolver:
                 name=f"extractor_flow_cap_{node[0]}_{node[1]}"
             )
             
-            # belt - 12
+            # belt - self.BELT_MAX_FLOW
             model.addGenConstrIndicator(
                 node_used_by_belt[node],
                 True,
@@ -270,7 +292,7 @@ class AstroidSolver:
                 name=f"extender_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
             )
         
-        # if miner is true, the end node must have belt
+        # if miner is true, the end node must have belt or elevator
         for miner in all_miner_platforms:
             # get the start and end nodes of the miner
             var_parts = miner.varName.split('_')
@@ -281,7 +303,7 @@ class AstroidSolver:
             model.addGenConstrIndicator(
                 miner,
                 True,
-                node_used_by_belt[end_node],
+                quicksum([node_used_by_belt[end_node] + node_used_by_elevator[end_node]]),
                 GRB.EQUAL,
                 1.0,
                 name=f"miner_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
@@ -304,6 +326,18 @@ class AstroidSolver:
                 name=f"belt_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
             )
         
+        # if node is elevator, only one in flow direction is allowed
+        for node in nodes_to_extract:
+            # add the constraint
+            model.addGenConstrIndicator(
+                node_used_by_elevator[node],
+                True,
+                quicksum(flow_greater_than_zero[flow] for flow in node_flow_in[node]),
+                GRB.LESS_EQUAL,
+                1.0,
+                name=f"elevator_in_flow_{node[0]}_{node[1]}"
+            )
+        
         # ----------------------------------------------------
         # store the model
         # ----------------------------------------------------
@@ -313,7 +347,9 @@ class AstroidSolver:
         self.all_belts = all_belts
         self.nodes_to_extract = nodes_to_extract
         self.nodes_sink = nodes_sink
-        self.node_flow_in = node_flow_in        
+        self.node_flow_in = node_flow_in   
+        self.node_flow_out = node_flow_out
+        self.node_used_by_elevator = node_used_by_elevator     
         
     def run_solver(self, miner_timelimit : float = 5.0, miner_gap : float = 5.0, belt_timelimit : float = 5.0, belt_gap : float = 5.0) -> None:
         # set limits
@@ -333,6 +369,8 @@ class AstroidSolver:
         self.all_belts_sol = [FakeVar(VarName=belt.VarName, X=belt.X) for belt in self.all_belts]
         self.nodes_to_extract_sol = self.nodes_to_extract
         self.node_flow_in_sol = {node: [FakeVar(VarName=flow.VarName, X=flow.X) for flow in flows] for node, flows in self.node_flow_in.items()}
+        self.node_flow_out_sol = {node: [FakeVar(VarName=flow.VarName, X=flow.X) for flow in flows] for node, flows in self.node_flow_out.items()}
+        self.node_used_by_elevator_sol = {node: FakeVar(VarName=elevator.VarName, X=elevator.X) for node, elevator in self.node_used_by_elevator.items()}
                 
     def save_variables(self, filename: str) -> None:
         # save the variables to a file
