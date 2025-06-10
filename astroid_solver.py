@@ -36,9 +36,6 @@ class AstroidSolver:
         
         # list of source nodes
         nodes_to_extract = [(x, y) for x, y in astroid_location]
-                       
-        # list of sink nodes]
-        nodes_sink = []
         
         # ----------------------------------------------------------
         # initialize the model
@@ -373,7 +370,6 @@ class AstroidSolver:
         self.all_miner_platforms = all_miner_platforms
         self.all_belts = all_belts
         self.nodes_to_extract = nodes_to_extract
-        self.nodes_sink = nodes_sink
         self.node_flow_in = node_flow_in   
         self.node_flow_out = node_flow_out
         self.node_used_by_elevator = node_used_by_elevator     
@@ -422,7 +418,6 @@ class AstroidSolver:
             self.all_extender_platforms_sol,
             self.all_belts_sol,
             nodes_to_extract=self.nodes_to_extract,
-            nodes_sink=self.nodes_sink,
             node_flow_in=self.node_flow_in_sol,
             node_flow_out=self.node_flow_out_sol,
             node_used_by_elevator=self.node_used_by_elevator_sol)
@@ -437,7 +432,6 @@ class AstroidSolver:
             self.all_extender_platforms_sol,
             self.all_belts_sol,
             nodes_to_extract=self.nodes_to_extract,
-            nodes_sink=self.nodes_sink,
             node_flow_in=self.node_flow_in_sol,
             node_flow_out=self.node_flow_out_sol,
             node_used_by_elevator=self.node_used_by_elevator_sol)
@@ -450,7 +444,6 @@ def render_result(all_miner_platforms: List[FakeVar],
                   all_extender_platforms: List[FakeVar],
                   all_belts: List[FakeVar],
                   nodes_to_extract: List[Tuple[int, int]] = [],
-                  nodes_sink: List[Tuple[int, int]] = [],
                   node_flow_in: Dict[Tuple[int, int], List[FakeVar]] = defaultdict(list),
                   node_flow_out: Dict[Tuple[int, int], List[FakeVar]] = defaultdict(list),
                   node_used_by_elevator: Dict[Tuple[int, int], FakeVar] = {}) -> BytesIO:
@@ -559,18 +552,6 @@ def render_result(all_miner_platforms: List[FakeVar],
             
             # draw line to miner or extender
             plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color=extender_belt_color, linewidth=1, zorder = 1)
-            
-    # draw sink nodes with flow value
-    for node in nodes_sink:
-        # get flow value
-        flow_value = sum(flow.X for flow in node_flow_in[node])
-        
-        # skip if value is zero
-        if flow_value == 0:
-            continue
-        
-        # put text
-        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=15, ha='center', va='bottom', color='black', zorder=3)
     
     # draw flow out values for miner node
     for node, flows in node_flow_out.items():
