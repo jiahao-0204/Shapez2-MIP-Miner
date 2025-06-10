@@ -493,10 +493,12 @@ def render_result(all_miner_platforms: List[FakeVar],
             plt.plot([start_node[0], end_node[0]], [start_node[1], end_node[1]], color=belt_color, linewidth=2, zorder = 1)
     
     # draw miners
+    used_miner_nodes = set()
     for miner in all_miner_platforms:
         if miner.X > 0.5:  # if the miner is placed
             start_node = tuple(map(int, miner.VarName.split('_')[1:3]))
             end_node = tuple(map(int, miner.VarName.split('_')[3:5]))
+            used_miner_nodes.add(start_node)
             
             # compute direction
             direction = (end_node[0] - start_node[0], end_node[1] - start_node[1])
@@ -540,7 +542,24 @@ def render_result(all_miner_platforms: List[FakeVar],
             continue
         
         # put text
-        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=10, ha='center', va='bottom', color='black', zorder=3)
+        plt.text(node[0], node[1], f"{flow_value:.0f}", fontsize=15, ha='center', va='bottom', color='black', zorder=3)
+    
+    # draw flow out values for miner node
+    for node, flows in node_flow_out.items():
+        if node not in used_miner_nodes:
+            continue
+        for flow in flows:
+            if flow.X > 0.5:  # if the flow is placed
+                # get end node
+                end_node = tuple(map(int, flow.VarName.split('_')[3:5]))
+                
+                # get flow value
+                flow_value = flow.X
+                
+                # put text on the flow direction, lean more towards the start node
+                mid_x = (node[0] + end_node[0]) / 2
+                mid_y = (node[1] + end_node[1]) / 2
+                plt.text(mid_x, mid_y, f"{flow_value:.0f}", fontsize=15, ha='center', va='center', color=belt_color, zorder=3)
     
     # add legend
     plt.legend()
