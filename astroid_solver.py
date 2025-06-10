@@ -124,15 +124,49 @@ class AstroidSolver:
                 elevator_var = model.addVar(vtype=GRB.BINARY, name=f"dummyelevator_{node[0]}_{node[1]}")
                 model.addConstr(elevator_var == 0, name=f"dummyelevator_constr_{node[0]}_{node[1]}")
                 node_used_by_elevator[node] = elevator_var
-            
+        
+        # node is miner
+        node_used_by_miner : Dict[Tuple[int, int], Var] = model.addVars(nodes, vtype=GRB.BINARY, name="node_used_by_miner")
+        for node in nodes:
+            model.addGenConstrOr(node_used_by_miner[node], node_miners.get(node, []), name=f"node_used_by_miner_constr_{node}")
+                
+        # node is miner and is saturated
+        node_is_miner_and_flow_is = model.addVars(nodes, [1, 2, 3, 4], vtype=GRB.BINARY, name="node_is_miner_and_flow_is")
+        for node in nodes:
+            for k in [1, 2, 3, 4]:
+                # make sure node is miner
+                model.addConstr(
+                    node_is_miner_and_flow_is[node[0], node[1], k] <= node_used_by_miner[node],
+                    name=f"node_is_miner_and_flow_is_{node}_{k}_constr"
+                )
+                
+                # make sure flow is k
+                model.addGenConstrIndicator(
+                    node_is_miner_and_flow_is[node[0], node[1], k],
+                    True,
+                    quicksum(node_flow_out[node]),
+                    GRB.EQUAL,
+                    k,
+                    name=f"node_is_miner_and_flow_is_{node}_{k}"
+                )
+        
+        # encourage more saturated miners
+        more_saturated_miner_objective = quicksum(
+            1000000 * node_is_miner_and_flow_is[n[0], n[1], 4] +
+            10000 * node_is_miner_and_flow_is[n[0], n[1], 3] +
+            100 * node_is_miner_and_flow_is[n[0], n[1], 2] +
+            1 * node_is_miner_and_flow_is[n[0], n[1], 1] 
+            for n in nodes)
+                            
         # ----------------------------------------------------------
         # set objective of the problem
         # ----------------------------------------------------------
                     
         # set first objective to maximize the number of extractors used
         # set second objective to minimize the number of belts used
-        model.setObjectiveN(quicksum(all_miner_platforms + all_extender_platforms), index=0, priority=1, name="maximize_extractors", weight=-1.0)
-        model.setObjectiveN(quicksum(all_belts), index=1, priority=0, name="minimize_belts", weight=1.0)
+        model.setObjectiveN(quicksum(all_miner_platforms+all_extender_platforms), index=0, priority=2, name="maximize_extractors", weight=-1.0)
+        model.setObjectiveN(more_saturated_miner_objective, index=1, priority=1, name="maximize_saturated_miners", weight=-1.0)
+        model.setObjectiveN(quicksum(all_belts), index=2, priority=0, name="minimize_belts", weight=1.0)
         
         # ----------------------------------------------------------
         # add constraints for the problem
@@ -354,12 +388,12 @@ class AstroidSolver:
         
     def run_solver(self, miner_timelimit : float = 5.0, miner_gap : float = 5.0, belt_timelimit : float = 5.0, belt_gap : float = 5.0, with_elevator : bool = False) -> None:
         # set limits
-        optimize_miner = self.model.getMultiobjEnv(0)
-        optimize_miner.setParam('MIPGap', miner_gap / 100.0)
-        optimize_miner.setParam('TimeLimit', miner_timelimit)
-        optimize_belts = self.model.getMultiobjEnv(1)
-        optimize_belts.setParam('MIPGap', belt_gap / 100.0)
-        optimize_belts.setParam('TimeLimit', belt_timelimit)
+        optimize_extractors = self.model.getMultiobjEnv(0)
+        optimize_extractors.setParam('TimeLimit', miner_timelimit)
+        optimize_saturation = self.model.getMultiobjEnv(1)
+        optimize_saturation.setParam('TimeLimit', miner_timelimit)
+        optimize_belt = self.model.getMultiobjEnv(2)
+        optimize_belt.setParam('TimeLimit', belt_timelimit)
         
         if not with_elevator:
             # if not with elevator, set the elevator variables to zero
