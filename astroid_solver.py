@@ -352,7 +352,7 @@ class AstroidSolver:
         self.node_flow_out = node_flow_out
         self.node_used_by_elevator = node_used_by_elevator     
         
-    def run_solver(self, miner_timelimit : float = 5.0, miner_gap : float = 5.0, belt_timelimit : float = 5.0, belt_gap : float = 5.0) -> None:
+    def run_solver(self, miner_timelimit : float = 5.0, miner_gap : float = 5.0, belt_timelimit : float = 5.0, belt_gap : float = 5.0, with_elevator : bool = False) -> None:
         # set limits
         optimize_miner = self.model.getMultiobjEnv(0)
         optimize_miner.setParam('MIPGap', miner_gap / 100.0)
@@ -360,6 +360,11 @@ class AstroidSolver:
         optimize_belts = self.model.getMultiobjEnv(1)
         optimize_belts.setParam('MIPGap', belt_gap / 100.0)
         optimize_belts.setParam('TimeLimit', belt_timelimit)
+        
+        if not with_elevator:
+            # if not with elevator, set the elevator variables to zero
+            for node in self.nodes_to_extract:
+                self.model.addConstr(self.node_used_by_elevator[node] == 0, name=f"elevator_zero_{node[0]}_{node[1]}")
         
         # optimize the model
         self.model.optimize()
@@ -589,7 +594,7 @@ if __name__ == "__main__":
     
     optimizer = AstroidSolver()
     optimizer.add_astroid_locations(np.array(astroid_location))
-    optimizer.run_solver(miner_timelimit=10.0, miner_gap=0.0, belt_timelimit=1.0, belt_gap=90.0)
+    optimizer.run_solver(miner_timelimit=10.0, miner_gap=0.0, belt_timelimit=1.0, belt_gap=90.0, with_elevator=True)
     optimizer.save_variables("variables.txt")
     blueprint = optimizer.get_solution_blueprint(MINER_BLUEPRINT)
     print(blueprint)
