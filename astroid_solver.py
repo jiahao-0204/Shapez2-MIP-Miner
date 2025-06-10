@@ -392,7 +392,8 @@ class AstroidSolver:
             self.all_belts_sol,
             nodes_to_extract=self.nodes_to_extract,
             nodes_sink=self.nodes_sink,
-            node_flow_in=self.node_flow_in_sol)
+            node_flow_in=self.node_flow_in_sol,
+            node_used_by_elevator=self.node_used_by_elevator_sol)
         
         # return the blob
         return blob
@@ -405,7 +406,9 @@ class AstroidSolver:
             self.all_belts_sol,
             nodes_to_extract=self.nodes_to_extract,
             nodes_sink=self.nodes_sink,
-            node_flow_in=self.node_flow_in_sol)
+            node_flow_in=self.node_flow_in_sol,
+            node_flow_out=self.node_flow_out_sol,
+            node_used_by_elevator=self.node_used_by_elevator_sol)
         
         # show in cv2 window
         cv2.imshow("Astroid Miner Solution", cv2.imdecode(np.frombuffer(blob.getvalue(), np.uint8), cv2.IMREAD_COLOR))
@@ -416,7 +419,9 @@ def render_result(all_miner_platforms: List[FakeVar],
                   all_belts: List[FakeVar],
                   nodes_to_extract: List[Tuple[int, int]] = [],
                   nodes_sink: List[Tuple[int, int]] = [],
-                  node_flow_in: Dict[Tuple[int, int], List[FakeVar]] = defaultdict(list)) -> BytesIO:
+                  node_flow_in: Dict[Tuple[int, int], List[FakeVar]] = defaultdict(list),
+                  node_flow_out: Dict[Tuple[int, int], List[FakeVar]] = defaultdict(list),
+                  node_used_by_elevator: Dict[Tuple[int, int], FakeVar] = {}) -> BytesIO:
     
     # -------------------------------------------
     # settings
@@ -429,6 +434,7 @@ def render_result(all_miner_platforms: List[FakeVar],
     miner_belt_color = belt_color
     extender_color = 'orange'
     extender_belt_color = 'black'
+    elevator_color = 'blue'
     
     # from all_belts, extract all nodes
     all_nodes = set()
@@ -467,6 +473,11 @@ def render_result(all_miner_platforms: List[FakeVar],
     
     # draw sink nodes
     plt.scatter(*zip(*nodes_sink), color='red', s=50, marker='x', zorder = 2)
+    
+    # draw elevator nodes
+    for node, elevator in node_used_by_elevator.items():
+        if elevator.X > 0.5:
+            plt.scatter(node[0], node[1], color=elevator_color, marker='x', s=150, edgecolors=edge_color, zorder=2)
     
     # draw belts
     for belt in all_belts:
