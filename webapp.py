@@ -112,6 +112,7 @@ async def get_task_id():
 async def run_solver_and_stream(
     request: Request,
     task_id: str,
+    with_elevator_bool: bool,
     miner_time: float,
     miner_threshold: float,
     belt_time: float,
@@ -146,7 +147,7 @@ async def run_solver_and_stream(
     loop = asyncio.get_running_loop()
     
     # run the solver in a separate thread to avoid blocking the event loop
-    def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop, miner_time: float, miner_threshold: float, belt_time: float, belt_threshold: float):
+    def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop, with_elevator_bool: bool, miner_time: float, miner_threshold: float, belt_time: float, belt_threshold: float):
         # run solver and redirect output
         
         class StreamToQueue(io.StringIO):
@@ -174,14 +175,15 @@ async def run_solver_and_stream(
                 miner_timelimit=miner_time,
                 miner_gap=miner_threshold,
                 belt_timelimit=belt_time,
-                belt_gap=belt_threshold
+                belt_gap=belt_threshold,
+                with_elevator=with_elevator_bool
             )
             
         # push None so stream() can break the loop
         loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
         loop.call_soon_threadsafe(queue.put_nowait, None)
         
-    threading.Thread(target=separate_thread_run_solver, args=(solver, queue, loop, miner_time, miner_threshold, belt_time, belt_threshold)).start()
+    threading.Thread(target=separate_thread_run_solver, args=(solver, queue, loop, with_elevator_bool, miner_time, miner_threshold, belt_time, belt_threshold)).start()
 
     # -------------------------------
     # current thread

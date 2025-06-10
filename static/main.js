@@ -64,6 +64,7 @@ input_miner_blueprint.addEventListener('change', async function()
 
 const canvas_simple_coordinates = document.getElementById('simple_coordinates_canvas');
 
+const checkbox_with_elevator = document.getElementById('with_elevator');
 const input_miner_timelimit = document.getElementById('miner_timelimit');
 const input_miner_threshold = document.getElementById('miner_threshold');
 const belt_miner_timelimit = document.getElementById('belt_timelimit');
@@ -396,10 +397,15 @@ async function callback_run_solver_and_stream()
     // clear output
     text_solver_output.textContent = "";
 
+    // get elevator checkbox value
+    const with_elevator_bool = checkbox_with_elevator.checked;
+    console.log('With elevator:', with_elevator_bool);
+    
     // get event source for streaming logs
     const params = new URLSearchParams(
     {
         task_id: task_id,
+        with_elevator_bool: with_elevator_bool,
         miner_time: input_miner_timelimit.value,
         miner_threshold: input_miner_threshold.value,
         belt_time: belt_miner_timelimit.value,
