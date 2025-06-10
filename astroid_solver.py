@@ -23,29 +23,22 @@ class AstroidSolver:
         # general settings
         self.BELT_MAX_FLOW = 12 * 4
         
-        # margin for the board
-        self.MARGIN_X = 5
-        self.MARGIN_Y = 5
-        
         # default blueprint
         self.default_blueprint = "SHAPEZ2-2-H4sIAN0dd2cA/6xaXW+bMBT9L9Ye0YTNl0Haw7J2UrVEqtqs2jRVE0qcDo1C5JBtUZX/PhIMNRCofU37ELXhnHt8fX2uDbygBxRhbHsWmt2i6AW9Kw5bhiJ0s0vjbI0sdLPKs9MXV3ERo+gHSsq/o+rb2zResWeWFeVl53+n8SHfF+/n54+f97/iLVskGePIyvZpKi66ft4WB/R4tNB1VvCE7UrWF7QsY17AoZksarZP0nWSPQ3JKgUVm5w/70TAKuruxBfd7avfXuRvKPIt9B1FZQ7uUORYZy3X/woer4qcX7FNvE+Lm6xgPIvTh5gncTnio3VGBmAklZBYCxmCkZVaV1Y7Y2khQHO26QIXCec5Z+uawO8TzJNNgb9uFcBN9HmjW4r+Oed/Y74ezRYMizF4kgRUccA9sbXM25wX9yxbM95FWOhTec2Xj+efD01Y5xLDHVux5M8QRwl/xRNwiYjQIKgLz7MrD3jB+BPjZJnj+Rslhb1uotRrWWBbI9WsR38Aq7wYKgKiGdwfxY4UpqgLA9liQcB0Y9sAHPalD9dJp5p90BxXEQOD+jiFV7XadmEIJKwyBsEqE2ybxA8vDFt9NQs0GUia0tBdcFsEQakMdQBtHAQVgj31ddzJUgv5dkN7jQdu3UCw8BvQ3NRYxcF2q/FVt2Eb71Jo93FQjdTBXXg7hmXdbQ1awaO9XpYUOpl3YXTqVUXA9lwXFcwf60lxYLK9AYPULkxPam0OuDq9CQbT2gxUxbI8HwDHywuy+XEN+rlQS1smMotXv8cwbo2pjA8oOJTwGLBGQpjx+ibgRjlcM1AtRCeVdd5v06Qor8bL3BlfxVSe0lNJkNEmKlBVRgkgNW4bD6lfINg3ARNp2RG4ZwXDNBqW5Yx6gPIdkEDzGEJk4zZOwmUe7SwMbrTf3j8S2AZfoLHBBp+C7Nsf9SOlg4Wt3KICeZRYp2METajG8R34zYVasoKjBVJ+nJah6SiGm1otVXsrZMOsTB/ndqYGqhbeiqFotzNFBsqJkXICOzja5gcwG+qUdCDzBkL6REA5ZCo54D4SNizgu2sYq+/8bbn3aPlqDcWmxioRqe4VbTlJWt7aVg0xV9xSC6oU/yKFxl4Dd1I/gRKTJdTWQ6bSA9+LBfLBUkXI4qkjJOiefYAMOk47RIGNKahuoQznYxIeffMfyc0kRFS3dEczRKbKEJkqQwZEocEZITQ4IwirvnCrRqtBUcnpTfpTaw2pN6mg3x7P8q/yv5nyAIBNiho7MTVsCXSiDkUnaVB0ov5EDduT3X7xAvxM0O0vDYU9X/Oqy8gdUMXHxoYMgQFDvZHzjLPYonA004jd0e2v6pNdUwpiToHNKWxjitCYoeUUo9P4aKFZksX88MD4Ljm9+XZ6Z+94fDwe/wsgwABYhMLTwicAAA==$"
         
-    def add_astroid_locations(self, astroid_location: np.ndarray) -> None:
-        # define board size
-        width = max(x for x, y in astroid_location) + 2 * self.MARGIN_X
-        height = max(y for x, y in astroid_location) + 2 * self.MARGIN_Y
-        
-        # list of all nodes
-        nodes = [(x, y) for x in range(width) for y in range(height)]
+    def add_astroid_locations(self, astroid_location: np.ndarray) -> None:        
+        # list of all nodes (the box around asteroid location and a border of 1 around it as sinks)
+        x_min = min(x for x, y in astroid_location) - 1
+        x_max = max(x for x, y in astroid_location) + 1
+        y_min = min(y for x, y in astroid_location) - 1
+        y_max = max(y for x, y in astroid_location) + 1
+        nodes = [(x, y) for x in range(x_min, x_max + 1) for y in range(y_min, y_max + 1)]
         
         # list of source nodes
-        nodes_to_extract = [(x + self.MARGIN_X, y + self.MARGIN_Y) for x, y in astroid_location]
-                        
-        # list of sink nodes
-        x_min_sink = 0
-        x_max_sink = width
-        y_sink = height - 1
-        nodes_sink = [(x, y_sink) for x in range(x_min_sink, x_max_sink)]
+        nodes_to_extract = [(x, y) for x, y in astroid_location]
+                       
+        # list of sink nodes]
+        nodes_sink = []
         
         # ----------------------------------------------------------
         # initialize the model
@@ -70,12 +63,12 @@ class AstroidSolver:
         
         flow_to_list_of_things_in_the_same_direction : Dict[Var, List[Var]] = defaultdict(list)
         
-        for node in nodes:
+        for node in nodes_to_extract:            
             for direction in DIRECTIONS:
                 end_node = (node[0] + direction[0], node[1] + direction[1])
                 
                 # skip if end node is out of bounds
-                if end_node[0] < 0 or end_node[0] >= width or end_node[1] < 0 or end_node[1] >= height:
+                if end_node[0] < x_min or end_node[0] > x_max or end_node[1] < y_min or end_node[1] > y_max:
                     continue
                                         
                 # create a variable to represent if a belt is placed at the node
@@ -112,7 +105,9 @@ class AstroidSolver:
                     node_extenders[node].append(extender_var)
                     
                     flow_to_list_of_things_in_the_same_direction[flow_var].append(extender_var)
-                    
+        model.update()
+        
+        # node_used_by_elevator
         for node in nodes:
             if node in nodes_to_extract:
                 # create a variable to represent if an elevator is placed at the node
@@ -166,7 +161,6 @@ class AstroidSolver:
         # set second objective to minimize the number of belts used
         model.setObjectiveN(quicksum(all_miner_platforms+all_extender_platforms), index=0, priority=2, name="maximize_extractors", weight=-1.0)
         model.setObjectiveN(more_saturated_miner_objective, index=1, priority=1, name="maximize_saturated_miners", weight=-1.0)
-        model.setObjectiveN(quicksum(all_belts), index=2, priority=0, name="minimize_belts", weight=1.0)
         
         # ----------------------------------------------------------
         # add constraints for the problem
@@ -238,27 +232,25 @@ class AstroidSolver:
                 name=f"elevator_out_flow_{node[0]}_{node[1]}"
             )
             
-            # skip the last condition if the node is in sink nodes
-            if node in nodes_sink:
-                continue
-            
-            # not used by something (in = out = 0)
-            model.addGenConstrIndicator(
-                node_used_by_something[node],
-                False,
-                quicksum(node_flow_out[node]),
-                GRB.EQUAL,
-                0.0,
-                name=f"nothing_out_flow_{node[0]}_{node[1]}"
-            )
-            model.addGenConstrIndicator(
-                node_used_by_something[node],
-                False,
-                quicksum(node_flow_in[node]),
-                GRB.EQUAL,
-                0.0,
-                name=f"nothing_in_flow_{node[0]}_{node[1]}"
-            )
+            # if node is in nodes to extract and has nothing in it, should have zero out flow and zero in flow
+            if node in nodes_to_extract:
+                # not used by something (in = out = 0)
+                model.addGenConstrIndicator(
+                    node_used_by_something[node],
+                    False,
+                    quicksum(node_flow_out[node]),
+                    GRB.EQUAL,
+                    0.0,
+                    name=f"nothing_out_flow_{node[0]}_{node[1]}"
+                )
+                model.addGenConstrIndicator(
+                    node_used_by_something[node],
+                    False,
+                    quicksum(node_flow_in[node]),
+                    GRB.EQUAL,
+                    0.0,
+                    name=f"nothing_in_flow_{node[0]}_{node[1]}"
+                )
         
         # constraint - max flow
         for node in nodes:
@@ -326,8 +318,8 @@ class AstroidSolver:
                 1.0,
                 name=f"extender_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
             )
-        
-        # if miner is true, the end node must have belt or elevator
+                
+        # if miner is true, the end node must not be used by extractor
         for miner in all_miner_platforms:
             # get the start and end nodes of the miner
             var_parts = miner.varName.split('_')
@@ -338,9 +330,9 @@ class AstroidSolver:
             model.addGenConstrIndicator(
                 miner,
                 True,
-                quicksum([node_used_by_belt[end_node] + node_used_by_elevator[end_node]]),
+                node_used_by_extractor[end_node],
                 GRB.EQUAL,
-                1.0,
+                0.0,
                 name=f"miner_end_node_{start_node[0]}_{start_node[1]}_{end_node[0]}_{end_node[1]}"
             )
         
@@ -392,8 +384,6 @@ class AstroidSolver:
         optimize_extractors.setParam('TimeLimit', miner_timelimit)
         optimize_saturation = self.model.getMultiobjEnv(1)
         optimize_saturation.setParam('TimeLimit', miner_timelimit)
-        optimize_belt = self.model.getMultiobjEnv(2)
-        optimize_belt.setParam('TimeLimit', belt_timelimit)
         
         if not with_elevator:
             # if not with elevator, set the elevator variables to zero
@@ -517,10 +507,7 @@ def render_result(all_miner_platforms: List[FakeVar],
     
     # draw nodes to extract
     plt.scatter(*zip(*nodes_to_extract), color='lightgrey', s=150, marker='s', zorder = 0)
-    
-    # draw sink nodes
-    plt.scatter(*zip(*nodes_sink), color='red', s=50, marker='x', zorder = 2)
-    
+        
     # draw elevator nodes
     for node, elevator in node_used_by_elevator.items():
         if elevator.X > 0.5:
