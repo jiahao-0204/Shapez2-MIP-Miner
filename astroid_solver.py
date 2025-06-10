@@ -454,8 +454,13 @@ def render_result(all_miner_platforms: List[FakeVar],
     num_extenders = sum(1 for extender in all_extender_platforms if extender.X > 0.5)
     num_belts = sum(1 for belt in all_belts if belt.X > 0.5)
     
+    # roughly compute figure size based on the limits
+    width = (x_max - x_min + 5) / 3
+    height = (y_max - y_min + 5) / 3
+    
     # initialize plt
     plt.clf()
+    plt.figure(figsize=(width, height))
     plt.xlim(x_min - 1, x_max + 1)
     plt.ylim(y_min - 1, y_max + 1)
     # plt.grid(True)
