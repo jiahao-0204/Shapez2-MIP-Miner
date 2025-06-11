@@ -408,6 +408,10 @@ class AstroidSolver:
             # use the default blueprint if none is provided
             miner_blueprint = self.default_blueprint
         
+        # skip if no solution
+        if self.all_miner_platforms_sol is None or self.all_extender_platforms_sol is None or self.all_belts_sol is None or self.all_elevators_sol is None:
+            return "Solution not found"
+
         # generate blueprint
         return compose_blueprint(self.all_miner_platforms_sol, self.all_extender_platforms_sol, self.all_belts_sol, self.all_elevators_sol, miner_blueprint=miner_blueprint)
     
