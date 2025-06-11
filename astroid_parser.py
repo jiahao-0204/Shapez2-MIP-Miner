@@ -329,7 +329,6 @@ def parse_using_blueprint_and_return_image(blueprint: str = "") -> BytesIO:
     # plot and store as image buffer
     plt.clf()
     if nodes:
-        print("nodes: ", nodes)
         xs, ys = zip(*nodes)
         plt.scatter(xs, ys, marker='s', c='lightgrey')
         plt.axis('equal')
