@@ -9,14 +9,14 @@ import io
 import asyncio
 import threading
 from time import time
+import logging
+logger = logging.getLogger(__name__)
 
 # third party
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Request
 from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, FileResponse, StreamingResponse
-
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
 import numpy as np
 
 # project
@@ -43,24 +43,22 @@ tasks_suffix : dict[str, str] = {}  # to store task type if needed
 
 cleanup_interval = 60  # 1 minute
 tasks_lifespan = 600  # 10 minutes
+logger.info(f"[Parameters] Cleanup interval: {cleanup_interval} seconds")
+logger.info(f"[Parameters] Tasks lifespan: {tasks_lifespan} seconds")
 
 def cleanup_tasks():    
     now = time()
-
     for task_id, timestamp in list(tasks_timestamps.items()):
         duration = now - timestamp
         if duration > tasks_lifespan:
+            logger.info(f"[Removing task] - {task_id}")
+            
             if task_id in tasks_solvers:
                 del tasks_solvers[task_id]
-            
-            image_path = Path(f"/tmp/{task_id}{tasks_suffix.get(task_id, '.png')}")
-            if image_path.exists():
-                try:
-                    image_path.unlink()  # delete the file
-                    print(f"Deleted file: {image_path}")
-                except Exception as e:
-                    print(f"Error deleting file {image_path}: {e}")
-            del tasks_timestamps[task_id]
+            if task_id in tasks_timestamps:
+                del tasks_timestamps[task_id]
+            if task_id in tasks_suffix:
+                del tasks_suffix[task_id]
             
     # Schedule the next cleanup
     threading.Timer(cleanup_interval, cleanup_tasks).start()  # Run every 60 seconds
@@ -75,11 +73,6 @@ cleanup_tasks()  # Start the cleanup process
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-
-# background task
-def process_data(task_id : str, tmp_path : Path, clicks : str):
-    print(f"Processing task {task_id} with file {tmp_path} and clicks {clicks}")
-
 
 @app.post("/get_simple_coordinates_preview/")
 async def get_simple_coordinates_preview(input_blueprint: str = Form(...)):
@@ -167,6 +160,7 @@ async def run_solver_and_stream(
                     self.loop.call_soon_threadsafe(self.queue.put_nowait, f"data: {self._buffer}\n\n")
                     self._buffer = ""
 
+        logger.info(f"[Solver] - start for {task_id}")
         stream_writer = StreamToQueue(queue, loop)
         with redirect_stdout(stream_writer):
             astroid_solver.run_solver(
@@ -174,7 +168,8 @@ async def run_solver_and_stream(
                 saturation_timelimit=saturation_timelimit,
                 with_elevator=with_elevator_bool
             )
-            
+        logger.info(f"[Solver] - finish for {task_id}")
+
         # push None so stream() can break the loop
         loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
         loop.call_soon_threadsafe(queue.put_nowait, None)
@@ -222,7 +217,7 @@ async def get_solver_results(task_id: str):
     
     # convert to base64
     solution_b64 = base64.b64encode(solution_image.getvalue()).decode()
-        
+    
     return {
         "task_id": task_id,
         "solution_image": solution_b64,
@@ -237,6 +232,8 @@ async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Fo
         
     # get the solver
     astroid_solver = tasks_solvers[task_id]
+    if astroid_solver is None:
+        return JSONResponse(status_code=404, content={"error": "Solver not found"})
     
     # get the blueprint txt
     if miner_blueprint == "empty":
