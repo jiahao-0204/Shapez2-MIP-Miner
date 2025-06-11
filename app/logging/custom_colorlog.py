@@ -10,7 +10,7 @@ class CustomColoredFormatter(colorlog.ColoredFormatter):
         reset = "\033[0m"
         ip_color = "\033[35m"
         name_colors = {
-            "webapp": "\033[32m",         # green
+            "app.webapp": "\033[32m",         # green
             "uvicorn.error": "\033[34m",  # blue
             "uvicorn.access": "\033[34m", # blue
             "watchfiles.main": "\033[31m", # red

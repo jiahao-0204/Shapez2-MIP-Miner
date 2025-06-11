@@ -11,10 +11,10 @@ import cv2
 import numpy as np
 
 # project
-from astroid_parser import astroid_parser
-from var_to_txt import var_to_txt, FakeVar
-from blueprint_composer import compose_blueprint
-from astroid_parser import get_brush_blueprint, parse_using_blueprint
+from app.astroid_parser import astroid_parser
+from app.var_to_txt import var_to_txt, FakeVar
+from app.blueprint_composer import compose_blueprint
+from app.astroid_parser import get_brush_blueprint, parse_using_blueprint
 
 DIRECTIONS = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 

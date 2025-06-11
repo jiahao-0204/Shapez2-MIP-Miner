@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 # project
-from blueprint_composer import blueprint_to_json, create_empty_blueprint_json, create_miner_json, json_to_blueprint, PREFIX
+from app.blueprint_composer import blueprint_to_json, create_empty_blueprint_json, create_miner_json, json_to_blueprint, PREFIX
 
 def template_matching(img_bgr: np.ndarray, x: int, y: int, w: int, h: int, peak_threshold_rel: float):
     # get template

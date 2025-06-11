@@ -20,8 +20,8 @@ from fastapi.templating import Jinja2Templates
 import numpy as np
 
 # project
-from astroid_parser import parse_using_blueprint_and_return_image, parse_using_blueprint
-from astroid_solver import AstroidSolver
+from app.astroid_parser import parse_using_blueprint_and_return_image, parse_using_blueprint
+from app.astroid_solver import AstroidSolver
 
 # ------------------------------------------
 # Setup
@@ -31,10 +31,10 @@ from astroid_solver import AstroidSolver
 app = FastAPI()
 
 # static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 # list of tasks
 tasks_solvers : dict[str, AstroidSolver] = {}

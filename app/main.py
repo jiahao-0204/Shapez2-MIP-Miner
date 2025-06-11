@@ -4,8 +4,8 @@ from pathlib import Path
 # thrid party
 
 # local
-from astroid_parser import astroid_parser
-from astroid_solver import AstroidSolver
+from app.astroid_parser import astroid_parser
+from app.astroid_solver import AstroidSolver
 
 if __name__ == "__main__":
     # read input png

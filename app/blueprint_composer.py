@@ -7,7 +7,7 @@ import base64, gzip, json
 import matplotlib.pyplot as plt
 
 # project
-from var_to_txt import txt_to_var, FakeVar
+from app.var_to_txt import txt_to_var, FakeVar
 
 PREFIX = "SHAPEZ2-3-"
 
