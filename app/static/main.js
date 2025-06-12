@@ -8,7 +8,15 @@ const default_threshold = 0.4;
 let threshold = default_threshold;
 
 const brush_blueprint = "SHAPEZ2-3-H4sIAHZLR2gC/53SzUrDQBRA4Vcpg0sF753/LkUXBYVSXShSJGjEQExKkwql9N2dal247CGQGe7kTDbfznyZ6URE9XxiruZlvzNn43ZVl52ZDW3VvZlyMnvtu5+z62qsyubZNGUynbfV+N6vP4fyTbdp27+3GT6qVT1dbH4fs9yX2U03rpt6ONQ781iWyzJ8Oq6L4/pw+O9tte0348v94ZK7pqvXpvT/mwshkZLIksiRyJMokCiSKJEonxAJACEEhBAQQkAIASEEhBAQQkAIASEEhAIQSkAoAaEEhBIQSkAoAaEEhBIQSkBYAMISEJaAsASEJSAsAWEJCEtAWALCEhAOgHAEhCMgHAHhCAhHQDgCwhEQjoBwBIQHIDwB4QkIT0B4AsITEJ6A8ASEJyA8AREAiEBABAIiEBCBgAgERCAgAgERCIhAQEQAIhIQkYCIBEQkICIBEQmISEBEAiISEAmASAREIiASAZEIiERAJAIiERCJgEgERAYgMgGRCYhMQGQCIhMQmYDIBEQmIPIpIJb7/TeqFG9MIRUAAA==$"
+const brush_fluid_blueprint = "SHAPEZ2-3-H4sIANS0SmgA/4yWTUvDQBCG/8vgcecwG3PZo6hQUCgiokiRxUYMxKTk41BC/ruRXjxlHgqB0Dez7zzvsMwsL5LMYgxys5c0y9V4PlWSZDc0uT1KkN1n1/79cZvHLOld6vU97Zs8fnX9zyChnZrm8pDhO5+q9DRdfnJYgty1Y19Xw/rhLK+S9DrIm6T1+bye8ZDP3TR+3DdTfXys26qXJfyXFUwWmcyAjNRRgzroS2Gb2F/p6QoWQsFCKFgIBQsBHqcGddAXPhdS80OILITIQogshMhCgHXUoI7Wg20qpOaHYCwEYyEYC8FYCMbqYB30pbBNhdS2Q/Doe9g93h7ozS+30bpMXZguRTLDbITZBLMBZvNrqIpCGfOkrEFltFz07ApnNzi7wNn9zaqoMRmsxhpURstFz1YYtsGwBYbtL+wsNSZjnhQeymi56NkKzzZ4tsCz/Z05UmMy5klZgwq9eehLhL5E6EuEvkTomW81JmOelDWojNYG+sOy/AogwAAP2KUlJg8AAA==$"
+
 const default_miner_blueprint = "SHAPEZ2-3-H4sIACSxSGgA/6yabWvbMBDHv4vYS7+IJFt+eBnaQSGFknZlY4RhEqUz8+ygOOtKyXdfUseJbMf23XkUCiH56R5099fJyTt7ZhHnQjhs+sCid/apeNtoFrG7bRpnK+awu2WeHd+4iYuYRd9ZcngdPaRxsc7N7y1zsl2alv/Y9me80dF8V/6xxd5ht1lhEr09gO/s6bDsLH7Ld8WPx+Mn75NMm4OFqW13ukvSVZK9/FfLXw8xSod9Y5HnsPnhhfPhzO3fwsTLIjc3eh3v0uIuK7TJ4vQ5NkmcFWzvlCgnoyGZ9OnulmhQQlOdFg+5KR51ttKmH+Ecz4QEMxMMI6xESFwiXDKqyGRAd7eM1LXRY4pO1EyvBwq0JEWL/Jyb19isekvURVIB1tf7xJjc6FU9w7UFZsm64F82APi0s0C6kSZl9xTO6RC7wNn0xHL4RN5r86LN04cU9mMKi5Vax11KFXI6G9JRf4THwmY5RSJIrKKjwQiPT9F69CquttgboRdHmCAYGLcbea6RgGZ3UVhXjiRejUM02TI+sX2XWLmom4ZzPhxQNoDIqqpGk9nHnqBl1K/z2MmjBAUG9CoQ7atqjmGgPrmMVVhPbZDjQwyxjioadpkBsQFKm+Qj2stvLIRNlT3AYnKF57zzXE4OVrVGe9Q+cfw+uedgyU67tnFbvG/y12y46bgAHxOqYWlsUXF8Ucl646KFxm2LYl+uOpIdkqda7Mns2YfH4yZNisPn+FMu+wE1ugnUxUWBOa/8qgeuJgjU+kHvEsPZqioanq7TFEA5s7gcStSVfjuHJ4niyHvXgOyWV5XjjDoZe201aLTyXC918qe7mSdXLjKIAck74zNiocheJYOdN8JaQ8CnQreTPuvRNF7+6nNAXlFRSM3LxlRBriEJKcaBLMp2HurqCMtCSNYMCdAcUAwBbR/8dg0CIxc9p+hA6/lXLj+IzpMovG5UIU9AiaG6boet4hyeNCbWZUbidI3bhzZmDvRxdmT1oKwpISCbQUMD4c7yDuEFj7suoWSrovOI4V6+maA57VF8dqn3TNUNwmxSbmyqh8REKqiRihGRCnKkOKvBUNOBpNdtn3eAqcGvV+Ict79++5kAJ4ROuLZdu++Bw63NBpJyzLndC0Dc9to4wPmgOreQuQoGZW6oLby6ZWSVVGOFICbtxIfkTasckKS0n2i/9wnBwDwn2vMcxDLv3nFYyIokCtbjd4ThhcOmSRabt2dttsnxxwPHXzbs94v9/p8AAwCnnDLw6CAAAA==$"
+const default_miner_blueprint_text = "Use default shape blueprint (1:12 Balanced Miner by LnZi)"
+
+const default_fluid_miner_blueprint = "SHAPEZ2-3-H4sIADa2SmgA/6yXYWvqMBSG/8vhfuwHk6qt/ejdBg4HsnuvbAwZwcYtrEtLmnIR6X9fa52Lc6s9xyFYinl83+Q9JyEbmEPEGOcejGcQbeCXXWcSIpjkidAxeDBZprr+4UJYAdEDqOo9miXCrlLzmoOniyRpviB/FpmMbovmA4vSg0ttjZJ5BW7gb/W3U7FOC/t4lRQqvlFamkph7OqOC5XESj/9qPJdPUcP7iEaeHBbvXhbM7PiNbuQK1EkdqKtNFokc2GU0BZKr6E4ifJJVP8Mqn5UmI+0iMY4DWNnYYwUGhrzaVj/HCwkxRaSUgtJq4+lBlsq2I1XmbxKzX9h4vbxtcWOwPBdwLFVUVO5su2Iq3F6dPgx+LrQS6tS/R0QuMB2a5ulxv6ROpamXWSEFRkRRFgPq/JOdJQJ9h2A99a0jZPMb5Pm+YliOYL+ZWOxfGmrmg+P032Xop026GHddS4OtO4+carjnovi0kdLDg6nSYunwTk9HX6wCZ/o8+ATia/4Hhkd0Wd6INol1eGxYncs/HpdMZqMpsmwms15NcSUAHcQRE/7NIw5JxfHGAywS+HTsL4zL47Fjk7k1p2c7Y9kbFo7Bh0Xntt59PGB7Rh0Yniu/43HjtzR+n8d2qK6pSktzHouTa7qa1l9ZyzLRVm+CSDAAAoWop9CDgAA$"
+const default_fluid_miner_blueprint_text = "Use default fluid miner blueprint"
+
+let solve_for_fluid = false;
 
 // -----------------------------------------------
 // get web page elements
@@ -16,15 +24,27 @@ const default_miner_blueprint = "SHAPEZ2-3-H4sIACSxSGgA/6yabWvbMBDHv4vYS7+IJFt+e
 const button_copy_brush_blueprint = document.getElementById('copy_brush_blueprint');
 button_copy_brush_blueprint.addEventListener('click', () => {
     // copy the brush blueprint to clipboard
-    navigator.clipboard.writeText(brush_blueprint)
-        .then(() => {
-            console.log('Brush blueprint copied to clipboard successfully!');
-        })
-        .catch(err => {
-            console.error('Failed to copy brush blueprint:', err);
-        });
-}
-);
+    if (solve_for_fluid)
+    {
+        navigator.clipboard.writeText(brush_fluid_blueprint)
+            .then(() => {
+                console.log('Brush blueprint copied to clipboard successfully!');
+            })
+            .catch(err => {
+                console.error('Failed to copy brush blueprint:', err);
+            });
+    }
+    else
+    {
+        navigator.clipboard.writeText(brush_blueprint)
+            .then(() => {
+                console.log('Brush blueprint copied to clipboard successfully!');
+            })
+            .catch(err => {
+                console.error('Failed to copy brush blueprint:', err);
+            });
+    }
+});
 
 const input_miner_blueprint = document.getElementById('input_miner_blueprint');
 input_miner_blueprint.addEventListener('change', async function() 
@@ -78,9 +98,17 @@ const button_generate_blueprint = document.getElementById('generate_blueprint');
 const button_copy_blueprint = document.getElementById('copy_blueprint');
 const text_blueprint = document.getElementById('blueprint_text');
 
+const checkbox_solve_for_fluid = document.getElementById('solve_for_fluid');
+checkbox_solve_for_fluid.addEventListener('click', () => {
+    solve_for_fluid = checkbox_solve_for_fluid.checked;
+    update_use_default_blueprint_text();
+    callback_use_default_blueprint();
+});
+
 // -----------------------------------------------
 // setup elements
 // -----------------------------------------------
+update_use_default_blueprint_text();
 callback_use_default_blueprint();
 
 // -----------------------------------------------
@@ -453,9 +481,28 @@ async function callback_run_solver_and_stream()
     };
 }
 
+function update_use_default_blueprint_text()
+{
+    if (solve_for_fluid)
+    {
+        button_use_default_blueprint.textContent = default_fluid_miner_blueprint_text;
+    }
+    else
+    {
+        button_use_default_blueprint.textContent = default_miner_blueprint_text;
+    }
+}
+
 function callback_use_default_blueprint()
 {
-    text_miner_blueprint.value = default_miner_blueprint; // set default blueprint
+    if (solve_for_fluid)
+    {
+        text_miner_blueprint.value = default_fluid_miner_blueprint; // set default blueprint
+    }
+    else
+    {
+        text_miner_blueprint.value = default_miner_blueprint; // set default blueprint
+    }
 }
 
 async function callback_generate_blueprint()
@@ -483,6 +530,7 @@ async function callback_generate_blueprint()
     form = new FormData();
     form.append('task_id', task_id); // add task_id to the form
     form.append('miner_blueprint', text_miner_blueprint.value); // add miner blueprint to the form
+    form.append('solve_for_fluid', solve_for_fluid); // add solve for fluid to the form
     const response = await fetch(`/generate_blueprint/`, {method: 'POST', body: form});
 
     // ----------------------------------------------------

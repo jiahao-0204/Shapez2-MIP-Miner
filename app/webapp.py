@@ -22,6 +22,7 @@ import numpy as np
 # project
 from app.astroid_parser import parse_using_blueprint_and_return_image, parse_using_blueprint
 from app.astroid_solver import AstroidSolver
+from app.blueprint_composer import convert_miner_to_fluid
 
 # ------------------------------------------
 # Setup
@@ -225,7 +226,7 @@ async def get_solver_results(task_id: str):
     
 # get solver blueprint
 @app.post("/generate_blueprint/")
-async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Form(...)):
+async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Form(...), solve_for_fluid: bool = Form(...)):
     # skip if task id not found
     if task_id not in tasks_solvers:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
@@ -239,7 +240,11 @@ async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Fo
     if miner_blueprint == "empty":
         miner_blueprint = ""
     blueprint = astroid_solver.get_solution_blueprint(miner_blueprint=miner_blueprint)
-    
+
+    if solve_for_fluid:
+        new_blueprint = convert_miner_to_fluid(blueprint, miner_blueprint)
+        blueprint = new_blueprint
+
     if blueprint is None:
         return JSONResponse(status_code=500, content={"error": "Failed to generate blueprint"})
             
