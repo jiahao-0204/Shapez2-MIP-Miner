@@ -43,9 +43,13 @@ tasks_timestamps : dict[str, float] = {}
 tasks_suffix : dict[str, str] = {}  # to store task type if needed
 
 cleanup_interval = 60  # 1 minute
-tasks_lifespan = 600  # 10 minutes
+miners_timelimit_max = 300
+saturation_timelimit_max = 300
+tasks_lifespan = 900  # 15 minutes
 logger.info(f"[Parameters] Cleanup interval: {cleanup_interval} seconds")
 logger.info(f"[Parameters] Tasks lifespan: {tasks_lifespan} seconds")
+logger.info(f"[Parameters] Timelimit: {miners_timelimit_max} seconds")
+logger.info(f"[Parameters] Saturation timelimit: {saturation_timelimit_max} seconds")
 
 def cleanup_tasks():    
     now = time()
@@ -131,8 +135,6 @@ async def run_solver_and_stream(
     solver.add_astroid_locations(astroid_location=np.array(coords))
     
     # cap timelimit
-    miners_timelimit_max = 300
-    saturation_timelimit_max = 300
     miners_timelimit = max(0, min(miners_timelimit, miners_timelimit_max))
     saturation_timelimit = max(0, min(saturation_timelimit, saturation_timelimit_max))
 
