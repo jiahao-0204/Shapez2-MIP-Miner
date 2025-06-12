@@ -6,6 +6,19 @@
     <title>Shapez2 Solver</title>
     <style>
         /* class selector */
+        .box_around
+        {
+            border: 1px solid black;
+            padding: 10px;
+        }
+
+        .align_right
+        {
+            /* justify-content: flex-end; */
+            margin-left: auto;
+            margin-right: 0;
+        }
+
         .two_col_container
         {
             display: grid; 
@@ -60,7 +73,25 @@
     </style>
 </head>
 <body>
-    <h1>Shapez2 Miner Layout Solver</h1>
+    <div class="two_col_container">
+        <h1>Shapez2 Miner Layout Solver</h1>
+        
+        <div class="list_container box_around align_right">
+            <div class="two_col_container">
+                <div>Tasks Ran In Total:</div>
+                <div id="stats_tasks_ran_in_total" class="align_right">0</div>
+            </div>
+            <div class="two_col_container">
+                <div>Tasks Ran Today:</div> 
+                <div id="stats_tasks_ran_today" class="align_right">0</div>
+            </div>
+            <div class="two_col_container">
+                <div>Current Running Tasks:</div>
+                <div id="stats_current_running_tasks_num" class="align_right">0</div>
+            </div>
+        </div>
+    </div>
+    
     <p><b>This project is open source!</b> You can find the source code on <a href="https://github.com/jiahao-0204/Shapez2-MIP-Miner"><b>GitHub</b></a>. If you find this project useful, consider <b>starring</b> it!</p>
         
     <div class="list_container">

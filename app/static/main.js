@@ -19,11 +19,18 @@ const default_fluid_miner_blueprint_text = "Use default fluid miner blueprint"
 const miner_timelimit_max = 300;
 const saturation_timelimit_max = 300;
 
+const stats_refresh_interval_in_seconds = 5; // seconds
+
 let solve_for_fluid = false;
 
 // -----------------------------------------------
 // get web page elements
 // -----------------------------------------------
+// stats element
+const stats_tasks_ran_in_total = document.getElementById('stats_tasks_ran_in_total');
+const stats_tasks_ran_today = document.getElementById('stats_tasks_ran_today');
+const stats_current_running_tasks_num = document.getElementById('stats_current_running_tasks_num');
+
 const button_copy_brush_blueprint = document.getElementById('copy_brush_blueprint');
 button_copy_brush_blueprint.addEventListener('click', () => {
     // copy the brush blueprint to clipboard
@@ -113,6 +120,18 @@ checkbox_solve_for_fluid.addEventListener('click', () => {
 // -----------------------------------------------
 update_use_default_blueprint_text();
 callback_use_default_blueprint();
+
+// audo pull stats
+setInterval(() => {
+    fetch('/get_stats/')
+        .then(response => response.json())
+        .then(data => {
+            stats_tasks_ran_in_total.textContent = data.tasks_ran_in_total;
+            stats_tasks_ran_today.textContent = data.tasks_ran_today;
+            stats_current_running_tasks_num.textContent = data.current_running_tasks_num;
+        })
+        .catch(error => console.error('Error fetching stats:', error));
+}, stats_refresh_interval_in_seconds * 1000);
 
 // -----------------------------------------------
 // link element to callbacks

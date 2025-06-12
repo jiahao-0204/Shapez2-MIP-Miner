@@ -42,6 +42,10 @@ tasks_solvers : dict[str, AstroidSolver] = {}
 tasks_timestamps : dict[str, float] = {}
 tasks_suffix : dict[str, str] = {}  # to store task type if needed
 
+current_running_tasks_num : int = 0
+tasks_ran_in_total : int = 0
+tasks_ran_today : int = 0
+
 cleanup_interval = 60  # 1 minute
 miners_timelimit_max = 300
 saturation_timelimit_max = 300
@@ -70,6 +74,16 @@ def cleanup_tasks():
 
 cleanup_tasks()  # Start the cleanup process
 
+def reset_stats_at_midnight():
+    global tasks_ran_today
+    tasks_ran_today = 0
+    # start first run at 00:00:00
+    now = time()
+    next_midnight = (now // 86400 + 1) * 86400
+    threading.Timer(next_midnight - now, reset_stats_at_midnight).start()
+
+reset_stats_at_midnight()  # Start the reset process
+
 # ------------------------------------------
 # Web API
 # ------------------------------------------
@@ -78,6 +92,10 @@ cleanup_tasks()  # Start the cleanup process
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/get_stats/")
+async def get_stats():
+    return JSONResponse(status_code=200, content={"tasks_ran_in_total": tasks_ran_in_total, "tasks_ran_today": tasks_ran_today, "current_running_tasks_num": current_running_tasks_num})
 
 @app.post("/get_simple_coordinates_preview/")
 async def get_simple_coordinates_preview(input_blueprint: str = Form(...)):
@@ -148,6 +166,10 @@ async def run_solver_and_stream(
     
     # run the solver in a separate thread to avoid blocking the event loop
     def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop, with_elevator_bool: bool, miners_timelimit: float, saturation_timelimit: float):
+        global current_running_tasks_num
+        global tasks_ran_in_total
+        global tasks_ran_today
+        
         # run solver and redirect output
         
         class StreamToQueue(io.StringIO):
@@ -170,6 +192,7 @@ async def run_solver_and_stream(
                     self._buffer = ""
 
         logger.info(f"[Solver] - start for {task_id}")
+        current_running_tasks_num += 1
         stream_writer = StreamToQueue(queue, loop)
         with redirect_stdout(stream_writer):
             astroid_solver.run_solver(
@@ -178,6 +201,9 @@ async def run_solver_and_stream(
                 with_elevator=with_elevator_bool
             )
         logger.info(f"[Solver] - finish for {task_id}")
+        current_running_tasks_num -= 1
+        tasks_ran_in_total += 1
+        tasks_ran_today += 1
 
         # push None so stream() can break the loop
         loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
