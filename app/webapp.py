@@ -1,4 +1,5 @@
 # system
+from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 from io import BytesIO
@@ -34,6 +35,10 @@ app = FastAPI()
 # static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+# path for counter
+total_counter_path = str(Path.home() / "fastapi_total_counter.txt")
+today_counter_path = str(Path.home() / "fastapi_today_counter.txt")
+
 # templates
 templates = Jinja2Templates(directory="app/templates")
 
@@ -43,8 +48,6 @@ tasks_timestamps : dict[str, float] = {}
 tasks_suffix : dict[str, str] = {}  # to store task type if needed
 
 current_running_tasks_num : int = 0
-tasks_ran_in_total : int = 0
-tasks_ran_today : int = 0
 
 cleanup_interval = 60  # 1 minute
 miners_timelimit_max = 300
@@ -74,15 +77,76 @@ def cleanup_tasks():
 
 cleanup_tasks()  # Start the cleanup process
 
-def reset_stats_at_midnight():
-    global tasks_ran_today
-    tasks_ran_today = 0
-    # start first run at 00:00:00
-    now = time()
-    next_midnight = (now // 86400 + 1) * 86400
-    threading.Timer(next_midnight - now, reset_stats_at_midnight).start()
+# increase total counter
+def increase_total_counter():
+    # increase the number stored in the counter file
+    with open(total_counter_path, "r") as f:
+        counter = int(f.read())
+    with open(total_counter_path, "w") as f:
+        f.write(f"{counter + 1}")
 
-reset_stats_at_midnight()  # Start the reset process
+def get_total_counter():
+    # create the file if it does not exist
+    if not Path(total_counter_path).exists():
+        with open(total_counter_path, "w") as f:
+            f.write("0")
+
+    with open(total_counter_path, "r") as f:
+        counter = int(f.read())
+    return counter
+
+# increase today counter
+def increase_today_counter():
+    with open(today_counter_path, "r") as f:
+        counter = int(f.read())
+    with open(today_counter_path, "w") as f:
+        f.write(f"{counter + 1}")
+
+def get_today_counter():
+    # create the file if it does not exist
+    if not Path(today_counter_path).exists():
+        with open(today_counter_path, "w") as f:
+            f.write("0")
+
+    with open(today_counter_path, "r") as f:
+        counter = int(f.read())
+    return counter
+
+def reset_today_counter():
+    with open(today_counter_path, "w") as f:
+        f.write("0")
+
+def reset_stats_at_midnight():
+    try:
+        # get current time
+        now = datetime.now()
+        
+        # Check if we're within the first minute of midnight
+        if now.hour == 0 and now.minute == 0:
+            try:
+                reset_today_counter()
+                logger.info("[Stats] Successfully reset daily counter at midnight")
+            except Exception as e:
+                logger.error(f"[Stats] Failed to reset counter: {str(e)}")
+        
+        # Schedule next check
+        next_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        time_to_midnight = (next_midnight - now).total_seconds()
+        
+        # Ensure we don't schedule a negative time
+        if time_to_midnight <= 0:
+            time_to_midnight = 24 * 3600  # Schedule for next day if we somehow got a negative time
+        
+        # Schedule next check
+        threading.Timer(time_to_midnight, reset_stats_at_midnight).start()
+        
+    except Exception as e:
+        logger.error(f"[Stats] Error in reset_stats_at_midnight: {str(e)}")
+        # Try to recover by scheduling another attempt in 1 hour
+        threading.Timer(3600, reset_stats_at_midnight).start()
+
+# Start the reset process
+reset_stats_at_midnight()
 
 # ------------------------------------------
 # Web API
@@ -95,7 +159,7 @@ async def get_index(request: Request):
 
 @app.get("/get_stats/")
 async def get_stats():
-    return JSONResponse(status_code=200, content={"tasks_ran_in_total": tasks_ran_in_total, "tasks_ran_today": tasks_ran_today, "current_running_tasks_num": current_running_tasks_num})
+    return JSONResponse(status_code=200, content={"tasks_ran_in_total": get_total_counter(), "tasks_ran_today": get_today_counter(), "current_running_tasks_num": current_running_tasks_num})
 
 @app.post("/get_simple_coordinates_preview/")
 async def get_simple_coordinates_preview(input_blueprint: str = Form(...)):
@@ -167,8 +231,6 @@ async def run_solver_and_stream(
     # run the solver in a separate thread to avoid blocking the event loop
     def separate_thread_run_solver(astroid_solver: AstroidSolver, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop, with_elevator_bool: bool, miners_timelimit: float, saturation_timelimit: float):
         global current_running_tasks_num
-        global tasks_ran_in_total
-        global tasks_ran_today
         
         # run solver and redirect output
         
@@ -202,8 +264,8 @@ async def run_solver_and_stream(
             )
         logger.info(f"[Solver] - finish for {task_id}")
         current_running_tasks_num -= 1
-        tasks_ran_in_total += 1
-        tasks_ran_today += 1
+        increase_total_counter()
+        increase_today_counter()
 
         # push None so stream() can break the loop
         loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
