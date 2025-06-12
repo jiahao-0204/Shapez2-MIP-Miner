@@ -130,6 +130,12 @@ async def run_solver_and_stream(
     solver = tasks_solvers[task_id]
     solver.add_astroid_locations(astroid_location=np.array(coords))
     
+    # cap timelimit
+    miners_timelimit_max = 300
+    saturation_timelimit_max = 300
+    miners_timelimit = max(0, min(miners_timelimit, miners_timelimit_max))
+    saturation_timelimit = max(0, min(saturation_timelimit, saturation_timelimit_max))
+
     # -------------------------------
     # separate thread
     # -------------------------------

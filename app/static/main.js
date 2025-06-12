@@ -16,6 +16,9 @@ const default_miner_blueprint_text = "Use default shape blueprint (1:12 Balanced
 const default_fluid_miner_blueprint = "SHAPEZ2-3-H4sIADa2SmgA/6yXYWvqMBSG/8vhfuwHk6qt/ejdBg4HsnuvbAwZwcYtrEtLmnIR6X9fa52Lc6s9xyFYinl83+Q9JyEbmEPEGOcejGcQbeCXXWcSIpjkidAxeDBZprr+4UJYAdEDqOo9miXCrlLzmoOniyRpviB/FpmMbovmA4vSg0ttjZJ5BW7gb/W3U7FOC/t4lRQqvlFamkph7OqOC5XESj/9qPJdPUcP7iEaeHBbvXhbM7PiNbuQK1EkdqKtNFokc2GU0BZKr6E4ifJJVP8Mqn5UmI+0iMY4DWNnYYwUGhrzaVj/HCwkxRaSUgtJq4+lBlsq2I1XmbxKzX9h4vbxtcWOwPBdwLFVUVO5su2Iq3F6dPgx+LrQS6tS/R0QuMB2a5ulxv6ROpamXWSEFRkRRFgPq/JOdJQJ9h2A99a0jZPMb5Pm+YliOYL+ZWOxfGmrmg+P032Xop026GHddS4OtO4+carjnovi0kdLDg6nSYunwTk9HX6wCZ/o8+ATia/4Hhkd0Wd6INol1eGxYncs/HpdMZqMpsmwms15NcSUAHcQRE/7NIw5JxfHGAywS+HTsL4zL47Fjk7k1p2c7Y9kbFo7Bh0Xntt59PGB7Rh0Yniu/43HjtzR+n8d2qK6pSktzHouTa7qa1l9ZyzLRVm+CSDAAAoWop9CDgAA$"
 const default_fluid_miner_blueprint_text = "Use default fluid miner blueprint"
 
+const miner_timelimit_max = 300;
+const saturation_timelimit_max = 300;
+
 let solve_for_fluid = false;
 
 // -----------------------------------------------
@@ -118,16 +121,16 @@ button_copy_blueprint.addEventListener('click', callback_copy_blueprint);
 miners_timelimit.addEventListener('change', () => {
     const value = miners_timelimit.value;
     if (value) {
-        // cap between 0 and 120
-        const cappedValue = Math.max(0, Math.min(120, parseFloat(value)));
+        // cap between 0 and miner_timelimit_max
+        const cappedValue = Math.max(0, Math.min(miner_timelimit_max, parseFloat(value)));
         miners_timelimit.value = cappedValue.toFixed(2);
     }
 });
 saturation_timelimit.addEventListener('change', () => {
     const value = saturation_timelimit.value;
     if (value) {
-        // cap between 0 and 120
-        const cappedValue = Math.max(0, Math.min(120, parseFloat(value)));
+        // cap between 0 and saturation_timelimit_max
+        const cappedValue = Math.max(0, Math.min(saturation_timelimit_max, parseFloat(value)));
         saturation_timelimit.value = cappedValue.toFixed(2);
     }
 });
