@@ -306,7 +306,7 @@ def parse_using_blueprint(blueprint: str = "") -> Optional[list[tuple[int, int]]
     for entry in entires:
         x = entry.get("X", 0)
         y = entry.get("Y", 0)
-        nodes.append((x, y))
+        nodes.append((x, -y))
     
     # shifts coordinates
     min_x = min(x for x, _ in nodes)
