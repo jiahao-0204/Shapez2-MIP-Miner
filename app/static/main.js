@@ -121,17 +121,27 @@ checkbox_solve_for_fluid.addEventListener('click', () => {
 update_use_default_blueprint_text();
 callback_use_default_blueprint();
 
-// audo pull stats
-setInterval(() => {
+// pull once at start
+function pull_stats_once()
+{
     fetch('/get_stats/')
-        .then(response => response.json())
-        .then(data => {
-            stats_tasks_ran_in_total.textContent = data.tasks_ran_in_total;
-            stats_tasks_ran_today.textContent = data.tasks_ran_today;
-            stats_current_running_tasks_num.textContent = data.current_running_tasks_num;
-        })
-        .catch(error => console.error('Error fetching stats:', error));
-}, stats_refresh_interval_in_seconds * 1000);
+    .then(response => response.json())
+    .then(data => {
+        stats_tasks_ran_in_total.textContent = data.tasks_ran_in_total;
+        stats_tasks_ran_today.textContent = data.tasks_ran_today;
+        stats_current_running_tasks_num.textContent = data.current_running_tasks_num;
+    })
+    .catch(error => console.error('Error fetching stats:', error));
+}
+
+// pull every 5 seconds
+function pull_stats_periodically()
+{
+    setInterval(() => pull_stats_once(), stats_refresh_interval_in_seconds * 1000);
+}
+
+pull_stats_once();
+pull_stats_periodically();
 
 // -----------------------------------------------
 // link element to callbacks
