@@ -309,7 +309,7 @@ def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms
         try:
             miner_json = blueprint_to_json(miner_blueprint)
             B = miner_json["BP"]["Entries"][0]["B"]
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, KeyError):
             B = None
     else:
         B = None
