@@ -1,0 +1,188 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shapez2 QR Encoder</title>
+    <style>
+        /* class selector */
+        .box_around
+        {
+            border: 1px solid black;
+            padding: 10px;
+        }
+
+        .align_right
+        {
+            /* justify-content: flex-end; */
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .two_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px;
+        }
+
+        .three_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 10px;
+        }
+
+        .four_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr; 
+            gap: 10px;
+        }
+
+        .five_col_container
+        {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr; 
+            gap: 10px;
+        }
+
+        .list_container 
+        {
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+        
+        .blueprint_text
+        {
+            display: block;
+            width: 100%;
+            height: auto;
+            overflow-y: auto;
+            word-break: break-word;
+        }
+
+        /* element type selector */
+        canvas
+        {
+            width: 100%;
+            height: auto;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div class="two_col_container">
+        <div class="list_container">
+            <h1>Shapez2 QR Encoder</h1>
+
+            <!-- on the same line -->
+            <span style="white-space: nowrap;">Go to: <a href="/">Miner Layout Solver</a></span>
+        </div>
+        
+        <div class="list_container box_around align_right">
+            <div class="two_col_container">
+                <div>QRs Generated In Total:</div>
+                <div id="stats_qrs_generated_in_total" class="align_right">0</div>
+            </div>
+            <div class="two_col_container">
+                <div>QRs Generated Today:</div> 
+                <div id="stats_qrs_generated_today" class="align_right">0</div>
+            </div>
+        </div>
+    </div>
+    
+    <p><b>This project is open source!</b> You can find the source code on <a href="https://github.com/jiahao-0204/Shapez2-MIP-Miner"><b>GitHub</b></a>. If you find this project useful, consider <b>starring</b> it!</p>
+        
+    <div class="list_container">
+        
+        <div class="two_col_container">
+            <div class="list_container">
+                
+                <!-- text input -->
+                <div>1. Input text below:</div>
+                <textarea id="input_text" placeholder="https://shapez2-tools.com" rows="4" cols="50"></textarea>
+                
+                <div>2. Select Version (Size):</div>
+                <select id="version">
+                    <option value="1">Version 1 (21x21)</option>
+                    <option value="2">Version 2 (25x25)</option>
+                    <option value="3">Version 3 (29x29)</option>
+                    <option value="4">Version 4 (33x33) - Fits under 2x2 Platform</option>
+                    <option value="5">Version 5 (37x37)</option>
+                    <option value="6">Version 6 (41x41)</option>
+                    <option value="7">Version 7 (45x45)</option>
+                    <option value="8">Version 8 (49x49)</option>
+                    <option value="9">Version 9 (53x53) - Fits under 3x3 Platform</option>
+                    <option value="10">Version 10 (57x57)</option>
+                    <option value="11">Version 11 (61x61)</option>
+                    <option value="12">Version 12 (65x65)</option>
+                    <option value="13">Version 13 (69x69)</option>
+                    <option value="14">Version 14 (73x73)</option>
+                    <option value="15">Version 15 (77x77)</option>
+                    <option value="16">Version 16 (81x81)</option>
+                    <option value="17">Version 17 (85x85)</option>
+                    <option value="18">Version 18 (89x89)</option>
+                    <option value="19">Version 19 (93x93)</option>
+                    <option value="20">Version 20 (97x97)</option>
+                    <option value="21">Version 21 (101x101)</option>
+                    <option value="22">Version 22 (105x105)</option>
+                    <option value="23">Version 23 (109x109)</option>
+                    <option value="24">Version 24 (113x113)</option>
+                    <option value="25">Version 25 (117x117)</option>
+                    <option value="26">Version 26 (121x121)</option>
+                    <option value="27">Version 27 (125x125)</option>
+                    <option value="28">Version 28 (129x129)</option>
+                    <option value="29">Version 29 (133x133)</option>
+                    <option value="30">Version 30 (137x137)</option>
+                    <option value="31">Version 31 (141x141)</option>
+                    <option value="32">Version 32 (145x145)</option>
+                    <option value="33">Version 33 (149x149)</option>
+                    <option value="34">Version 34 (153x153)</option>
+                    <option value="35">Version 35 (157x157)</option>
+                    <option value="36">Version 36 (161x161)</option>
+                    <option value="37">Version 37 (165x165)</option>
+                    <option value="38">Version 38 (169x169)</option>
+                    <option value="39">Version 39 (173x173)</option>
+                    <option value="40">Version 40 (177x177)</option>
+                </select>
+                
+                <div>3. Select Error Correction Level:</div>
+                <select id="error_correction_level">
+                    <option value="L">L</option>
+                    <option value="M">M</option>
+                    <option value="Q">Q</option>
+                    <option value="H">H</option>
+                </select>
+
+                <div>* Use smallest QR code possible</div>
+                <button id="use_smallest_qr_code_possible">Use Smallest QR Code Possible</button>
+            </div>
+
+            <div class="list_container">
+                <div>QR code preview:</div>
+                <canvas id="qr_canvas"></canvas>
+            </div>
+        </div>
+
+        
+
+        <!-- QR encoder -->
+        <div>5. Generate QR:</div>
+        <select id="blueprint_type">
+            <option value="platform">Platform Blueprint</option>
+            <option value="building">Building Blueprint</option>
+        </select>
+
+        <button id="generate_blueprint">Generate QR Code Blueprint</button>
+
+        <button id="copy_blueprint">Copy Blueprint</button>
+
+        <code id="blueprint_text" class="blueprint_text">No blueprint available. Please generate a QR code blueprint first.</code>
+    </div>
+
+    <!-- Script include -->
+    <script src="/static/qr_encoder.js" defer></script>
+</body>
+</html>

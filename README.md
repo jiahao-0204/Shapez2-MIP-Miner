@@ -73,6 +73,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   - matplotlib
   - uvicorn-standard
   - colorlog
+  - qrcode
 - to start the webapp
   ```bash
   mkdir git

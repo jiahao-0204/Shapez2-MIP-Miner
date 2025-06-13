@@ -19,11 +19,13 @@ from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, Fil
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import numpy as np
+import qrcode
 
 # project
 from app.astroid_parser import parse_using_blueprint_and_return_image, parse_using_blueprint
 from app.astroid_solver import AstroidSolver
 from app.blueprint_composer import convert_miner_to_fluid
+from app.qr_encoder import content_to_qr_matrix, matrix_to_platform_blueprint, matrix_to_building_blueprint
 
 # ------------------------------------------
 # Setup
@@ -38,6 +40,22 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # path for counter
 total_counter_path = str(Path.home() / "fastapi_total_counter.txt")
 today_counter_path = str(Path.home() / "fastapi_today_counter.txt")
+total_qr_counter_path = str(Path.home() / "fastapi_total_qr_counter.txt")
+today_qr_counter_path = str(Path.home() / "fastapi_today_qr_counter.txt")
+
+# create the counter files if they do not exist
+if not Path(total_counter_path).exists():
+    with open(total_counter_path, "w") as f:
+        f.write("0")
+if not Path(today_counter_path).exists():
+    with open(today_counter_path, "w") as f:
+        f.write("0")
+if not Path(total_qr_counter_path).exists():
+    with open(total_qr_counter_path, "w") as f:
+        f.write("0")
+if not Path(today_qr_counter_path).exists():
+    with open(today_qr_counter_path, "w") as f:
+        f.write("0")
 
 # templates
 templates = Jinja2Templates(directory="app/templates")
@@ -86,11 +104,6 @@ def increase_total_counter():
         f.write(f"{counter + 1}")
 
 def get_total_counter():
-    # create the file if it does not exist
-    if not Path(total_counter_path).exists():
-        with open(total_counter_path, "w") as f:
-            f.write("0")
-
     with open(total_counter_path, "r") as f:
         counter = int(f.read())
     return counter
@@ -103,17 +116,40 @@ def increase_today_counter():
         f.write(f"{counter + 1}")
 
 def get_today_counter():
-    # create the file if it does not exist
-    if not Path(today_counter_path).exists():
-        with open(today_counter_path, "w") as f:
-            f.write("0")
-
     with open(today_counter_path, "r") as f:
         counter = int(f.read())
     return counter
 
 def reset_today_counter():
     with open(today_counter_path, "w") as f:
+        f.write("0")
+
+# increase total qr counter
+def increase_total_qr_counter():
+    with open(total_qr_counter_path, "r") as f:
+        counter = int(f.read())
+    with open(total_qr_counter_path, "w") as f:
+        f.write(f"{counter + 1}")
+
+def get_total_qr_counter():
+    with open(total_qr_counter_path, "r") as f:
+        counter = int(f.read())
+    return counter
+
+# increase today qr counter
+def increase_today_qr_counter():
+    with open(today_qr_counter_path, "r") as f:
+        counter = int(f.read())
+    with open(today_qr_counter_path, "w") as f:
+        f.write(f"{counter + 1}")
+
+def get_today_qr_counter():
+    with open(today_qr_counter_path, "r") as f:
+        counter = int(f.read())
+    return counter
+
+def reset_today_qr_counter():
+    with open(today_qr_counter_path, "w") as f:
         f.write("0")
 
 def reset_stats_at_midnight():
@@ -125,6 +161,7 @@ def reset_stats_at_midnight():
         if now.hour == 0 and now.minute == 0:
             try:
                 reset_today_counter()
+                reset_today_qr_counter()
                 logger.info("[Stats] Successfully reset daily counter at midnight")
             except Exception as e:
                 logger.error(f"[Stats] Failed to reset counter: {str(e)}")
@@ -157,9 +194,18 @@ reset_stats_at_midnight()
 async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+# qr page
+@app.get("/qr_encoder", response_class=HTMLResponse)
+async def get_qr_encoder(request: Request):
+    return templates.TemplateResponse("qr_encoder.html", {"request": request})
+
 @app.get("/get_stats/")
 async def get_stats():
     return JSONResponse(status_code=200, content={"tasks_ran_in_total": get_total_counter(), "tasks_ran_today": get_today_counter(), "current_running_tasks_num": current_running_tasks_num})
+
+@app.get("/get_qr_stats/")
+async def get_qr_stats():
+    return JSONResponse(status_code=200, content={"qr_codes_ran_in_total": get_total_qr_counter(), "qr_codes_ran_today": get_today_qr_counter()})
 
 @app.post("/get_simple_coordinates_preview/")
 async def get_simple_coordinates_preview(input_blueprint: str = Form(...)):
@@ -345,3 +391,53 @@ async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Fo
         return JSONResponse(status_code=500, content={"error": "Failed to generate blueprint"})
             
     return {"blueprint": blueprint}
+
+
+# ------------------------------------------
+# QR encoder
+# ------------------------------------------
+
+@app.post("/generate_qr_code_image/")
+async def generate_qr_code_image(input_text: str = Form(...), version: int = Form(...), error_correction_level: str = Form(...)):
+    # generate QR code image
+    qr = qrcode.QRCode(
+        version=version,
+        error_correction=getattr(qrcode.constants, f"ERROR_CORRECT_{error_correction_level.upper()}", qrcode.constants.ERROR_CORRECT_L),
+        box_size=20,
+        border=4,
+    )
+    qr.add_data(input_text)
+    qr.make(fit=True)
+
+    # get version number used
+    version_used = qr.version
+
+    img = qr.make_image(fill='black', back_color='white')
+
+    # image write to blob
+    blob = BytesIO()
+    img.save(blob, 'PNG')
+    blob = blob.getvalue()
+
+    # convert to base64 and create data URL
+    img_b64 = base64.b64encode(blob).decode('utf-8')
+    img_data_url = f"data:image/png;base64,{img_b64}"
+    
+    return JSONResponse(status_code=200, content={"qr_code_image": img_data_url, "version_used": version_used})
+
+@app.post("/generate_qr_code_blueprint/")
+async def generate_qr_code_blueprint(input_text: str = Form(...), version: int = Form(...), error_correction_level: str = Form(...), blueprint_type: str = Form(...)):
+    # generate QR code matrix
+    matrix = content_to_qr_matrix(input_text, version, error_correction_level)
+    
+    # convert to blueprint
+    if blueprint_type == "platform":
+        blueprint = matrix_to_platform_blueprint(matrix)
+    elif blueprint_type == "building":
+        blueprint = matrix_to_building_blueprint(matrix)
+    
+    # increase qr counter
+    increase_total_qr_counter()
+    increase_today_qr_counter()
+
+    return JSONResponse(status_code=200, content={"blueprint": blueprint})
