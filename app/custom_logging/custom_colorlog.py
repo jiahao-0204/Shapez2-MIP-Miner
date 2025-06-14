@@ -1,4 +1,5 @@
 import colorlog
+import logging
 
 class CustomColoredFormatter(colorlog.ColoredFormatter):
     def format(self, record):
@@ -35,3 +36,20 @@ class CustomColoredFormatter(colorlog.ColoredFormatter):
 
         # format the rest
         return super().format(record)
+
+class SuppressStatsFilter(logging.Filter):
+    """
+    Hide the 200-OK polling of /get_qr_stats/ (or /get_stats/).
+    """
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.name != "uvicorn.access":
+            return True                # let everything else through
+
+        # Build the final message the same way logging does
+        try:
+            msg = record.getMessage()
+        except Exception:
+            msg = str(record.msg)
+
+        # Suppress only that one, boring, success path
+        return not (("GET /get_qr_stats/" in msg or "GET /get_stats/" in msg) and " 200" in msg)

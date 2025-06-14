@@ -1,6 +1,10 @@
 version: 1
 disable_existing_loggers: False
 
+filters:
+  suppress_stats:
+    (): app.custom_logging.custom_colorlog.SuppressStatsFilter
+
 formatters:
   color:
     (): app.custom_logging.custom_colorlog.CustomColoredFormatter
@@ -12,13 +16,13 @@ formatters:
       WARNING:  yellow
       ERROR:    red
       CRITICAL: bold_red
-    
 
 handlers:
   console:
     class: logging.StreamHandler
     formatter: color
     stream: ext://sys.stdout
+    filters: [suppress_stats]
 
 root:
   handlers: [console]
@@ -32,4 +36,8 @@ loggers:
   gurobipy:
     handlers: [console]
     level: WARNING
+    propagate: False
+  uvicorn.access:
+    handlers: [console]
+    level: INFO
     propagate: False
