@@ -17,6 +17,7 @@ const copy_blueprint = document.getElementById('copy_blueprint');
 const blueprint_text = document.getElementById('blueprint_text');
 const stats_qrs_generated_in_total = document.getElementById('stats_qrs_generated_in_total');
 const stats_qrs_generated_today = document.getElementById('stats_qrs_generated_today');
+const boost_error_correction_level = document.getElementById('boost_error_correction_level');
 
 // pull once at start
 function pull_stats_once()
@@ -83,6 +84,7 @@ async function callback_generate_qr()
     form.append('input_text', get_input_text_value());
     form.append('version', version.value); 
     form.append('error_correction_level', error_correction_level.value); 
+    form.append('boost_error', boost_error_correction_level.checked);
     
     const response = await fetch(`/generate_qr_code_image/`, {method: 'POST', body: form});
 
@@ -95,8 +97,10 @@ async function callback_generate_qr()
     const data = await response.json();
     const qr_code_image_base64 = data.qr_code_image;
     const version_used = data.version_used;
+    const error_level = data.error_level;
     update_canvas_image(qr_canvas, qr_code_image_base64);
     version.value = version_used;
+    error_correction_level.value = error_level;
 }
 
 input_text.addEventListener('change', async function() 
@@ -114,9 +118,14 @@ error_correction_level.addEventListener('change', async function()
     callback_generate_qr();
 })
 
+boost_error_correction_level.addEventListener('change', async function() 
+{
+    callback_generate_qr();
+})
+
 use_smallest_qr_code_possible.addEventListener('click', async function() 
 {
-    version.value = '1';
+    version.value = 'M1';
     error_correction_level.value = 'L';
     callback_generate_qr();
 })
@@ -138,6 +147,7 @@ async function callback_generate_blueprint()
     form.append('version', version.value); 
     form.append('error_correction_level', error_correction_level.value); 
     form.append('blueprint_type', blueprint_type.value); 
+    form.append('boost_error', boost_error_correction_level.checked);
     
     const response = await fetch(`/generate_qr_code_blueprint/`, {method: 'POST', body: form});
 

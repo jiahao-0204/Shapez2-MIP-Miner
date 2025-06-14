@@ -106,6 +106,10 @@
                 
                 <div>2. Select Version (Size):</div>
                 <select id="version">
+                    <option value="M1">Version M1 (11x11)</option>
+                    <option value="M2">Version M2 (13x13) - Fits under 1x1 Platform</option>
+                    <option value="M3">Version M3 (15x15)</option>
+                    <option value="M4">Version M4 (17x17) - Micro QR Code may not work on all QR Code scanners</option>
                     <option value="1">Version 1 (21x21)</option>
                     <option value="2">Version 2 (25x25)</option>
                     <option value="3">Version 3 (29x29)</option>
@@ -148,7 +152,11 @@
                     <option value="40">Version 40 (177x177)</option>
                 </select>
                 
-                <div>3. Select Error Correction Level:</div>
+                <div class="two_col_container">
+                    <div>3. Select Error Correction Level:</div>
+                    <div class="align_right">Use highest error level <input type="checkbox" id="boost_error_correction_level" checked> </div>
+                </div>
+
                 <select id="error_correction_level">
                     <option value="L">L</option>
                     <option value="M">M</option>

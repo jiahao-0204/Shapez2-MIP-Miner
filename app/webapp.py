@@ -25,7 +25,7 @@ import qrcode
 from app.astroid_parser import parse_using_blueprint_and_return_image, parse_using_blueprint
 from app.astroid_solver import AstroidSolver
 from app.blueprint_composer import convert_miner_to_fluid
-from app.qr_encoder import content_to_qr_matrix, matrix_to_platform_blueprint, matrix_to_building_blueprint
+from app.qr_encoder import content_to_segno_image, content_to_segno_matrix, matrix_to_platform_blueprint, matrix_to_building_blueprint
 
 # ------------------------------------------
 # Setup
@@ -398,37 +398,23 @@ async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Fo
 # ------------------------------------------
 
 @app.post("/generate_qr_code_image/")
-async def generate_qr_code_image(input_text: str = Form(...), version: int = Form(...), error_correction_level: str = Form(...)):
+async def generate_qr_code_image(input_text: str = Form(...), version: str = Form(...), error_correction_level: str = Form(...), boost_error: bool = Form(...)):
     # generate QR code image
-    qr = qrcode.QRCode(
-        version=version,
-        error_correction=getattr(qrcode.constants, f"ERROR_CORRECT_{error_correction_level.upper()}", qrcode.constants.ERROR_CORRECT_L),
-        box_size=20,
-        border=4,
-    )
-    qr.add_data(input_text)
-    qr.make(fit=True)
+    blob, version_used, error_level = content_to_segno_image(input_text, version, error_correction_level, boost_error)
 
-    # get version number used
-    version_used = qr.version
-
-    img = qr.make_image(fill='black', back_color='white')
-
-    # image write to blob
-    blob = BytesIO()
-    img.save(blob, 'PNG')
-    blob = blob.getvalue()
+    if version_used == "M1":
+        error_level = "L"
 
     # convert to base64 and create data URL
     img_b64 = base64.b64encode(blob).decode('utf-8')
     img_data_url = f"data:image/png;base64,{img_b64}"
     
-    return JSONResponse(status_code=200, content={"qr_code_image": img_data_url, "version_used": version_used})
+    return JSONResponse(status_code=200, content={"qr_code_image": img_data_url, "version_used": version_used, "error_level": error_level})
 
 @app.post("/generate_qr_code_blueprint/")
-async def generate_qr_code_blueprint(input_text: str = Form(...), version: int = Form(...), error_correction_level: str = Form(...), blueprint_type: str = Form(...)):
+async def generate_qr_code_blueprint(input_text: str = Form(...), version: str = Form(...), error_correction_level: str = Form(...), boost_error: bool = Form(...), blueprint_type: str = Form(...)):
     # generate QR code matrix
-    matrix = content_to_qr_matrix(input_text, version, error_correction_level)
+    matrix = content_to_segno_matrix(input_text, version, error_correction_level, boost_error)
     
     # convert to blueprint
     if blueprint_type == "platform":
