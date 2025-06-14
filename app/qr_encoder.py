@@ -70,7 +70,7 @@ def content_to_segno_image(content: str, version: str = "M1", error_correction_l
     
     # Get raw PNG data as bytes
     buffer = BytesIO()
-    qrcode.save(buffer, kind='png', scale=10)
+    qrcode.save(buffer, kind='png', scale=30)
     return buffer.getvalue(), qrcode.version, qrcode.error
 
 def print_qr_matrix(matrix: np.ndarray) -> None:
