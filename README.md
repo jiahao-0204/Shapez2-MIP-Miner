@@ -74,6 +74,7 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   - uvicorn-standard
   - colorlog
   - qrcode
+  - segno
 - to start the webapp
   ```bash
   mkdir git
