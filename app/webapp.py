@@ -43,20 +43,6 @@ today_counter_path = str(Path.home() / "fastapi_today_counter.txt")
 total_qr_counter_path = str(Path.home() / "fastapi_total_qr_counter.txt")
 today_qr_counter_path = str(Path.home() / "fastapi_today_qr_counter.txt")
 
-# create the counter files if they do not exist
-if not Path(total_counter_path).exists():
-    with open(total_counter_path, "w") as f:
-        f.write("0")
-if not Path(today_counter_path).exists():
-    with open(today_counter_path, "w") as f:
-        f.write("0")
-if not Path(total_qr_counter_path).exists():
-    with open(total_qr_counter_path, "w") as f:
-        f.write("0")
-if not Path(today_qr_counter_path).exists():
-    with open(today_qr_counter_path, "w") as f:
-        f.write("0")
-
 # templates
 templates = Jinja2Templates(directory="app/templates")
 
@@ -95,96 +81,80 @@ def cleanup_tasks():
 
 cleanup_tasks()  # Start the cleanup process
 
-# increase total counter
-def increase_total_counter():
-    # increase the number stored in the counter file
-    with open(total_counter_path, "r") as f:
-        counter = int(f.read())
-    with open(total_counter_path, "w") as f:
-        f.write(f"{counter + 1}")
+# === Generic total counter functions ===
 
-def get_total_counter():
-    with open(total_counter_path, "r") as f:
-        counter = int(f.read())
-    return counter
-
-# increase today counter
-def increase_today_counter():
-    with open(today_counter_path, "r") as f:
-        counter = int(f.read())
-    with open(today_counter_path, "w") as f:
-        f.write(f"{counter + 1}")
-
-def get_today_counter():
-    with open(today_counter_path, "r") as f:
-        counter = int(f.read())
-    return counter
-
-def reset_today_counter():
-    with open(today_counter_path, "w") as f:
-        f.write("0")
-
-# increase total qr counter
-def increase_total_qr_counter():
-    with open(total_qr_counter_path, "r") as f:
-        counter = int(f.read())
-    with open(total_qr_counter_path, "w") as f:
-        f.write(f"{counter + 1}")
-
-def get_total_qr_counter():
-    with open(total_qr_counter_path, "r") as f:
-        counter = int(f.read())
-    return counter
-
-# increase today qr counter
-def increase_today_qr_counter():
-    with open(today_qr_counter_path, "r") as f:
-        counter = int(f.read())
-    with open(today_qr_counter_path, "w") as f:
-        f.write(f"{counter + 1}")
-
-def get_today_qr_counter():
-    with open(today_qr_counter_path, "r") as f:
-        counter = int(f.read())
-    return counter
-
-def reset_today_qr_counter():
-    with open(today_qr_counter_path, "w") as f:
-        f.write("0")
-
-def reset_stats_at_midnight():
+def increase_counter(path):
     try:
-        # get current time
-        now = datetime.now()
-        
-        # Check if we're within the first minute of midnight
-        if now.hour == 0 and now.minute == 0:
+        with open(path, "r") as f:
+            counter = int(f.read())
+    except (FileNotFoundError, ValueError):
+        counter = 0
+    with open(path, "w") as f:
+        f.write(f"{counter + 1}")
+
+def get_counter(path):
+    try:
+        with open(path, "r") as f:
+            return int(f.read())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+# === Daily counter functions ===
+
+def increase_daily_counter(path):
+    today = datetime.now().strftime("%Y-%m-%d")
+    try:
+        with open(path, "r") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        lines = []
+
+    found = False
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line or ':' not in line:
+            continue
+        parts = line.split(":")
+        if len(parts) != 2:
+            continue
+        date, counter = parts
+        if date == today:
             try:
-                reset_today_counter()
-                reset_today_qr_counter()
-                logger.info("[Stats] Successfully reset daily counter at midnight")
-            except Exception as e:
-                logger.error(f"[Stats] Failed to reset counter: {str(e)}")
-        
-        # Schedule next check
-        next_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        time_to_midnight = (next_midnight - now).total_seconds()
-        
-        # Ensure we don't schedule a negative time
-        if time_to_midnight <= 0:
-            time_to_midnight = 24 * 3600  # Schedule for next day if we somehow got a negative time
-        
-        # Schedule next check
-        threading.Timer(time_to_midnight, reset_stats_at_midnight).start()
-        
-    except Exception as e:
-        logger.error(f"[Stats] Error in reset_stats_at_midnight: {str(e)}")
-        # Try to recover by scheduling another attempt in 1 hour
-        threading.Timer(3600, reset_stats_at_midnight).start()
+                counter = int(counter) + 1
+            except ValueError:
+                counter = 1  # fallback to 1 if corrupted
+            lines[i] = f"{date}:{counter}\n"
+            found = True
+            break
 
-# Start the reset process
-reset_stats_at_midnight()
+    if not found:
+        lines.append(f"{today}:1\n")
 
+    with open(path, "w") as f:
+        f.writelines(lines)
+
+def get_daily_counter(path):
+    today = datetime.now().strftime("%Y-%m-%d")
+    try:
+        with open(path, "r") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        return 0
+
+    for line in lines:
+        line = line.strip()
+        if not line or ':' not in line:
+            continue
+        parts = line.split(":")
+        if len(parts) != 2:
+            continue
+        date, counter = parts
+        if date == today:
+            try:
+                return int(counter)
+            except ValueError:
+                return 0
+    return 0
 # ------------------------------------------
 # Web API
 # ------------------------------------------
@@ -201,11 +171,11 @@ async def get_qr_encoder(request: Request):
 
 @app.get("/get_stats/")
 async def get_stats():
-    return JSONResponse(status_code=200, content={"tasks_ran_in_total": get_total_counter(), "tasks_ran_today": get_today_counter(), "current_running_tasks_num": current_running_tasks_num})
+    return JSONResponse(status_code=200, content={"tasks_ran_in_total": get_counter(total_counter_path), "tasks_ran_today": get_daily_counter(today_counter_path), "current_running_tasks_num": current_running_tasks_num})
 
 @app.get("/get_qr_stats/")
 async def get_qr_stats():
-    return JSONResponse(status_code=200, content={"qr_codes_ran_in_total": get_total_qr_counter(), "qr_codes_ran_today": get_today_qr_counter()})
+    return JSONResponse(status_code=200, content={"qr_codes_ran_in_total": get_counter(total_qr_counter_path), "qr_codes_ran_today": get_daily_counter(today_qr_counter_path)})
 
 @app.post("/get_simple_coordinates_preview/")
 async def get_simple_coordinates_preview(input_blueprint: str = Form(...)):
@@ -310,8 +280,8 @@ async def run_solver_and_stream(
             )
         logger.info(f"[Solver] - finish for {task_id}")
         current_running_tasks_num -= 1
-        increase_total_counter()
-        increase_today_counter()
+        increase_counter(total_counter_path)
+        increase_daily_counter(today_counter_path)
 
         # push None so stream() can break the loop
         loop.call_soon_threadsafe(queue.put_nowait, "data: DONE\n\n")
@@ -423,7 +393,7 @@ async def generate_qr_code_blueprint(input_text: str = Form(...), version: str =
         blueprint = matrix_to_building_blueprint(matrix)
     
     # increase qr counter
-    increase_total_qr_counter()
-    increase_today_qr_counter()
+    increase_counter(total_qr_counter_path)
+    increase_daily_counter(today_qr_counter_path)
 
     return JSONResponse(status_code=200, content={"blueprint": blueprint})
