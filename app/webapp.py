@@ -313,8 +313,8 @@ async def run_solver_and_stream(
     return StreamingResponse(stream(), media_type="text/event-stream")
 
 # get solver image
-@app.get("/get_solver_results/{task_id}")
-async def get_solver_results(task_id: str):    
+@app.post("/get_solver_results")
+async def get_solver_results(task_id: str = Form(...), remove_non_saturated_miners: bool = Form(...)):
     # skip if task id not found
     if task_id not in tasks_solvers:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
@@ -323,7 +323,7 @@ async def get_solver_results(task_id: str):
     astroid_solver = tasks_solvers[task_id]
     
     # get the solution image
-    solution_image = astroid_solver.get_solution_image()
+    solution_image = astroid_solver.get_solution_image(remove_non_saturated_miners=remove_non_saturated_miners)
     
     if solution_image is None:
         return JSONResponse(status_code=500, content={"error": "Failed to generate solution image"})
@@ -338,7 +338,7 @@ async def get_solver_results(task_id: str):
     
 # get solver blueprint
 @app.post("/generate_blueprint/")
-async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Form(...), solve_for_fluid: bool = Form(...)):
+async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Form(...), solve_for_fluid: bool = Form(...), remove_non_saturated_miners: bool = Form(...)):
     # skip if task id not found
     if task_id not in tasks_solvers:
         return JSONResponse(status_code=404, content={"error": "Task not found"})
@@ -351,7 +351,7 @@ async def generate_blueprint(task_id: str = Form(...), miner_blueprint: str = Fo
     # get the blueprint txt
     if miner_blueprint == "empty":
         miner_blueprint = ""
-    blueprint = astroid_solver.get_solution_blueprint(miner_blueprint=miner_blueprint)
+    blueprint = astroid_solver.get_solution_blueprint(miner_blueprint=miner_blueprint, remove_non_saturated_miners=remove_non_saturated_miners)
 
     if solve_for_fluid:
         new_blueprint = convert_miner_to_fluid(blueprint, miner_blueprint)

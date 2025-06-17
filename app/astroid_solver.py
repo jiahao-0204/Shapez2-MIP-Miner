@@ -408,7 +408,7 @@ class AstroidSolver:
         # save the variables to a file
         var_to_txt(filename, self.all_extender_platforms, self.all_miner_platforms, self.all_belts)
         
-    def get_solution_blueprint(self, miner_blueprint: Optional[str] = None) -> str:
+    def get_solution_blueprint(self, miner_blueprint: Optional[str] = None, remove_non_saturated_miners: bool = False) -> str:
         if miner_blueprint is None:
             # use the default blueprint if none is provided
             miner_blueprint = self.default_blueprint
@@ -416,15 +416,27 @@ class AstroidSolver:
         # skip if no solution
         if not self.has_solution:
             return "Solution not found"
+        
+        if remove_non_saturated_miners:
+            miner_platforms_sol, extender_platforms_sol = remove_non_saturated_miners_func(self.all_miner_platforms_sol, self.all_extender_platforms_sol)
+        else:
+            miner_platforms_sol = self.all_miner_platforms_sol
+            extender_platforms_sol = self.all_extender_platforms_sol
 
         # generate blueprint
-        return compose_blueprint(self.all_miner_platforms_sol, self.all_extender_platforms_sol, self.all_belts_sol, self.all_elevators_sol, miner_blueprint=miner_blueprint)
+        return compose_blueprint(miner_platforms_sol, extender_platforms_sol, self.all_belts_sol, self.all_elevators_sol, miner_blueprint=miner_blueprint)
     
-    def get_solution_image(self) -> BytesIO:
+    def get_solution_image(self, remove_non_saturated_miners: bool = False) -> BytesIO:
         # render the result
+        if remove_non_saturated_miners:
+            miner_platforms_sol, extender_platforms_sol = remove_non_saturated_miners_func(self.all_miner_platforms_sol, self.all_extender_platforms_sol)
+        else:
+            miner_platforms_sol = self.all_miner_platforms_sol
+            extender_platforms_sol = self.all_extender_platforms_sol
+        
         blob = render_result(
-            self.all_miner_platforms_sol,
-            self.all_extender_platforms_sol,
+            miner_platforms_sol,
+            extender_platforms_sol,
             self.all_belts_sol,
             nodes_to_extract=self.nodes_to_extract,
             node_flow_in=self.node_flow_in_sol,
@@ -448,6 +460,57 @@ class AstroidSolver:
         # show in cv2 window
         cv2.imshow("Astroid Miner Solution", cv2.imdecode(np.frombuffer(blob.getvalue(), np.uint8), cv2.IMREAD_COLOR))
         cv2.waitKey(0)
+
+def remove_non_saturated_miners_func(all_miner_platforms_sol: List[FakeVar], all_extender_platforms_sol: List[FakeVar]):    
+    # miner nodes
+    miner_nodes = []
+    for miner in all_miner_platforms_sol:
+        # skip if not used
+        if miner.X < 0.5:
+            continue
+        var_parts = miner.VarName.split('_')
+        start_node = (int(var_parts[1]), int(var_parts[2]))
+        miner_nodes.append(start_node)
+    
+    # extension map
+    extension_maps = {}
+    for extender in all_extender_platforms_sol:
+        # skip if extender is not used
+        if extender.X < 0.5:
+            continue
+        var_parts = extender.VarName.split('_')
+        start_node = (int(var_parts[1]), int(var_parts[2]))
+        end_node = (int(var_parts[3]), int(var_parts[4]))
+        extension_maps[start_node] = end_node
+    for start_node, end_node in extension_maps.items():
+        # similar to union find, compress the path
+        while end_node in extension_maps:
+            end_node = extension_maps[end_node]
+        extension_maps[start_node] = end_node
+
+    # miner to extension count
+    miner_to_extension_count = {}
+    for miner_node in miner_nodes:
+        count = sum(1 for start_node, end_node in extension_maps.items() if end_node == miner_node)
+        miner_to_extension_count[miner_node] = count
+    
+    # remove non-saturated miners and extensions
+    miners_not_saturated = [miner_node for miner_node in miner_nodes if miner_to_extension_count[miner_node] < 3]
+    extension_not_saturated = [start_node for start_node, end_node in extension_maps.items() if end_node in miners_not_saturated]
+    all_miner_platforms_sol_new = []
+    all_extender_platforms_sol_new = []
+    for miner in all_miner_platforms_sol:
+        start_node = (int(miner.VarName.split('_')[1]), int(miner.VarName.split('_')[2]))
+        if start_node not in miners_not_saturated:
+            all_miner_platforms_sol_new.append(miner)
+    for extender in all_extender_platforms_sol:
+        start_node = (int(extender.VarName.split('_')[1]), int(extender.VarName.split('_')[2]))
+        end_node = (int(extender.VarName.split('_')[3]), int(extender.VarName.split('_')[4]))
+        if start_node not in extension_not_saturated:
+            all_extender_platforms_sol_new.append(extender)
+    
+    # return the new solution
+    return all_miner_platforms_sol_new, all_extender_platforms_sol_new
 
 def render_result(all_miner_platforms: List[FakeVar],
                   all_extender_platforms: List[FakeVar],

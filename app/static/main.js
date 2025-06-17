@@ -115,6 +115,14 @@ checkbox_solve_for_fluid.addEventListener('click', () => {
     callback_use_default_blueprint();
 });
 
+const checkbox_remove_non_saturated_miners = document.getElementById('remove_non_saturated_miners');
+checkbox_remove_non_saturated_miners.addEventListener('change', () => {
+    // if have task id, update solver result
+    if (task_id) {
+        get_solver_result();
+    }
+});
+
 // -----------------------------------------------
 // setup elements
 // -----------------------------------------------
@@ -404,6 +412,41 @@ async function callback_increase_threshold()
     callback_threshold_change(); // call the threshold change callback to update the preview
 }   
 
+async function get_solver_result()
+{
+    // -------------------------------------
+    // send to server
+    // -------------------------------------
+
+    // request the final result
+    form = new FormData();
+    form.append('task_id', task_id); // add task_id to the form
+    form.append('remove_non_saturated_miners', checkbox_remove_non_saturated_miners.checked.toString()); // add remove_non_saturated_miners to the form
+    const response = await fetch(`/get_solver_results`, {method: 'POST', body: form});
+    
+    // -------------------------------------
+    // process response
+    // -------------------------------------
+
+    // ensure the response is ok
+    if (!response.ok)
+    {
+        const error_text = await response.text();
+        console.error('Failed to get final result:', error_text);
+        task_not_found_alert(error_text);
+        return;
+    }
+
+    // get the final result
+    const result = await response.json();
+
+    // draw the image on the canvas
+    update_canvas_image(canvas_results, `data:image/png;base64,${result.solution_image}`);
+
+    // try generating the blueprint
+    callback_generate_blueprint();
+}
+
 async function callback_run_solver_and_stream() 
 {
     // ----------------------------------------------------
@@ -469,34 +512,7 @@ async function callback_run_solver_and_stream()
 
             try 
             {
-                // -------------------------------------
-                // send to server
-                // -------------------------------------
-
-                // request the final result
-                const response = await fetch(`/get_solver_results/${task_id}`);
-                
-                // -------------------------------------
-                // process response
-                // -------------------------------------
-
-                // ensure the response is ok
-                if (!response.ok)
-                {
-                    const error_text = await response.text();
-                    console.error('Failed to get final result:', error_text);
-                    task_not_found_alert(error_text);
-                    return;
-                }
-
-                // get the final result
-                const result = await response.json();
-
-                // draw the image on the canvas
-                update_canvas_image(canvas_results, `data:image/png;base64,${result.solution_image}`);
-
-                // try generating the blueprint
-                callback_generate_blueprint();
+                get_solver_result();
             } 
             catch (err) 
             {
@@ -563,6 +579,7 @@ async function callback_generate_blueprint()
     form.append('task_id', task_id); // add task_id to the form
     form.append('miner_blueprint', text_miner_blueprint.value); // add miner blueprint to the form
     form.append('solve_for_fluid', solve_for_fluid); // add solve for fluid to the form
+    form.append('remove_non_saturated_miners', checkbox_remove_non_saturated_miners.checked); // add remove non-saturated miners to the form
     const response = await fetch(`/generate_blueprint/`, {method: 'POST', body: form});
 
     // ----------------------------------------------------
