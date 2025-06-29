@@ -107,3 +107,11 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   ```
 - notes
   - after `sudo cp ./server/fastapi.conf /etc/nginx/sites-available/`, need to redo `sudo certbot --nginx -d shapez2-tools.com`
+- increase swap space to prevent out of memory error
+  ```bash
+  sudo fallocate -l 4G /swapfile
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+  ```
