@@ -115,3 +115,4 @@ Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204
   sudo swapon /swapfile
   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
   ```
+  - the out of memory error is discovered by running `journalctl -u fastapi` and is identified by the line `Jun 29 05:39:27 ip-172-31-45-79 systemd[1]: fastapi.service: A process of this unit has been killed by the OOM killer. Jun 29 05:39:27 ip-172-31-45-79 systemd[1]: fastapi.service: Failed with result 'oom-kill'.`
