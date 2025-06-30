@@ -111,6 +111,7 @@ const text_blueprint = document.getElementById('blueprint_text');
 const checkbox_solve_for_fluid = document.getElementById('solve_for_fluid');
 checkbox_solve_for_fluid.addEventListener('click', () => {
     solve_for_fluid = checkbox_solve_for_fluid.checked;
+    update_copy_brush_blueprint_text();
     update_use_default_blueprint_text();
     callback_use_default_blueprint();
 });
@@ -527,6 +528,18 @@ async function callback_run_solver_and_stream()
         text_solver_output.textContent += "\n[Connection closed or error]\n";
         eventSource.close();
     };
+}
+
+function update_copy_brush_blueprint_text()
+{
+    if (solve_for_fluid)
+    {
+        button_copy_brush_blueprint.textContent = "Copy Fluid Brush Blueprint (Size = 10)";
+    }
+    else
+    {
+        button_copy_brush_blueprint.textContent = "Copy Brush Blueprint (Size = 10)";
+    }
 }
 
 function update_use_default_blueprint_text()
