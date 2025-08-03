@@ -2,7 +2,16 @@
 
 Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204/Shapez2-MIP-Router)**, **Shapez2-MIP-Miner** applies Mixed-Integer Programming (MIP) with the Gurobi optimiser to design asteroid-mining layouts that maximise extraction throughput while respecting in-game constraints.
 
-### How to use
+### How to use 'Copy Blueprint Based Method' (more reliable)
+**A.** Either visit https://shapez2-tools.com,
+
+
+**B.** OR launch locally
+- first get a Gorubi license
+- for dependencies, you can refer to [ec2-deployment-notes](https://github.com/jiahao-0204/Shapez2-MIP-Miner/edit/main/README.md#ec2-deployment-notes) section
+- then launch the app using `uvicorn app.webapp:app --host 0.0.0.0 --port 8000 --reload` when in the `/app` folder.
+
+### How to use 'Image Based Method' (outdated)
 1. put screenshot into `/images`
 2. edit `path` in `main.py` to point to screenshot
 3. `left click` + `right click` to box a repeating element
