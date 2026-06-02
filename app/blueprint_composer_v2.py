@@ -7,7 +7,8 @@ import gzip
 import base64
 
 
-PREFIX = "SHAPEZ2-3-"
+PREFIX = "SHAPEZ2-4-"
+VERSION = 1137
 
 def json_to_blueprint(json_str):
     """
@@ -153,7 +154,7 @@ class BuildingSpace():
     
     def to_blueprint(self):
         blueprint_json = {
-            "V": 1122,
+            "V": VERSION,
             "BP": {
                 "$type": "Building",
                 "Entries": [building.to_entry(x, y, z) for (x, y, z), building in self.buildings.items()],
@@ -174,7 +175,7 @@ class PlatformSpace():
     
     def to_blueprint(self):
         blueprint_json = {
-            "V": 1122,
+            "V": VERSION,
             "BP": {
                 "$type": "Island",
                 "Entries": [platform.to_entry(x, y, z) for (x, y, z), platform in self.platforms.items()],

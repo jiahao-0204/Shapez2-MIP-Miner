@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 # project
 from app.var_to_txt import txt_to_var, FakeVar
 
-PREFIX = "SHAPEZ2-3-"
-
+PREFIX = "SHAPEZ2-4-"
+VERSION = 1137
 
 def blueprint_to_json(blueprint_str) -> dict:
     """
@@ -288,7 +288,7 @@ def create_empty_blueprint_json() -> dict:
         dict: An empty blueprint JSON structure.
     """
     return {
-        "v": 1122,
+        "v": VERSION,
         "BP": {
             "$type": "Island",
             "Icon": {
