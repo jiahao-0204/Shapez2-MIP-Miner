@@ -1,127 +1,241 @@
-## Overview
+# Astroid Planner
 
-Like its companion project, **[Shapez-MIP-Router](https://github.com/jiahao-0204/Shapez2-MIP-Router)**, **Shapez2-MIP-Miner** applies Mixed-Integer Programming (MIP) with the Gurobi optimiser to design asteroid-mining layouts that maximise extraction throughput while respecting in-game constraints.
+An optimizer for asteroid mining layouts in **Shapez 2** using Mixed-Integer Programming (MIP) with Gurobi.
 
-### How to use 'Copy Blueprint Based Method' (more reliable)
-**A.** Either visit https://shapez2-tools.com,
+---
 
+## 🧭 Navigation Reference
 
-**B.** OR launch locally
-- first get a Gorubi license
-- for dependencies, you can refer to [ec2-deployment-notes](https://github.com/jiahao-0204/Shapez2-MIP-Miner/edit/main/README.md#ec2-deployment-notes) section
-- then launch the app using `uvicorn app.webapp:app --host 0.0.0.0 --port 8000 --reload` when in the `/app` folder.
+| Section | Links |
+| --- | --- |
+| **⚡ Quick Start** | [🌐 Try Online](https://www.google.com/search?q=%23-try-online) • [💻 Install Locally](https://www.google.com/search?q=%23-install-locally) • [☁️ Deploy on AWS](https://www.google.com/search?q=%23-deploy-on-aws) |
+| **📚 Learn More** | [📖 What is This?](https://www.google.com/search?q=%23-what-is-this) • [🔧 Optimization Details](https://www.google.com/search?q=%23-optimization-details) • [🔌 API Endpoints](https://www.google.com/search?q=%23-api-endpoints) • [🔗 Related Projects](https://www.google.com/search?q=%23-related-projects) |
+| **🤝 Contribute** | [🐛 Contributing](https://www.google.com/search?q=%23-contributing) • [📄 License](https://www.google.com/search?q=%23-license) |
 
-### How to use 'Image Based Method' (outdated)
-1. put screenshot into `/images`
-2. edit `path` in `main.py` to point to screenshot
-3. `left click` + `right click` to box a repeating element
-4. `q` to confirm selection
-5. wait for optimizer to run
-6. result is shown
-7. blueprint code will be printed to console
+---
 
+## 📖 What is This?
 
-### Current Progress Update
-> **Status: work in progress – expect rapid changes.**
+Astroid Planner solves the asteroid mining layout optimization problem. Given a set of asteroids you want to mine, the tool automatically determines the optimal placement of the following components to maximize the number of asteroids mined:
 
-![Prototype layout screenshot](<images/thumbnail3.png>)
-![Prototype layout screenshot](<images/result3.png>)
-![Prototype layout screenshot](<images/result3_implemented.png>)
+* **Miners** (extract resources)
+* **Extenders** (extend miner reach)
+* **Belts** (route resources)
+* **Elevators** (send to Layer 1)
 
+---
 
-| Symbol          | Meaning              |
-|-----------------|----------------------|
-| Yellow circle   | Extender platform    |
-| Green triangle  | Miner platform       |
-| Grey rectangle  | Asteroid source      |
-| Blue line       | Space belt           |
-| Red cross       | Belt endpoint        |
+## 🌐 Try Online
 
+Use the web version at **[shapez2-tools.com](https://www.google.com/search?q=https://shapez2-tools.com)** — no installation needed!
 
-## Roadmap
+### Features
 
-- [x] image recognition for importing astroid layouts
-- [x] spit out shapez blueprint
-- [ ] add yaml file to expose settings
-- [ ] better readme (include instruction of git clone, how to star XD, python command etc)
-- [ ] better window layout
-- [ ] store output to folder
-- [x] make into a web application
-  - [x] better blueprint showing box and add copy button
-  - [x] add button to adjust peak identification threshold
-  - [x] better layout
-  - [x] run gorubi as background process so can support multiple users
-  - [x] show optimization progress to webpage
-  - [x] ec2 deployment
-  - [x] add text box to adjust solver duration
-  - [x] add text box to support custom miner blueprint
-  - [x] parse using blueprint
-  - [x] support sending to upper layer
-  - [x] optimize for saturated miners
-  - [x] don't solve for belts
-  - [ ] fix empty miner blueprint not working
-  - [ ] dockerise app
-  - [ ] test docker locally
-  - [ ] cloudflare setup
-  - [ ] toggle between generating fluid miner or shape miner
-  - [ ] toggle between single layer and multi layer
-  - [ ] a queueing system
+* **Web Interface**: Real-time streaming solver output.
+* **Multi-user**: Background threads handle concurrent optimizations.
+* **Task Management**: Auto-cleanup after 15 minutes, maximum 5-minute solver runs.
+* **Solver Options**: Add elevators to Layer 1, use custom miner blueprints, convert shape miners to fluid miners, remove non-saturated miners, and adjust solver time limits.
+* **QR Encoder**: Generate QR codes as Shapez blueprints.
+* **Statistics**: Track total/daily tasks and concurrent solvers.
 
+### Usage Steps
 
-*Questions or suggestions?* Feel free to open an issue or a pull request.
+1. Go to [shapez2-tools.com](https://www.google.com/search?q=https://shapez2-tools.com).
+2. Copy the "Brush Blueprint" (10×10 template).
+3. Paste into Shapez 2, then `Shift+Drag` to place miners on asteroids.
+4. Copy all miner blueprints and paste them into the tool.
+5. Click "Run Solver" and wait for the results.
+6. Paste the generated blueprint back into the game.
 
+### Visualization Legend
 
-## EC2 Deployment Notes
-- download and install `miniconda`
-- `conda create -n shapez2`
-- `conda activate shapez2`
-- then with `conda install`
-  - gurobi
-  - opencv
-  - scikit-image
-  - matplotlib
-  - uvicorn-standard
-  - colorlog
-  - qrcode
-  - -c conda-forge segno / or `pip install segno`
-- to start the webapp
-  ```bash
-  mkdir git
-  cd git
-  git clone https://github.com/jiahao-0204/Shapez2-MIP-Miner
-  cd Shapez2-MIP-Miner
-  sudo cp ./server/fastapi.service /etc/systemd/system/
-  chmod +x ./server/start.sh
-  sudo systemctl daemon-reload
-  sudo systemctl restart fastapi
-  sudo systemctl status fastapi
-  sudo journalctl -u fastapi -f
-  ```
-- nginx to port 8000 to 80/443
-  ```bash
-  sudo apt update
-  sudo apt install nginx
-  sudo cp ./server/fastapi.conf /etc/nginx/sites-available/
-  sudo ln -s /etc/nginx/sites-available/fastapi.conf /etc/nginx/sites-enabled/
-  sudo nginx -t
-  sudo systemctl reload nginx
-  ```
-- on cloudflare
-  - setup DNS "A" record with "@" and "www" that points to server ip address
-- certbot to support https
-  ```bash
-  sudo apt install certbot python3-certbot-nginx
-  sudo certbot --nginx -d shapez2-tools.com
-  sudo certbot renew --dry-run
-  ```
-- notes
-  - after `sudo cp ./server/fastapi.conf /etc/nginx/sites-available/`, need to redo `sudo certbot --nginx -d shapez2-tools.com`
-- increase swap space to prevent out of memory error
-  ```bash
-  sudo fallocate -l 4G /swapfile
-  sudo chmod 600 /swapfile
-  sudo mkswap /swapfile
-  sudo swapon /swapfile
-  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-  ```
-  - the out of memory error is discovered by running `journalctl -u fastapi` and is identified by the line `Jun 29 05:39:27 ip-172-31-45-79 systemd[1]: fastapi.service: A process of this unit has been killed by the OOM killer. Jun 29 05:39:27 ip-172-31-45-79 systemd[1]: fastapi.service: Failed with result 'oom-kill'.`
+| Icon | Color | Element |
+| --- | --- | --- |
+| 🟡 | Yellow | Extender platform |
+| 🟢 | Green | Miner platform |
+| ⬜ | Grey | Asteroid source |
+| 🔵 | Blue | Space belt |
+| ❌ | Red | Belt endpoint |
+
+---
+
+## 💻 Install Locally
+
+### Prerequisites
+
+* Gurobi (Free for students/academics, or a 30-day trial available at [gurobi.com](https://www.google.com/search?q=https://www.gurobi.com)).
+
+### Installation
+
+```bash
+git clone https://github.com/jiahao-0204/Shapez2-MIP-Miner
+cd Shapez2-MIP-Miner
+
+# Create environment
+conda create -n shapez2
+conda activate shapez2
+
+# Install dependencies
+conda install gurobi opencv scikit-image matplotlib uvicorn colorlog qrcode
+conda install -c conda-forge segno
+
+```
+
+### Running Locally
+
+```bash
+cd app
+uvicorn webapp:app --host 0.0.0.0 --port 8000 --reload
+
+```
+
+> **Note:** Once running, open `http://localhost:8000` in your browser.
+
+### Project Structure
+
+| Path | Description |
+| --- | --- |
+| `app/webapp.py` | FastAPI endpoints and web server |
+| `app/astroid_solver.py` | Gurobi MIP model and solver |
+| `app/astroid_parser.py` | Parse blueprints, extract asteroid locations |
+| `app/blueprint_composer.py` | Build blueprints from solution |
+| `app/qr_encoder.py` | QR code generation tool |
+| `app/templates/` | UI templates (`index.html` and `qr_encoder.html`) |
+| `app/custom_logging/` | Logging setup |
+| `server/` | Deployment configs (systemd, nginx) |
+| `images/` | Example screenshots |
+
+---
+
+## ☁️ Deploy on AWS
+
+**Step 1: Environment Setup**
+
+```bash
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+
+conda create -n shapez2
+conda activate shapez2
+conda install gurobi opencv scikit-image matplotlib uvicorn colorlog qrcode
+conda install -c conda-forge segno
+
+```
+
+**Step 2: Clone & Service Installation**
+
+```bash
+mkdir ~/git && cd ~/git
+git clone https://github.com/jiahao-0204/Shapez2-MIP-Miner
+cd Shapez2-MIP-Miner
+
+sudo cp ./server/fastapi.service /etc/systemd/system/
+chmod +x ./server/start.sh
+
+sudo systemctl daemon-reload
+sudo systemctl enable fastapi
+sudo systemctl start fastapi
+
+```
+
+**Step 3: Nginx Reverse Proxy Setup**
+
+```bash
+sudo apt update
+sudo apt install nginx
+sudo cp ./server/fastapi.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/fastapi.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+
+```
+
+**Step 4: HTTPS with Certbot**
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d shapez2-tools.com
+sudo certbot renew --dry-run
+
+```
+
+**Step 5: DNS Configuration**
+Point A records to your instance IP via Cloudflare or your preferred DNS provider.
+
+**Step 6: Memory Management (Swap)**
+
+```bash
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+```
+
+### Server Monitoring & Troubleshooting
+
+* **Check Solver Status:** Run `sudo systemctl status fastapi` and `sudo journalctl -u fastapi -f`.
+* **Check for OOM (Out of Memory):** Run `sudo journalctl -u fastapi | grep "OOM killer"`.
+* **Troubleshoot Memory:** If encountering OOM errors, increase swap space or reduce solver time limits.
+* **Troubleshoot Stuck Solver:** Check Gurobi output via `journalctl` or try shorter time limits (the default is 30 seconds).
+
+---
+
+## 🔧 Optimization Details
+
+### Problem Statement
+
+Given specific asteroid locations, the objective is to correctly place elements on a grid:
+
+* **Miners:** Placed at asteroid positions to extract 1 item/s.
+* **Extenders:** Placed between miners and destinations to bridge gaps.
+* **Belts:** Placed to route items with a maximum flow of 48 items/s.
+* **Elevators:** Placed at asteroid positions to send items up to Layer 1.
+
+### Objectives (Multi-objective)
+
+1. **Priority 1 (Higher):** Maximize the total number of miners and extenders.
+2. **Priority 2 (Lower):** Maximize fully saturated miners. The solver prefers miners with a flow of 4, followed by 3, 2, and finally 1.
+
+### Constraints
+
+* At most **1 item** may be placed per grid cell (miner, extender, belt, or elevator).
+* **Belt flow conservation:** Output must equal input.
+* **Extractor flow:** Output must equal input + 1 (generates 1 item).
+* **Elevator constraints:** Consumes items (zero outflow).
+* **Flow limits:** Maximum belt flow is 48 items/s per direction.
+* **Placement limits:** Miners may only be placed on defined asteroid positions.
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| **GET** | `/` | Main solver UI |
+| **GET** | `/qr_encoder` | QR encoder UI |
+| **GET** | `/get_stats/` | Task statistics |
+| **POST** | `/get_simple_coordinates_preview/` | Preview asteroid locations from blueprint |
+| **GET** | `/get_task_id/` | Create new optimization task |
+| **GET** | `/run_solver_and_stream` | Run optimizer, stream progress (SSE) |
+| **POST** | `/get_solver_results` | Get solution visualization |
+| **POST** | `/generate_blueprint/` | Generate optimized blueprint |
+| **POST** | `/generate_qr_code_image/` | Generate QR code image |
+| **POST** | `/generate_qr_code_blueprint/` | Generate QR code as blueprint |
+
+---
+
+## 🔗 Related Projects
+
+* **[Shapez2-MIP-Router](https://www.google.com/search?q=https://github.com/jiahao-0204/Shapez2-MIP-Router)** - Route optimization
+* **[Shapez2 Solver](https://www.google.com/search?q=https://vystel.github.io/shapez2-solver/)** - Shape solver (by Vystel)
+
+---
+
+## 🐛 Contributing & License
+
+* **Contributing:** Found a bug or have suggestions? [Open an issue](https://www.google.com/search?q=https://github.com/jiahao-0204/Shapez2-MIP-Miner/issues) or submit a Pull Request!
+* **License:** See the `LICENSE` file in the repository for full details.
+
+---
