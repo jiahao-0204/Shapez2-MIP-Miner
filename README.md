@@ -8,10 +8,9 @@ An optimizer for asteroid mining layouts in **Shapez 2** using Mixed-Integer Pro
 
 | Section | Links |
 | --- | --- |
-| **⚡ Quick Start** | [🌐 Try Online](https://www.google.com/search?q=%23-try-online) • [💻 Install Locally](https://www.google.com/search?q=%23-install-locally) • [☁️ Deploy on AWS](https://www.google.com/search?q=%23-deploy-on-aws) |
-| **📚 Learn More** | [📖 What is This?](https://www.google.com/search?q=%23-what-is-this) • [🔧 Optimization Details](https://www.google.com/search?q=%23-optimization-details) • [🔌 API Endpoints](https://www.google.com/search?q=%23-api-endpoints) • [🔗 Related Projects](https://www.google.com/search?q=%23-related-projects) |
-| **🤝 Contribute** | [🐛 Contributing](https://www.google.com/search?q=%23-contributing) • [📄 License](https://www.google.com/search?q=%23-license) |
-
+| **⚡ Quick Start** | [🌐 Try Online](#-try-online) • [💻 Install Locally](#-install-locally) • [☁️ Deploy on AWS](#%EF%B8%8F-deploy-on-aws) |
+| **📚 Learn More** | [📖 What is This?](#-what-is-this) • [🔧 Optimization Details](#-optimization-details) • [🔌 API Endpoints](#-api-endpoints) • [🔗 Related Projects](#-related-projects) |
+| **🤝 Contribute** | [🐛 Contributing](#-contributing) • [📄 License](#-license) |
 ---
 
 ## 📖 What is This?
@@ -27,7 +26,7 @@ Astroid Planner solves the asteroid mining layout optimization problem. Given a 
 
 ## 🌐 Try Online
 
-Use the web version at **[shapez2-tools.com](https://www.google.com/search?q=https://shapez2-tools.com)** — no installation needed!
+Use the web version at **[shapez2-tools.com](https://shapez2-tools.com)** — no installation needed!
 
 ### Features
 
@@ -40,7 +39,7 @@ Use the web version at **[shapez2-tools.com](https://www.google.com/search?q=htt
 
 ### Usage Steps
 
-1. Go to [shapez2-tools.com](https://www.google.com/search?q=https://shapez2-tools.com).
+1. Go to [shapez2-tools.com](https://shapez2-tools.com).
 2. Copy the "Brush Blueprint" (10×10 template).
 3. Paste into Shapez 2, then `Shift+Drag` to place miners on asteroids.
 4. Copy all miner blueprints and paste them into the tool.
@@ -63,7 +62,7 @@ Use the web version at **[shapez2-tools.com](https://www.google.com/search?q=htt
 
 ### Prerequisites
 
-* Gurobi (Free for students/academics, or a 30-day trial available at [gurobi.com](https://www.google.com/search?q=https://www.gurobi.com)).
+* Gurobi (Free for students/academics, or a 30-day trial available at [gurobi.com](https://www.gurobi.com)).
 
 ### Installation
 
@@ -228,14 +227,12 @@ Given specific asteroid locations, the objective is to correctly place elements 
 
 ## 🔗 Related Projects
 
-* **[Shapez2-MIP-Router](https://www.google.com/search?q=https://github.com/jiahao-0204/Shapez2-MIP-Router)** - Route optimization
-* **[Shapez2 Solver](https://www.google.com/search?q=https://vystel.github.io/shapez2-solver/)** - Shape solver (by Vystel)
+* **[Shapez2-MIP-Router](https://github.com/jiahao-0204/Shapez2-MIP-Router)** - Route optimization
 
 ---
 
-## 🐛 Contributing & License
+## 🐛 Contributing
+Found a bug or have suggestions? Open an issue or submit a Pull Request!
 
-* **Contributing:** Found a bug or have suggestions? [Open an issue](https://www.google.com/search?q=https://github.com/jiahao-0204/Shapez2-MIP-Miner/issues) or submit a Pull Request!
-* **License:** See the `LICENSE` file in the repository for full details.
-
----
+## 📄 License
+See the LICENSE file in the repository for full details.
