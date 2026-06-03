@@ -217,7 +217,7 @@ saturation_timelimit.addEventListener('change', () => {
 });
 
 button_run_solver_and_stream.addEventListener('click', callback_run_solver_and_stream);
-dropdown_miner_blueprint.addEventListener('click', callback_dropdown_change);
+dropdown_miner_blueprint.addEventListener('change', callback_dropdown_change);
 button_generate_blueprint.addEventListener('click', callback_generate_blueprint);
 
 // -----------------------------------------------
@@ -598,6 +598,14 @@ function callback_dropdown_change()
 
     const selectedKey = dropdown_miner_blueprint.value;
     text_miner_blueprint.value = get_blueprint_by_key(selectedKey);
+
+    // Check if the selected key belongs to "Fluid Miner" group
+    const isFluid = !!(miner_blueprints["Fluid Miner"] && miner_blueprints["Fluid Miner"][selectedKey]);
+    
+    // Update solve_for_fluid variable and checkbox state accordingly
+    solve_for_fluid = isFluid;
+    checkbox_solve_for_fluid.checked = solve_for_fluid;
+    update_copy_brush_blueprint_text();
 }
 
 async function callback_generate_blueprint()
