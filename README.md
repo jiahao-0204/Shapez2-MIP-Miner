@@ -83,8 +83,7 @@ conda install -c conda-forge segno
 ### Running Locally
 
 ```bash
-cd app
-uvicorn webapp:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.webapp:app --host 0.0.0.0 --port 8000 --reload
 
 ```
 
