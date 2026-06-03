@@ -10,11 +10,20 @@ let threshold = default_threshold;
 const brush_blueprint = "SHAPEZ2-4-H4sIAIVqo2kA/4yXQUvDQBCF/8vgcQUnGy97FHsoKBSVokiRRSMG4qZkk0MI+e8m9OShnY9CQ8jbmTfvDcPsJHsJqv7Gyd1OwiRX/XisJMg2NzF9iZPtZ5vWD/exjxLepV7ew66J/Xfb/WZxaWia05/kn3iswtNw+slhdrJJfVdXeTk4yauE61snb8ujdPKyJHmIYzv0H8/rucc6VZ3M7h/OQ1wBcQpwJJAyGKQFq4SimSWU0IMSelBCD0roASSmDAZpwSohN9MDDz3w0AMPPfDQA5hQGQzSgkmhaKYHBfSggB4U0IMCegADKYPBaLBKKJrpgUIPFHqg0AOFHigLBGGQFqwSinbRA1N8U3VTblPni0fVCG2ltrhbxVsdDBsY9i9sX9i9isIwFKPE6mNiWcrD8Q2nNxzecHazMIpQLBarj4llKQ+XF7i7wNUFbi4smyIUo8QyMrEs5eHqDjd3uLjDvZ2RUoRilFh9jNd55Q/L1bhOsRv3VZfr9TK83pfn+U8AAQYAk7SZ7zsPAAA=$"
 const brush_fluid_blueprint = "SHAPEZ2-4-H4sIAAVro2kA/4yXT0vDQBDFv8vgcQUnay57FC0UFIpIUaTIYiMuxG3Jn0MI+e4m5OTBzo9AQsjLzJv3hmF2lL0EVX/j5G4nYZSrbjhXEmTb1jEfxcn285SXD/exixLeJc3vYVfH7uvU/LTicl/X603a73iuwnO/XnKYnDzkrklVO/84yquE61snb+vjZU7yGIdT331s6j4dn1KuGpncH5yHuALiFOBIIGUwSAtWCbmVFsxDDzz0wEMPPPQAJlQGg7RgUiia6UEBPSigBwX0oIAewEDKYDAarBKKZnqg0AOFHij0QKEHygJBGKQFq4SiXfTAFN9U3ZTb1Pnir2qEtlJb3K3irQ6GDQz7F7Yv7F5FYRiKUWL1MbEs5eH4htMbDm84u1kYRSgWi9XHxLKUh8sL3F3g6gI3F5ZNEYpRYhmZWJbycHWHmztc3OHezkgpQjFKrD7Gy1K+ZMqXTPmSKV8y5Rl3RShGidXHxPqf/WE+EKccm2FfNW1ajsDLKXmafgUQYACpKx0vMQ8AAA==$"
 
-const default_miner_blueprint = "SHAPEZ2-4-H4sIAF7HumkA/6yYX4viMBTFv0vYxz6YtvbfY5lZECqIujLDMixB42zYbipp3F0Rv/u2tjNTW6PJzSAoan6999yck0KPaIUSjD3fQekMJUf0RR52FCVoUuaEb5CDJuuC1388EElQ8h2x6nsyy4ncFuJ3iRy+z/PmDZU/yY4m833zQi8nBz1yKRgtK/CIltVlM3Io9vLHol45ZZyKqkLarZvuWb5h/PVTKz/VGh30XH1UQuco8ZxzN4//pCBrWYgHuiX7XE64pIKTfEUEI1yik9OwrgXrWbA+nA3gaAhHIzga22odn0kMkAohIzAZg8nWwyDUhaMeHPVttdbFP/yQ0ly2WEa3fXTKhCgE3fRj28JTKl6pcJcFzu6BHhT0rzStxntZtZAaAhuOoEKb3Qm6G3u7496mBLqzafdCf70/7ExfVwCVFZp1GZktjw1nMOqurwXMCiEXlG+oUCHja8icrin7o4RiqHtGF6BJg33mToc4GFAaFm0hV5HHr4X4S8RGRbdZxCbi2ooji8MufL+EftmPVrMLv+s2HIA6bdhQETKt6UbmvcaAsyp8I01HGkEnGnW7XOxyJqvVeFl4t2PRYK6RuPFwLBnbSvfb7n424rM+F7Z5A1g7H7ibD/3ptJwLcuv4SjTVc1KYvcbhAxvS9yfm24TMH3qxloxvW2N83fp6Jd8PhQa+nHVVOCXrX/f56G1QwKhHUGteqNZxZjdH2OZoMj1nfKubm38liGprqMKEbTzSpgF/yr0SdkpfCtDf7nrq/f028ndb2LXXjg2c/uKglHEiDisqSlY/lKmfGJ2Uv/8XQIABAJX1h1xVEgAA$"
-const default_miner_blueprint_text = "Use default blueprint (1:12 Balanced Shape Miner 76 Bulidings by 404)"
-
-const default_fluid_miner_blueprint = "SHAPEZ2-4-H4sIAFVro2kA/6yXX2vCMBTFv8tlj30wrdraR/cHHA7EbbIxxgg2bmE1LWnKEPG7r7Xq4py19zoEpZqf5yTn3oQsYQIhY17Lgf4IwiVcmEUqIIRBFnMVgQODaaLKH6644RC+gCyew1HMzSzR8wwclcdx9QbZB09FOM6rF7yuHLhWRkuRFeASHoq/HfJFkpu3mziX0Z1UQhcKfVu3n8s4kur9X5Wfyjk68Axhx4Fx8eCszYzyeXolZjyPzUAZoRWPJ1xLrgysnIpySZRHotpnUOVHgXlIi2jMpWHsLIyRQkNjHg1rn4MFpNgCUmoBafWxVGdN+ZvxMhU3if7iOqofX1psCHS3ApatghqKmalHbI3To4Ofwbe5mhqZqGOAbwPrrW2UaHMvVCR0vUgPK9IjiLAWVmVLNJTxdx2A91a1jZXMpU6y7ESxHECPaZ9PP+uq5sfjcNelaKcVul93jYsDrbtLnOq4ZaO49NGSnf1p0uKpcJeejru3CZ/oc/8Xia/4Fhnt0We6J9ok1e6hYnMs+HtdMZqMpsmwmtV51cWUgGshiJ72aBizTi4XY9DHLoVHw9rWvFwsdnAi1+7kbHckY9PaMOi48NzGo4cPbMOgE8Nz7SMeG3IH6/93aK/FLU0qrhcToTNZXsvKO+Pq6PffAgwAKnl1QlcOAAA=$"
-const default_fluid_miner_blueprint_text = "Use default blueprint (Fluid Miner)"
+const miner_blueprints = {
+    "Shape Miner": {
+        "default_shape_miner": {
+            name: "1:12 Balanced Shape Miner (76 Buildings by 404)",
+            blueprint: "SHAPEZ2-4-H4sIAF7HumkA/6yYX4viMBTFv0vYxz6YtvbfY5lZECqIujLDMixB42zYbipp3F0Rv/u2tjNTW6PJzSAoan6999yck0KPaIUSjD3fQekMJUf0RR52FCVoUuaEb5CDJuuC1388EElQ8h2x6nsyy4ncFuJ3iRy+z/PmDZU/yY4m833zQi8nBz1yKRgtK/CIltVlM3Io9vLHol45ZZyKqkLarZvuWb5h/PVTKz/VGh30XH1UQuco8ZxzN4//pCBrWYgHuiX7XE64pIKTfEUEI1yik9OwrgXrWbA+nA3gaAhHIzga22odn0kMkAohIzAZg8nWwyDUhaMeHPVttdbFP/yQ0ly2WEa3fXTKhCgE3fRj28JTKl6pcJcFzu6BHhT0rzStxntZtZAaAhuOoEKb3Qm6G3u7496mBLqzafdCf70/7ExfVwCVFZp1GZktjw1nMOqurwXMCiEXlG+oUCHja8icrin7o4RiqHtGF6BJg33mToc4GFAaFm0hV5HHr4X4S8RGRbdZxCbi2ooji8MufL+EftmPVrMLv+s2HIA6bdhQETKt6UbmvcaAsyp8I01HGkEnGnW7XOxyJqvVeFl4t2PRYK6RuPFwLBnbSvfb7n424rM+F7Z5A1g7H7ibD/3ptJwLcuv4SjTVc1KYvcbhAxvS9yfm24TMH3qxloxvW2N83fp6Jd8PhQa+nHVVOCXrX/f56G1QwKhHUGteqNZxZjdH2OZoMj1nfKubm38liGprqMKEbTzSpgF/yr0SdkpfCtDf7nrq/f028ndb2LXXjg2c/uKglHEiDisqSlY/lKmfGJ2Uv/8XQIABAJX1h1xVEgAA$"
+        }
+    },
+    "Fluid Miner": {
+        "default_fluid_miner": {
+            name: "Default Fluid Miner",
+            blueprint: "SHAPEZ2-4-H4sIAFVro2kA/6yXX2vCMBTFv8tlj30wrdraR/cHHA7EbbIxxgg2bmE1LWnKEPG7r7Xq4py19zoEpZqf5yTn3oQsYQIhY17Lgf4IwiVcmEUqIIRBFnMVgQODaaLKH6644RC+gCyew1HMzSzR8wwclcdx9QbZB09FOM6rF7yuHLhWRkuRFeASHoq/HfJFkpu3mziX0Z1UQhcKfVu3n8s4kur9X5Wfyjk68Axhx4Fx8eCszYzyeXolZjyPzUAZoRWPJ1xLrgysnIpySZRHotpnUOVHgXlIi2jMpWHsLIyRQkNjHg1rn4MFpNgCUmoBafWxVGdN+ZvxMhU3if7iOqofX1psCHS3ApatghqKmalHbI3To4Ofwbe5mhqZqGOAbwPrrW2UaHMvVCR0vUgPK9IjiLAWVmVLNJTxdx2A91a1jZXMpU6y7ESxHECPaZ9PP+uq5sfjcNelaKcVul93jYsDrbtLnOq4ZaO49NGSnf1p0uKpcJeejru3CZ/oc/8Xia/4Fhnt0We6J9ok1e6hYnMs+HtdMZqMpsmwmtV51cWUgGshiJ72aBizTi4XY9DHLoVHw9rWvFwsdnAi1+7kbHckY9PaMOi48NzGo4cPbMOgE8Nz7SMeG3IH6/93aK/FLU0qrhcToTNZXsvKO+Pq6PffAgwAKnl1QlcOAAA=$"
+        }
+    }
+};
 
 const miner_timelimit_max = 300;
 const saturation_timelimit_max = 300;
@@ -102,7 +111,7 @@ const button_run_solver_and_stream = document.getElementById('run_solver_and_str
 const text_solver_output = document.getElementById("solver_output");
 
 const canvas_results = document.getElementById('result_canvas');
-const button_use_default_blueprint = document.getElementById('use_default_blueprint');
+const dropdown_miner_blueprint = document.getElementById('miner_blueprint_dropdown');
 const text_miner_blueprint = document.getElementById('miner_blueprint');
 const button_generate_blueprint = document.getElementById('generate_blueprint');
 const button_copy_blueprint = document.getElementById('copy_blueprint');
@@ -112,8 +121,7 @@ const checkbox_solve_for_fluid = document.getElementById('solve_for_fluid');
 checkbox_solve_for_fluid.addEventListener('click', () => {
     solve_for_fluid = checkbox_solve_for_fluid.checked;
     update_copy_brush_blueprint_text();
-    update_use_default_blueprint_text();
-    callback_use_default_blueprint();
+    update_default_dropdown_selection();
 });
 
 const checkbox_remove_non_saturated_miners = document.getElementById('remove_non_saturated_miners');
@@ -127,8 +135,35 @@ checkbox_remove_non_saturated_miners.addEventListener('change', () => {
 // -----------------------------------------------
 // setup elements
 // -----------------------------------------------
-update_use_default_blueprint_text();
-callback_use_default_blueprint();
+// populate the dropdown with miner blueprints
+function populate_dropdown()
+{
+    for (const groupName in miner_blueprints) {
+        const optgroup = document.createElement("optgroup");
+        optgroup.label = groupName;
+        for (const key in miner_blueprints[groupName]) {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = miner_blueprints[groupName][key].name;
+            optgroup.appendChild(option);
+        }
+        dropdown_miner_blueprint.appendChild(optgroup);
+    }
+}
+
+// set initial dropdown state based on solve_for_fluid
+function update_default_dropdown_selection() 
+{
+    if (solve_for_fluid) {
+        dropdown_miner_blueprint.value = "default_fluid_miner";
+    } else {
+        dropdown_miner_blueprint.value = "default_shape_miner";
+    }
+    callback_dropdown_change();
+}
+
+populate_dropdown();
+update_default_dropdown_selection();
 
 // pull once at start
 function pull_stats_once()
@@ -174,7 +209,7 @@ saturation_timelimit.addEventListener('change', () => {
 });
 
 button_run_solver_and_stream.addEventListener('click', callback_run_solver_and_stream);
-button_use_default_blueprint.addEventListener('click', callback_use_default_blueprint);
+dropdown_miner_blueprint.addEventListener('click', callback_dropdown_change);
 button_generate_blueprint.addEventListener('click', callback_generate_blueprint);
 
 // -----------------------------------------------
@@ -542,28 +577,19 @@ function update_copy_brush_blueprint_text()
     }
 }
 
-function update_use_default_blueprint_text()
+function callback_dropdown_change() 
 {
-    if (solve_for_fluid)
-    {
-        button_use_default_blueprint.textContent = default_fluid_miner_blueprint_text;
+    function get_blueprint_by_key(keyToFind) {
+        for (const groupName in miner_blueprints) {
+            if (miner_blueprints[groupName][keyToFind]) {
+                return miner_blueprints[groupName][keyToFind].blueprint;
+            }
+        }
+        return "";
     }
-    else
-    {
-        button_use_default_blueprint.textContent = default_miner_blueprint_text;
-    }
-}
 
-function callback_use_default_blueprint()
-{
-    if (solve_for_fluid)
-    {
-        text_miner_blueprint.value = default_fluid_miner_blueprint; // set default blueprint
-    }
-    else
-    {
-        text_miner_blueprint.value = default_miner_blueprint; // set default blueprint
-    }
+    const selectedKey = dropdown_miner_blueprint.value;
+    text_miner_blueprint.value = get_blueprint_by_key(selectedKey);
 }
 
 async function callback_generate_blueprint()
