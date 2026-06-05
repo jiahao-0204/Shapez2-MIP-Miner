@@ -83,78 +83,85 @@ cleanup_tasks()  # Start the cleanup process
 
 # === Generic total counter functions ===
 
+counter_lock = threading.Lock()
+
 def increase_counter(path):
-    try:
-        with open(path, "r") as f:
-            counter = int(f.read())
-    except (FileNotFoundError, ValueError):
-        counter = 0
-    with open(path, "w") as f:
-        f.write(f"{counter + 1}")
+    with counter_lock:
+        try:
+            with open(path, "r") as f:
+                counter = int(f.read())
+        except (FileNotFoundError, ValueError):
+            counter = 0
+        with open(path, "w") as f:
+            f.write(f"{counter + 1}")
 
 def get_counter(path):
-    try:
-        with open(path, "r") as f:
-            return int(f.read())
-    except (FileNotFoundError, ValueError):
-        return 0
+    with counter_lock:
+        try:
+            with open(path, "r") as f:
+                return int(f.read())
+        except (FileNotFoundError, ValueError):
+            return 0
 
 # === Daily counter functions ===
 
 def increase_daily_counter(path):
-    today = datetime.now().strftime("%Y-%m-%d")
-    try:
-        with open(path, "r") as f:
-            lines = f.readlines()
-    except FileNotFoundError:
-        lines = []
+    with counter_lock:
+        today = datetime.now().strftime("%Y-%m-%d")
+        try:
+            with open(path, "r") as f:
+                lines = f.readlines()
+        except FileNotFoundError:
+            lines = []
 
-    found = False
-    for i, line in enumerate(lines):
-        line = line.strip()
-        if not line or ':' not in line:
-            continue
-        parts = line.split(":")
-        if len(parts) != 2:
-            continue
-        date, counter = parts
-        if date == today:
-            try:
-                counter = int(counter) + 1
-            except ValueError:
-                counter = 1  # fallback to 1 if corrupted
-            lines[i] = f"{date}:{counter}\n"
-            found = True
-            break
+        found = False
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line or ':' not in line:
+                continue
+            parts = line.split(":")
+            if len(parts) != 2:
+                continue
+            date, counter = parts
+            if date == today:
+                try:
+                    counter = int(counter) + 1
+                except ValueError:
+                    counter = 1  # fallback to 1 if corrupted
+                lines[i] = f"{date}:{counter}\n"
+                found = True
+                break
 
-    if not found:
-        lines.append(f"{today}:1\n")
+        if not found:
+            lines.append(f"{today}:1\n")
 
-    with open(path, "w") as f:
-        f.writelines(lines)
+        with open(path, "w") as f:
+            f.writelines(lines)
 
 def get_daily_counter(path):
-    today = datetime.now().strftime("%Y-%m-%d")
-    try:
-        with open(path, "r") as f:
-            lines = f.readlines()
-    except FileNotFoundError:
+    with counter_lock:
+        today = datetime.now().strftime("%Y-%m-%d")
+        try:
+            with open(path, "r") as f:
+                lines = f.readlines()
+        except FileNotFoundError:
+            return 0
+
+        for line in lines:
+            line = line.strip()
+            if not line or ':' not in line:
+                continue
+            parts = line.split(":")
+            if len(parts) != 2:
+                continue
+            date, counter = parts
+            if date == today:
+                try:
+                    return int(counter)
+                except ValueError:
+                    return 0
         return 0
 
-    for line in lines:
-        line = line.strip()
-        if not line or ':' not in line:
-            continue
-        parts = line.split(":")
-        if len(parts) != 2:
-            continue
-        date, counter = parts
-        if date == today:
-            try:
-                return int(counter)
-            except ValueError:
-                return 0
-    return 0
 # ------------------------------------------
 # Web API
 # ------------------------------------------
