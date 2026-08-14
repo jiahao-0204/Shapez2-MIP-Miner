@@ -303,7 +303,7 @@ class AstroidSolver:
         self.node_flow_out = node_flow_out
         self.node_used_by_elevator = node_used_by_elevator     
         
-    def run_solver(self, miners_timelimit : float = 5.0, saturation_timelimit : float = 5.0, with_elevator : bool = False) -> None:
+    def run_solver(self, miners_timelimit : float = 5.0, saturation_timelimit : float = 5.0, with_elevator : bool = False, log_callback = None) -> None:
         if not with_elevator:
             # if not with elevator, set the elevator variables to zero
             for node in self.nodes_to_extract:
@@ -313,6 +313,9 @@ class AstroidSolver:
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = miners_timelimit + saturation_timelimit
         solver.parameters.log_search_progress = True
+        
+        if log_callback is not None:
+            solver.log_callback = log_callback
         
         status = solver.Solve(self.model)
         
