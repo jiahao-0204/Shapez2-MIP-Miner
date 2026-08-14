@@ -2,7 +2,6 @@
 from typing import List, Tuple
 
 # thrid party
-from gurobipy import Var
 
 class FakeVar:
     """

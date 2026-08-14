@@ -3,13 +3,13 @@ from typing import List, Tuple, Dict, Optional
 import copy
 
 # third party
-import base64, gzip, json
+import base64, gzip, json, re
 import matplotlib.pyplot as plt
 
 # project
 from app.var_to_txt import txt_to_var, FakeVar
 
-PREFIX = "SHAPEZ2-4-"
+PREFIX = "SHAPEZ2-5-"
 VERSION = 1137
 
 def blueprint_to_json(blueprint_str) -> dict:
@@ -22,8 +22,16 @@ def blueprint_to_json(blueprint_str) -> dict:
     Returns:
         dict: The decoded blueprint in JSON format or as plain text if not JSON.
     """
-    # remove prefix
-    compressed_b64 = blueprint_str[len(PREFIX):]
+    # remove any whitespace or newlines that might have been added by copy-pasting
+    blueprint_str = "".join(blueprint_str.split())
+    
+    # use regex to handle both old and new (v5) blueprint formats
+    # matches SHAPEZ2-<version>-<base64>[<trailer>_<trailerLen>]$
+    match = re.match(r"^SHAPEZ2-\d+-([A-Za-z0-9+/=]+)", blueprint_str)
+    if not match:
+        raise ValueError("Invalid blueprint format")
+        
+    compressed_b64 = match.group(1)
 
     # Base‑64 decode
     compressed_bytes = base64.b64decode(compressed_b64)
@@ -69,8 +77,9 @@ def json_to_blueprint(json_str):
     # Base‑64 encode
     compressed_b64 = base64.b64encode(compressed_bytes).decode("utf-8")
 
-    # Add the prefix back
-    return f"{PREFIX}{compressed_b64}{'$'}"
+    # Add the prefix and new trailer back
+    # Version 5 format requires a trailer (e.g. empty mods array '[]' of length 2)
+    return f"{PREFIX}{compressed_b64}[]_2$"
 
 def create_elevator_json(x, y, direction):
     """
@@ -308,8 +317,11 @@ def compose_blueprint(all_miner_platforms: List[FakeVar], all_extender_platforms
     if miner_blueprint is not None:    
         try:
             miner_json = blueprint_to_json(miner_blueprint)
-            B = miner_json["BP"]["Entries"][0]["B"]
-        except (json.JSONDecodeError, KeyError):
+            entries = miner_json["BP"]["Entries"]
+            if isinstance(entries, dict) and "$values" in entries:
+                entries = entries["$values"]
+            B = entries[0]["B"]
+        except (json.JSONDecodeError, KeyError, IndexError):
             B = None
     else:
         B = None
@@ -445,8 +457,11 @@ def convert_miner_to_fluid(miner_blueprint : str, fluid_blueprint : Optional[str
     if fluid_blueprint is not None:    
         try:
             fluid_json = blueprint_to_json(fluid_blueprint)
-            B = fluid_json["BP"]["Entries"][0]["B"]
-        except json.JSONDecodeError:
+            entries = fluid_json["BP"]["Entries"]
+            if isinstance(entries, dict) and "$values" in entries:
+                entries = entries["$values"]
+            B = entries[0]["B"]
+        except (json.JSONDecodeError, KeyError, IndexError):
             B = None
     else:
         B = None

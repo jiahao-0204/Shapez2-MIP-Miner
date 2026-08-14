@@ -1,6 +1,6 @@
 # Astroid Planner
 
-An optimizer for asteroid mining layouts in **Shapez 2** using Mixed-Integer Programming (MIP) with Gurobi.
+An optimizer for asteroid mining layouts in **Shapez 2** using Constraint Programming (CP-SAT) with Google's OR-Tools.
 
 ---
 
@@ -62,7 +62,7 @@ Use the web version at **[shapez2-tools.com](https://shapez2-tools.com)** — no
 
 ### Prerequisites
 
-* Gurobi (Free for students/academics, or a 30-day trial available at [gurobi.com](https://www.gurobi.com)).
+* Python environment manager (e.g. Conda or Miniconda).
 
 ### Installation
 
@@ -75,9 +75,24 @@ conda create -n shapez2
 conda activate shapez2
 
 # Install dependencies
-conda install gurobi opencv scikit-image matplotlib uvicorn colorlog qrcode
+conda install scikit-image matplotlib uvicorn colorlog qrcode
 conda install -c conda-forge segno
+pip install ortools opencv-python-headless
 
+```
+
+### Migrating from Gurobi (Old Setup)
+
+If you are upgrading from an older version of this project that used Gurobi, you can update your environment to use Google's OR-Tools (the new default):
+
+```bash
+conda activate shapez2
+
+# Remove gurobi and the system OpenCV package (to prevent protobuf collisions)
+conda remove gurobi opencv
+
+# Install OR-Tools and the headless version of OpenCV
+pip install ortools opencv-python-headless
 ```
 
 ### Running Locally
@@ -94,7 +109,7 @@ uvicorn app.webapp:app --host 0.0.0.0 --port 8000 --reload
 | Path | Description |
 | --- | --- |
 | `app/webapp.py` | FastAPI endpoints and web server |
-| `app/astroid_solver.py` | Gurobi MIP model and solver |
+| `app/astroid_solver.py` | OR-Tools CP-SAT model and solver |
 | `app/astroid_parser.py` | Parse blueprints, extract asteroid locations |
 | `app/blueprint_composer.py` | Build blueprints from solution |
 | `app/qr_encoder.py` | QR code generation tool |
@@ -115,8 +130,9 @@ bash Miniconda3-latest-Linux-x86_64.sh
 
 conda create -n shapez2
 conda activate shapez2
-conda install gurobi opencv scikit-image matplotlib uvicorn colorlog qrcode
+conda install scikit-image matplotlib uvicorn colorlog qrcode
 conda install -c conda-forge segno
+pip install ortools opencv-python-headless
 
 ```
 
@@ -176,7 +192,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 * **Check Solver Status:** Run `sudo systemctl status fastapi` and `sudo journalctl -u fastapi -f`.
 * **Check for OOM (Out of Memory):** Run `sudo journalctl -u fastapi | grep "OOM killer"`.
 * **Troubleshoot Memory:** If encountering OOM errors, increase swap space or reduce solver time limits.
-* **Troubleshoot Stuck Solver:** Check Gurobi output via `journalctl` or try shorter time limits (the default is 30 seconds).
+* **Troubleshoot Stuck Solver:** Check OR-Tools output via `journalctl` or try shorter time limits (the default is 30 seconds).
 
 ---
 

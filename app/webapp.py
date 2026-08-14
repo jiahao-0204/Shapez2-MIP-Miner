@@ -194,6 +194,13 @@ async def get_simple_coordinates_preview(input_blueprint: str = Form(...)):
     try:
         img = parse_using_blueprint_and_return_image(input_blueprint)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        try:
+            with open("failed_blueprint.txt", "w") as f:
+                f.write(input_blueprint)
+        except Exception:
+            pass
         return JSONResponse(status_code=400, content={"error": str(e)})
     
     # convert to base64
@@ -279,11 +286,16 @@ async def run_solver_and_stream(
         logger.info(f"[Solver] - start for {task_id}")
         current_running_tasks_num += 1
         stream_writer = StreamToQueue(queue, loop)
+        
+        def solver_log_callback(msg: str):
+            stream_writer.write(msg + "\n")
+            
         with redirect_stdout(stream_writer):
             astroid_solver.run_solver(
                 miners_timelimit=miners_timelimit,
                 saturation_timelimit=saturation_timelimit,
-                with_elevator=with_elevator_bool
+                with_elevator=with_elevator_bool,
+                log_callback=solver_log_callback
             )
         logger.info(f"[Solver] - finish for {task_id}")
         current_running_tasks_num -= 1
