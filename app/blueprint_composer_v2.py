@@ -7,7 +7,7 @@ import gzip
 import base64
 
 
-PREFIX = "SHAPEZ2-4-"
+PREFIX = "SHAPEZ2-5-"
 VERSION = 1137
 
 def json_to_blueprint(json_str):
@@ -40,8 +40,8 @@ def json_to_blueprint(json_str):
     # Base‑64 encode
     compressed_b64 = base64.b64encode(compressed_bytes).decode("utf-8")
 
-    # Add the prefix back
-    return f"{PREFIX}{compressed_b64}{'$'}"
+    # Add the prefix and new trailer back
+    return f"{PREFIX}{compressed_b64}[]_2$"
 
 class Building():
     def __init__(self, T: str = "TrashDefaultInternalVariant", R: int = 0):

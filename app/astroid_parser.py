@@ -300,6 +300,8 @@ def parse_using_blueprint(blueprint: str = "") -> Optional[list[tuple[int, int]]
 
     # get platform entries
     entires = blueprint_json["BP"]["Entries"]
+    if isinstance(entires, dict) and "$values" in entires:
+        entires = entires["$values"]
     
     # get platform coodinate
     nodes: list[tuple[int, int]] = []
@@ -309,6 +311,8 @@ def parse_using_blueprint(blueprint: str = "") -> Optional[list[tuple[int, int]]
         nodes.append((x, -y))
     
     # shifts coordinates
+    if not nodes:
+        return []
     min_x = min(x for x, _ in nodes)
     min_y = min(y for _, y in nodes)
     nodes = [(x - min_x, y - min_y) for x, y in nodes]
